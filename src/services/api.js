@@ -1,7 +1,7 @@
 import axios from 'axios';
 
 const api = axios.create({
-    baseURL: 'https://tender-api.reliablesolution.in/api',
+    baseURL: 'https://tender-backend-three.vercel.app/api',
     headers: {
         'Content-Type': 'application/json',
     },
