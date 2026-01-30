@@ -85,21 +85,50 @@ const Projects = () => {
         }
     };
 
+    const [filterCategory, setFilterCategory] = useState('All');
+
+    // Filter Logic
+    const filteredProjects = projects.filter(project => {
+        if (filterCategory === 'All') return true;
+        return project.category === filterCategory;
+    });
+
     return (
         <div>
-            <div className="flex justify-between items-center mb-6">
+            <div className="flex flex-col md:flex-row justify-between items-center mb-6 gap-4">
                 <h1 className="text-2xl font-bold">Projects</h1>
-                <Link to="/projects/new" className="bg-primary text-white px-4 py-2 rounded flex items-center gap-2">
-                    <Plus size={20} /> Create Project
-                </Link>
+
+                <div className="flex items-center gap-4 w-full md:w-auto">
+                    {/* Filter Dropdown */}
+                    <select
+                        className="border p-2 rounded w-full md:w-48"
+                        value={filterCategory}
+                        onChange={(e) => setFilterCategory(e.target.value)}
+                    >
+                        <option value="All">All Categories</option>
+                        <option value="Primary">Primary</option>
+                        <option value="Upper Primary">Upper Primary</option>
+                        <option value="Secondary">Secondary</option>
+                        <option value="Higher Secondary">Higher Secondary</option>
+                        <option value="Residential">Residential</option>
+                    </select>
+
+                    <Link to="/projects/new" className="bg-primary text-white px-4 py-2 rounded flex items-center gap-2 whitespace-nowrap">
+                        <Plus size={20} /> Create Project
+                    </Link>
+                </div>
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                {Array.isArray(projects) && projects.map((project) => (
+                {Array.isArray(filteredProjects) && filteredProjects.map((project) => (
                     <div key={project._id} className="bg-white p-6 rounded-lg shadow">
-                        <Link to={`/projects/${project._id}`} className="hover:underline text-primary">
-                            <h3 className="text-xl font-bold mb-2">{project.name}</h3>
-                        </Link>
+                        <div className="flex justify-between items-start mb-2">
+                            <Link to={`/projects/${project._id}`} className="hover:underline text-primary">
+                                <h3 className="text-xl font-bold">{project.name}</h3>
+                            </Link>
+                            <span className="text-xs font-semibold bg-gray-100 px-2 py-1 rounded text-gray-600">{project.category || 'N/A'}</span>
+                        </div>
+
                         <p className="text-gray-600 mb-4">{project.description}</p>
                         <div className="flex justify-between items-center text-sm text-gray-500 border-t pt-4">
                             <div className="flex flex-col">

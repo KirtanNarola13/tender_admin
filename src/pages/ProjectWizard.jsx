@@ -12,6 +12,7 @@ const ProjectWizard = () => {
     const [projectData, setProjectData] = useState({
         name: '',
         client: '', // changed from clientName to match schema
+        category: 'Primary', // Default to Primary
         location: '',
         startDate: '',
         deadline: '',
@@ -54,6 +55,18 @@ const ProjectWizard = () => {
                 <div>
                     <label className="block text-sm font-bold mb-1">Client Name</label>
                     <input className="w-full border p-2 rounded" placeholder="Enter Client Name" value={projectData.client} onChange={e => setProjectData({ ...projectData, client: e.target.value })} />
+                </div>
+                <div>
+                    <label className="block text-sm font-bold mb-1">Category / School Type</label>
+                    <select
+                        className="w-full border p-2 rounded"
+                        value={projectData.category}
+                        onChange={e => setProjectData({ ...projectData, category: e.target.value })}
+                    >
+                        {['Primary', 'Upper Primary', 'Secondary', 'Higher Secondary', 'Residential'].map(cat => (
+                            <option key={cat} value={cat}>{cat}</option>
+                        ))}
+                    </select>
                 </div>
                 <div>
                     <label className="block text-sm font-bold mb-1">Location/City</label>
@@ -197,6 +210,10 @@ const ProjectWizard = () => {
                     <div>
                         <span className="text-gray-500 block">Location</span>
                         <span className="font-semibold">{projectData.location}</span>
+                    </div>
+                    <div>
+                        <span className="text-gray-500 block">Category</span>
+                        <span className="font-semibold">{projectData.category}</span>
                     </div>
                     <div>
                         <span className="text-gray-500 block">Team Leader</span>

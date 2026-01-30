@@ -1,13 +1,14 @@
 import { useState, useEffect } from 'react';
 import { useParams } from 'react-router-dom';
 import api from '../services/api';
-import { Package, CheckCircle, Clock, AlertCircle } from 'lucide-react';
+import { Package, CheckCircle, Clock, AlertCircle, FileText, Upload } from 'lucide-react';
 
 const ProjectDetails = () => {
     const { id } = useParams();
     const [project, setProject] = useState(null);
     const [tasks, setTasks] = useState([]);
     const [loading, setLoading] = useState(true);
+    const [uploading, setUploading] = useState(false);
 
     useEffect(() => {
         fetchProjectDetails();
@@ -36,6 +37,43 @@ const ProjectDetails = () => {
             console.error(error);
         } finally {
             setLoading(false);
+        }
+    };
+
+    const handleFileUpload = async (event) => {
+        const file = event.target.files[0];
+        if (!file) return;
+
+        setUploading(true);
+        const formData = new FormData();
+        formData.append('image', file); // API expects 'image' key, but works for PDFs too if configured
+
+        try {
+            // 1. Upload File
+            const uploadRes = await api.post('/upload', formData, {
+                headers: { 'Content-Type': 'multipart/form-data' }
+            });
+
+            const fileUrl = uploadRes.data.url;
+            console.log('Uploaded File URL:', fileUrl);
+
+            // 2. Update Project
+            await api.put(`/projects/${id}`, {
+                completionLetter: {
+                    url: fileUrl,
+                    uploadedAt: new Date()
+                }
+            });
+
+            // 3. Refresh Data
+            fetchProjectDetails();
+            alert('Handover Letter uploaded successfully!');
+
+        } catch (error) {
+            console.error("Upload failed", error);
+            alert('Failed to upload file.');
+        } finally {
+            setUploading(false);
         }
     };
 
@@ -73,6 +111,61 @@ const ProjectDetails = () => {
                 <div className="bg-white p-4 rounded shadow">
                     <span className="text-gray-500 block text-xs">Leader</span>
                     <span className="font-bold">{project.assignedLeader?.name || 'Unassigned'}</span>
+                </div>
+            </div>
+
+            {/* Handover Letter Section */}
+            <div className="bg-white p-6 rounded-lg shadow mb-8 border border-gray-100">
+                <div className="flex justify-between items-center">
+                    <div>
+                        <h2 className="text-lg font-bold flex items-center gap-2">
+                            <FileText className="text-blue-600" size={20} />
+                            Handover Letter / Completion Report
+                        </h2>
+                        <p className="text-sm text-gray-500">Upload the final signed handover document.</p>
+                    </div>
+                    <div>
+                        {project.completionLetter?.url ? (
+                            <div className="flex items-center gap-4">
+                                <div className="text-right">
+                                    <span className="block text-sm font-semibold text-green-600">Uploaded</span>
+                                    <span className="text-xs text-gray-400">
+                                        {new Date(project.completionLetter.uploadedAt).toLocaleDateString()}
+                                    </span>
+                                </div>
+                                <a
+                                    href={project.completionLetter.url}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    className="px-4 py-2 bg-blue-50 text-blue-600 rounded hover:bg-blue-100 border border-blue-200 text-sm font-semibold"
+                                >
+                                    View Document
+                                </a>
+                                <label className="cursor-pointer px-4 py-2 bg-gray-100 text-gray-600 rounded hover:bg-gray-200 text-sm font-semibold">
+                                    {uploading ? 'Updating...' : 'Replace'}
+                                    <input
+                                        type="file"
+                                        className="hidden"
+                                        accept=".pdf,.jpg,.jpeg,.png"
+                                        onChange={handleFileUpload}
+                                        disabled={uploading}
+                                    />
+                                </label>
+                            </div>
+                        ) : (
+                            <label className="cursor-pointer flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 transition shadow text-sm font-semibold">
+                                <Upload size={16} />
+                                {uploading ? 'Uploading...' : 'Upload Letter'}
+                                <input
+                                    type="file"
+                                    className="hidden"
+                                    accept=".pdf,.jpg,.jpeg,.png"
+                                    onChange={handleFileUpload}
+                                    disabled={uploading}
+                                />
+                            </label>
+                        )}
+                    </div>
                 </div>
             </div>
 

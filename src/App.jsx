@@ -11,6 +11,8 @@ import ProjectWizard from './pages/ProjectWizard';
 import ProjectDetails from './pages/ProjectDetails';
 import Sidebar from './components/Sidebar';
 
+import VerifyDashboard from './pages/VerifyDashboard';
+
 const ProtectedRoute = ({ children }) => {
   const { user, loading } = useAuth();
   if (loading) return <div>Loading...</div>;
@@ -37,6 +39,7 @@ function App() {
           <Route path="/projects/:id" element={<ProtectedRoute><ProjectDetails /></ProtectedRoute>} />
           <Route path="/tasks" element={<ProtectedRoute><Tasks /></ProtectedRoute>} />
           <Route path="/tasks/:id" element={<ProtectedRoute><TaskDetails /></ProtectedRoute>} />
+          <Route path="/verify" element={<ProtectedRoute><VerifyDashboard /></ProtectedRoute>} />
           <Route path="/users" element={<ProtectedRoute><Users /></ProtectedRoute>} />
           <Route path="/inventory" element={<ProtectedRoute><Inventory /></ProtectedRoute>} />
         </Routes>

@@ -52,7 +52,6 @@ const Tasks = () => {
                             <th className="text-left p-4 font-medium text-gray-500">Project</th>
                             <th className="text-left p-4 font-medium text-gray-500">Team Leader</th>
                             <th className="text-left p-4 font-medium text-gray-500">Status</th>
-                            <th className="text-left p-4 font-medium text-gray-500">Progress</th>
                             <th className="text-left p-4 font-medium text-gray-500">Actions</th>
                         </tr>
                     </thead>
@@ -69,11 +68,6 @@ const Tasks = () => {
                                                 'bg-gray-100 text-gray-800'}`}>
                                         {task.status}
                                     </span>
-                                </td>
-                                <td className="p-4">
-                                    {/* Calculate progress based on checklist items */}
-                                    {task.checklist ?
-                                        Math.round((task.checklist.filter(i => i.isCompleted).length / task.checklist.length) * 100) : 0}%
                                 </td>
                                 <td className="p-4 flex space-x-2">
                                     {/* View Details / Verify Button */}
