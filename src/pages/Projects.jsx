@@ -139,9 +139,9 @@ const Projects = () => {
                                 <Link to={`/projects/${project._id}`} className="text-blue-600 hover:text-blue-800 text-sm font-medium">
                                     View Details
                                 </Link>
-                                <button className="text-red-500 hover:text-red-700">
+                                {/* <button className="text-red-500 hover:text-red-700">
                                     <Trash2 size={18} />
-                                </button>
+                                </button> */}
                             </div>
                         </div>
                     </div>
