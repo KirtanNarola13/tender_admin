@@ -78,74 +78,127 @@ const Inventory = () => {
         } catch (e) { alert('Error creating warehouse'); }
     };
 
+    const [searchTerm, setSearchTerm] = useState('');
+
+    const filteredProducts = products.filter(p =>
+        p.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        p.sku.toLowerCase().includes(searchTerm.toLowerCase())
+    );
+
     return (
         <div>
-            <div className="flex justify-between items-center mb-6">
-                <h1 className="text-2xl font-bold">Inventory Management</h1>
-                <div className="flex gap-2">
-                    <button onClick={() => setShowAddStockModal(true)} className="bg-green-600 text-white px-4 py-2 rounded flex items-center gap-2">
-                        <Plus size={20} /> Add Stock
+            <div className="flex flex-col md:flex-row justify-between items-center mb-6 gap-4">
+                <div>
+                    <h1 className="text-2xl font-bold">Inventory Management</h1>
+                    <p className="text-gray-500 text-sm">Manage products, warehouses, and stock levels.</p>
+                </div>
+
+                <div className="flex flex-wrap gap-2">
+                    <button onClick={() => setShowAddStockModal(true)} className="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded flex items-center gap-2 transition-colors">
+                        <Plus size={18} /> Add Stock
                     </button>
-                    <button onClick={() => setShowTransferStockModal(true)} className="bg-blue-600 text-white px-4 py-2 rounded flex items-center gap-2">
-                        <Package size={20} /> Transfer
+                    <button onClick={() => setShowTransferStockModal(true)} className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded flex items-center gap-2 transition-colors">
+                        <Package size={18} /> Transfer
                     </button>
                     <button
                         onClick={() => { setActiveTab('products'); setShowProductModal(true); }}
-                        className="bg-primary text-white px-4 py-2 rounded flex items-center gap-2"
+                        className="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded flex items-center gap-2 transition-colors"
                     >
-                        <Plus size={20} /> New Product
+                        <Plus size={18} /> New Product
                     </button>
                     <button
                         onClick={() => { setActiveTab('warehouses'); setShowWarehouseModal(true); }}
-                        className="bg-secondary text-white px-4 py-2 rounded flex items-center gap-2"
+                        className="bg-purple-600 hover:bg-purple-700 text-white px-4 py-2 rounded flex items-center gap-2 transition-colors"
                     >
-                        <Plus size={20} /> New Warehouse
+                        <Plus size={18} /> New Warehouse
                     </button>
                 </div>
             </div>
 
             {/* Tabs */}
-            <div className="flex border-b mb-6">
+            <div className="flex border-b mb-6 overflow-x-auto">
                 <button
                     onClick={() => setActiveTab('products')}
-                    className={`px-4 py-2 ${activeTab === 'products' ? 'border-b-2 border-primary text-primary font-bold' : 'text-gray-500'}`}
+                    className={`px-6 py-3 font-medium transition-colors whitespace-nowrap ${activeTab === 'products' ? 'border-b-2 border-indigo-600 text-indigo-600' : 'text-gray-500 hover:text-gray-700'}`}
                 >
                     Products ({products.length})
                 </button>
                 <button
                     onClick={() => setActiveTab('warehouses')}
-                    className={`px-4 py-2 ${activeTab === 'warehouses' ? 'border-b-2 border-primary text-primary font-bold' : 'text-gray-500'}`}
+                    className={`px-6 py-3 font-medium transition-colors whitespace-nowrap ${activeTab === 'warehouses' ? 'border-b-2 border-indigo-600 text-indigo-600' : 'text-gray-500 hover:text-gray-700'}`}
                 >
                     Warehouses ({warehouses.length})
                 </button>
                 <button
                     onClick={() => setActiveTab('logs')}
-                    className={`px-4 py-2 ${activeTab === 'logs' ? 'border-b-2 border-primary text-primary font-bold' : 'text-gray-500'}`}
+                    className={`px-6 py-3 font-medium transition-colors whitespace-nowrap ${activeTab === 'logs' ? 'border-b-2 border-indigo-600 text-indigo-600' : 'text-gray-500 hover:text-gray-700'}`}
                 >
                     Stock History
                 </button>
             </div>
 
+            {/* Search Bar for Products */}
             {activeTab === 'products' && (
-                <div className="bg-white rounded shadow p-4">
+                <div className="mb-6">
+                    <input
+                        type="text"
+                        placeholder="Search products by Name or SKU..."
+                        className="w-full md:w-1/3 px-4 py-2 border rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none"
+                        value={searchTerm}
+                        onChange={(e) => setSearchTerm(e.target.value)}
+                    />
+                </div>
+            )}
+
+            {activeTab === 'products' && (
+                <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
                     <table className="w-full">
                         <thead>
-                            <tr className="text-left bg-gray-50">
-                                <th className="p-3">Name</th>
-                                <th className="p-3">SKU</th>
-                                <th className="p-3">Category</th>
-                                <th className="p-3">Total Stock</th>
+                            <tr className="text-left bg-gray-50 border-b">
+                                <th className="p-4 text-xs font-bold text-gray-500 uppercase tracking-wider">Name</th>
+                                <th className="p-4 text-xs font-bold text-gray-500 uppercase tracking-wider">SKU</th>
+                                <th className="p-4 text-xs font-bold text-gray-500 uppercase tracking-wider">Category</th>
+                                <th className="p-4 text-xs font-bold text-gray-500 uppercase tracking-wider text-right">Total Stock</th>
+                                <th className="p-4 text-xs font-bold text-gray-500 uppercase tracking-wider text-right">Status</th>
                             </tr>
                         </thead>
-                        <tbody>
-                            {Array.isArray(products) && products.map(p => (
-                                <tr key={p._id} className="border-t">
-                                    <td className="p-3 font-semibold">{p.name}</td>
-                                    <td className="p-3 text-gray-500">{p.sku}</td>
-                                    <td className="p-3">{p.category}</td>
-                                    <td className="p-3">{p.totalStock}</td>
+                        <tbody className="divide-y divide-gray-100">
+                            {filteredProducts.length > 0 ? (
+                                filteredProducts.map(p => {
+                                    const isLowStock = p.totalStock < 10;
+                                    return (
+                                        <tr key={p._id} className={`hover:bg-gray-50 transition-colors ${isLowStock ? 'bg-red-50' : ''}`}>
+                                            <td className="p-4 font-semibold text-gray-800">{p.name}</td>
+                                            <td className="p-4 text-gray-500 font-mono text-sm">{p.sku}</td>
+                                            <td className="p-4">
+                                                <span className="px-2 py-1 rounded bg-gray-100 text-gray-600 text-xs font-medium border border-gray-200">
+                                                    {p.category}
+                                                </span>
+                                            </td>
+                                            <td className={`p-4 text-right font-bold ${isLowStock ? 'text-red-600' : 'text-gray-700'}`}>
+                                                {p.totalStock}
+                                            </td>
+                                            <td className="p-4 text-right">
+                                                {isLowStock ? (
+                                                    <span className="inline-flex items-center gap-1 text-xs font-bold text-red-600 bg-red-100 px-2 py-1 rounded">
+                                                        Low Stock
+                                                    </span>
+                                                ) : (
+                                                    <span className="inline-flex items-center gap-1 text-xs font-bold text-green-600 bg-green-100 px-2 py-1 rounded">
+                                                        In Stock
+                                                    </span>
+                                                )}
+                                            </td>
+                                        </tr>
+                                    );
+                                })
+                            ) : (
+                                <tr>
+                                    <td colSpan="5" className="p-8 text-center text-gray-400">
+                                        No products found matching "{searchTerm}"
+                                    </td>
                                 </tr>
-                            ))}
+                            )}
                         </tbody>
                     </table>
                 </div>

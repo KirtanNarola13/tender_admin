@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
-import api from '../services/api';
+import api, { getImageUrl } from '../services/api';
 import { CheckCircle, XCircle, ArrowRight, Loader } from 'lucide-react';
+import ImageModal from '../components/ImageModal';
 
 const VerifyDashboard = () => {
     const [tasks, setTasks] = useState([]);
@@ -8,6 +9,7 @@ const VerifyDashboard = () => {
     const [selectedTask, setSelectedTask] = useState(null);
     const [isRejectModalOpen, setIsRejectModalOpen] = useState(false);
     const [rejectionReason, setRejectionReason] = useState('');
+    const [previewImage, setPreviewImage] = useState(null);
 
     useEffect(() => {
         fetchTasks();
@@ -106,7 +108,12 @@ const VerifyDashboard = () => {
                                 <div>
                                     <span className="block text-xs font-bold text-gray-400 mb-2 uppercase">Reference / Before</span>
                                     {task.photos?.before ? (
-                                        <img src={task.photos.before} alt="Before" className="h-48 object-cover rounded border bg-white" />
+                                        <img
+                                            src={getImageUrl(task.photos.before)}
+                                            alt="Before"
+                                            className="h-48 object-cover rounded border bg-white cursor-zoom-in hover:opacity-90 transition"
+                                            onClick={() => setPreviewImage(getImageUrl(task.photos.before))}
+                                        />
                                     ) : (
                                         <div className="h-48 bg-gray-200 rounded flex items-center justify-center text-gray-400 text-xs text-center p-4">
                                             No Standard Photo
@@ -116,11 +123,21 @@ const VerifyDashboard = () => {
                                 <div>
                                     <span className="block text-xs font-bold text-gray-400 mb-2 uppercase">Actual / Site Photo</span>
                                     {task.photos?.siteCapture ? (
-                                        <img src={task.photos.siteCapture} alt="Site" className="h-48 object-cover rounded border bg-white" />
+                                        <img
+                                            src={getImageUrl(task.photos.siteCapture)}
+                                            alt="Site"
+                                            className="h-48 object-cover rounded border bg-white cursor-zoom-in hover:opacity-90 transition"
+                                            onClick={() => setPreviewImage(getImageUrl(task.photos.siteCapture))}
+                                        />
                                     ) : (
                                         // Fallback if 'siteCapture' key varies, try getting first available 'after' or dynamic
                                         task.photos?.after ? (
-                                            <img src={task.photos.after} alt="After" className="h-48 object-cover rounded border bg-white" />
+                                            <img
+                                                src={getImageUrl(task.photos.after)}
+                                                alt="After"
+                                                className="h-48 object-cover rounded border bg-white cursor-zoom-in hover:opacity-90 transition"
+                                                onClick={() => setPreviewImage(getImageUrl(task.photos.after))}
+                                            />
                                         ) : (
                                             <div className="h-48 bg-red-50 border border-red-200 rounded flex items-center justify-center text-red-400 text-xs font-bold">
                                                 MISSING PHOTO
@@ -156,6 +173,14 @@ const VerifyDashboard = () => {
                     </div>
                 </div>
             )}
+
+            {/* Image Zoom Modal */}
+            <ImageModal
+                isOpen={!!previewImage}
+                onClose={() => setPreviewImage(null)}
+                imageUrl={previewImage}
+                altText="Verification Preview"
+            />
         </div>
     );
 };

@@ -1,6 +1,6 @@
 import { Link, useLocation } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
-import { LayoutDashboard, FolderKanban, ClipboardCheck, Users, Warehouse, LogOut, CheckCircle } from 'lucide-react';
+import { LayoutDashboard, FolderKanban, ClipboardCheck, Users, Warehouse, LogOut, CheckCircle, BarChart3 } from 'lucide-react';
 import clsx from 'clsx';
 
 const Sidebar = () => {
@@ -8,7 +8,8 @@ const Sidebar = () => {
     const location = useLocation();
 
     const links = [
-        // { name: 'Dashboard', path: '/', icon: LayoutDashboard },
+        { name: 'Dashboard', path: '/', icon: LayoutDashboard },
+        { name: 'Reports', path: '/reports', icon: BarChart3 },
         { name: 'Projects', path: '/projects', icon: FolderKanban },
         { name: 'Tasks', path: '/tasks', icon: ClipboardCheck },
         { name: 'Verify', path: '/verify', icon: CheckCircle }, // Verify Dashboard

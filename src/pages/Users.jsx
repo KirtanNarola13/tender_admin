@@ -4,6 +4,8 @@ import { Plus } from 'lucide-react';
 
 const Users = () => {
     const [users, setUsers] = useState([]);
+    const [filteredUsers, setFilteredUsers] = useState([]);
+    const [searchTerm, setSearchTerm] = useState('');
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [editingUser, setEditingUser] = useState(null);
     const [formData, setFormData] = useState({ name: '', email: '', password: '', role: 'employee' });
@@ -11,6 +13,15 @@ const Users = () => {
     useEffect(() => {
         fetchUsers();
     }, []);
+
+    useEffect(() => {
+        setFilteredUsers(
+            users.filter(user =>
+                user.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                user.email.toLowerCase().includes(searchTerm.toLowerCase())
+            )
+        );
+    }, [searchTerm, users]);
 
     const fetchUsers = async () => {
         try {
@@ -61,89 +72,142 @@ const Users = () => {
 
     return (
         <div>
-            <div className="flex justify-between items-center mb-6">
-                <h1 className="text-2xl font-bold">User Management</h1>
+            <div className="flex flex-col md:flex-row justify-between items-center mb-6 gap-4">
+                <div>
+                    <h1 className="text-2xl font-bold text-gray-800">User Management</h1>
+                    <p className="text-gray-500 text-sm">Manage team members, roles, and access.</p>
+                </div>
+
                 <button
                     onClick={() => handleOpenModal()}
-                    className="bg-primary text-white px-4 py-2 rounded flex items-center gap-2"
+                    className="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-lg flex items-center gap-2 transition-colors shadow-sm"
                 >
                     <Plus size={20} /> Create User
                 </button>
             </div>
 
-            <div className="bg-white rounded-lg shadow overflow-hidden">
+            {/* Search Bar */}
+            <div className="mb-6">
+                <input
+                    type="text"
+                    placeholder="Search users by Name or Email..."
+                    className="w-full md:w-1/3 px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none transition-all"
+                    value={searchTerm}
+                    onChange={(e) => setSearchTerm(e.target.value)}
+                />
+            </div>
+
+            <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
                 <table className="w-full">
                     <thead>
-                        <tr className="bg-gray-50 border-b">
-                            <th className="text-left p-4">Name</th>
-                            <th className="text-left p-4">Email</th>
-                            <th className="text-left p-4">Role</th>
-                            <th className="text-left p-4">Actions</th>
+                        <tr className="bg-gray-50 border-b border-gray-100">
+                            <th className="text-left p-4 text-xs font-bold text-gray-500 uppercase tracking-wider">Name</th>
+                            <th className="text-left p-4 text-xs font-bold text-gray-500 uppercase tracking-wider">Email</th>
+                            <th className="text-left p-4 text-xs font-bold text-gray-500 uppercase tracking-wider">Role</th>
+                            <th className="text-right p-4 text-xs font-bold text-gray-500 uppercase tracking-wider">Actions</th>
                         </tr>
                     </thead>
-                    <tbody>
-                        {Array.isArray(users) && users.map((user) => (
-                            <tr key={user._id} className="border-b hover:bg-gray-50">
-                                <td className="p-4">{user.name}</td>
-                                <td className="p-4">{user.email}</td>
-                                <td className="p-4 capitalize">{user.role.replace('_', ' ')}</td>
-                                <td className="p-4 flex gap-3">
-                                    <button
-                                        onClick={() => handleOpenModal(user)}
-                                        className="text-blue-500 hover:text-blue-700"
-                                    >
-                                        Edit
-                                    </button>
-                                    <button
-                                        onClick={() => handleDelete(user._id)}
-                                        className="text-red-500 hover:text-red-700"
-                                    >
-                                        Delete
-                                    </button>
+                    <tbody className="divide-y divide-gray-100">
+                        {filteredUsers.length > 0 ? (
+                            filteredUsers.map((user) => (
+                                <tr key={user._id} className="hover:bg-gray-50 transition-colors">
+                                    <td className="p-4 font-semibold text-gray-800">{user.name}</td>
+                                    <td className="p-4 text-gray-600">{user.email}</td>
+                                    <td className="p-4">
+                                        <span className={`px-2 py-1 rounded text-xs font-bold uppercase tracking-wide ${user.role === 'team_leader'
+                                                ? 'bg-indigo-100 text-indigo-700'
+                                                : user.role === 'admin'
+                                                    ? 'bg-purple-100 text-purple-700'
+                                                    : 'bg-green-100 text-green-700'
+                                            }`}>
+                                            {user.role.replace('_', ' ')}
+                                        </span>
+                                    </td>
+                                    <td className="p-4 flex justify-end gap-3">
+                                        <button
+                                            onClick={() => handleOpenModal(user)}
+                                            className="text-indigo-600 hover:text-indigo-800 font-medium text-sm transition-colors"
+                                        >
+                                            Edit
+                                        </button>
+                                        <button
+                                            onClick={() => handleDelete(user._id)}
+                                            className="text-red-500 hover:text-red-700 font-medium text-sm transition-colors"
+                                        >
+                                            Delete
+                                        </button>
+                                    </td>
+                                </tr>
+                            ))
+                        ) : (
+                            <tr>
+                                <td colSpan="4" className="p-8 text-center text-gray-400">
+                                    No users found matching "{searchTerm}"
                                 </td>
                             </tr>
-                        ))}
+                        )}
                     </tbody>
                 </table>
             </div>
 
             {isModalOpen && (
-                <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4">
-                    <div className="bg-white p-6 rounded-lg w-full max-w-md">
-                        <h2 className="text-xl font-bold mb-4">{editingUser ? 'Edit User' : 'Create New User'}</h2>
-                        <input
-                            className="w-full border p-2 rounded mb-4"
-                            placeholder="Name"
-                            value={formData.name}
-                            onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                        />
-                        <input
-                            className="w-full border p-2 rounded mb-4"
-                            placeholder="Email"
-                            type="email"
-                            value={formData.email}
-                            onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                        />
-                        <input
-                            className="w-full border p-2 rounded mb-4"
-                            placeholder={editingUser ? "Password (leave blank to keep)" : "Password"}
-                            type="password"
-                            value={formData.password}
-                            onChange={(e) => setFormData({ ...formData, password: e.target.value })}
-                        />
-                        <select
-                            className="w-full border p-2 rounded mb-4"
-                            value={formData.role}
-                            onChange={(e) => setFormData({ ...formData, role: e.target.value })}
-                        >
-                            <option value="team_leader">Team Leader</option>
-                            <option value="verify_team">Verify Team</option>
-                            <option value="viewer">Viewer</option>
-                            <option value="admin">Admin</option>
-                        </select>
-                        <div className="flex justify-end gap-2">
-                            <button onClick={() => setIsModalOpen(false)} className="px-4 py-2 border rounded">Cancel</button>
-                            <button onClick={handleSubmit} className="px-4 py-2 bg-primary text-white rounded">
+                <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50 backdrop-blur-sm">
+                    <div className="bg-white p-6 rounded-lg w-full max-w-md shadow-xl animate-in fade-in zoom-in duration-200">
+                        <h2 className="text-xl font-bold mb-4 text-gray-800">{editingUser ? 'Edit User' : 'Create New User'}</h2>
+                        <div className="space-y-4">
+                            <div>
+                                <label className="block text-sm font-medium text-gray-700 mb-1">Full Name</label>
+                                <input
+                                    className="w-full border border-gray-300 p-2.5 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none"
+                                    placeholder="e.g. John Doe"
+                                    value={formData.name}
+                                    onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                                />
+                            </div>
+                            <div>
+                                <label className="block text-sm font-medium text-gray-700 mb-1">Email Address</label>
+                                <input
+                                    className="w-full border border-gray-300 p-2.5 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none"
+                                    placeholder="e.g. john@example.com"
+                                    type="email"
+                                    value={formData.email}
+                                    onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                                />
+                            </div>
+                            <div>
+                                <label className="block text-sm font-medium text-gray-700 mb-1">Password</label>
+                                <input
+                                    className="w-full border border-gray-300 p-2.5 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none"
+                                    placeholder={editingUser ? "Leave blank to keep current password" : "Set a secure password"}
+                                    type="password"
+                                    value={formData.password}
+                                    onChange={(e) => setFormData({ ...formData, password: e.target.value })}
+                                />
+                            </div>
+                            <div>
+                                <label className="block text-sm font-medium text-gray-700 mb-1">Role</label>
+                                <select
+                                    className="w-full border border-gray-300 p-2.5 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none bg-white"
+                                    value={formData.role}
+                                    onChange={(e) => setFormData({ ...formData, role: e.target.value })}
+                                >
+                                    <option value="employee">Employee</option>
+                                    <option value="team_leader">Team Leader</option>
+                                    {/* Admin creation usually restricted, but keeping if needed */}
+                                </select>
+                            </div>
+                        </div>
+                        <div className="flex justify-end gap-3 mt-6">
+                            <button
+                                onClick={() => setIsModalOpen(false)}
+                                className="px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors"
+                            >
+                                Cancel
+                            </button>
+                            <button
+                                onClick={handleSubmit}
+                                className="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 shadow-sm transition-colors"
+                            >
                                 {editingUser ? 'Save Changes' : 'Create User'}
                             </button>
                         </div>

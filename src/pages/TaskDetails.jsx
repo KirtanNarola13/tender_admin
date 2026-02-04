@@ -1,12 +1,14 @@
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import api from '../services/api';
+import api, { getImageUrl } from '../services/api';
+import ImageModal from '../components/ImageModal';
 
 const TaskDetails = () => {
     const { id } = useParams();
     const navigate = useNavigate();
     const [task, setTask] = useState(null);
     const [loading, setLoading] = useState(true);
+    const [previewImage, setPreviewImage] = useState(null);
 
     useEffect(() => {
         const fetchTask = async () => {
@@ -74,13 +76,17 @@ const TaskDetails = () => {
                             <div key={type} className="border rounded p-4 text-center bg-gray-50">
                                 <p className="text-xs font-bold uppercase text-gray-500 mb-2">{type}</p>
                                 {task.photos && task.photos[type] ? (
-                                    <a href={task.photos[type]} target="_blank" rel="noopener noreferrer">
+                                    <div
+                                        className="cursor-pointer group"
+                                        onClick={() => setPreviewImage(getImageUrl(task.photos[type]))}
+                                    >
                                         <img
-                                            src={task.photos[type]}
+                                            src={getImageUrl(task.photos[type])}
                                             alt={`${type}`}
-                                            className="w-full h-40 object-cover rounded border hover:opacity-90 transition"
+                                            className="w-full h-40 object-cover rounded border group-hover:opacity-90 transition"
                                         />
-                                    </a>
+                                        <p className="text-xs text-blue-500 mt-2 opacity-0 group-hover:opacity-100 transition-opacity">Click to Zoom</p>
+                                    </div>
                                 ) : (
                                     <div className="w-full h-40 bg-gray-200 rounded flex items-center justify-center text-gray-400 text-sm">
                                         No Photo
@@ -90,6 +96,14 @@ const TaskDetails = () => {
                         ))}
                 </div>
             </div>
+
+            {/* Image Zoom Modal */}
+            <ImageModal
+                isOpen={!!previewImage}
+                onClose={() => setPreviewImage(null)}
+                imageUrl={previewImage}
+                altText="Task Photo Preview"
+            />
         </div>
     );
 };

@@ -10,6 +10,7 @@ import TaskDetails from './pages/TaskDetails';
 import ProjectWizard from './pages/ProjectWizard';
 import ProjectDetails from './pages/ProjectDetails';
 import Sidebar from './components/Sidebar';
+import Reports from './pages/Reports';
 
 import VerifyDashboard from './pages/VerifyDashboard';
 
@@ -42,6 +43,7 @@ function App() {
           <Route path="/verify" element={<ProtectedRoute><VerifyDashboard /></ProtectedRoute>} />
           <Route path="/users" element={<ProtectedRoute><Users /></ProtectedRoute>} />
           <Route path="/inventory" element={<ProtectedRoute><Inventory /></ProtectedRoute>} />
+          <Route path="/reports" element={<ProtectedRoute><Reports /></ProtectedRoute>} />
         </Routes>
       </AuthProvider>
     </BrowserRouter>
