@@ -1,7 +1,7 @@
 import axios from 'axios';
 
-export const FILE_BASE_URL = 'http://localhost:4000';
-// export const FILE_BASE_URL = 'https://tender-backend-three.vercel.app';
+export const FILE_BASE_URL = 'http://localhost:3000';
+// export const FILE_BASE_URL = 'https://tender-api.reliablesolution.in';
 
 const api = axios.create({
     baseURL: `${FILE_BASE_URL}/api`,

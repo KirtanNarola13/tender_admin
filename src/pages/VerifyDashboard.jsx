@@ -74,7 +74,7 @@ const VerifyDashboard = () => {
                 <div className="space-y-6">
                     {tasks.map(task => (
                         <div key={task._id} className="bg-white p-6 rounded shadow border-l-4 border-yellow-500">
-                            <div className="flex justify-between items-start mb-4">
+                            <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center mb-4 gap-4">
                                 <div>
                                     <h3 className="font-bold text-lg">{task.stepName}</h3>
                                     <p className="text-gray-500 text-sm">
@@ -87,16 +87,16 @@ const VerifyDashboard = () => {
                                         Leader: <span className="font-semibold">{task.assignedTo?.name}</span>
                                     </p>
                                 </div>
-                                <div className="flex gap-2">
+                                <div className="flex gap-2 w-full lg:w-auto">
                                     <button
                                         onClick={() => { setSelectedTask(task); setIsRejectModalOpen(true); }}
-                                        className="bg-red-50 text-red-600 px-4 py-2 rounded font-medium hover:bg-red-100 flex items-center gap-2"
+                                        className="flex-1 lg:flex-none justify-center bg-red-50 text-red-600 px-4 py-2 rounded font-medium hover:bg-red-100 flex items-center gap-2"
                                     >
                                         <XCircle size={18} /> Reject
                                     </button>
                                     <button
                                         onClick={() => handleApprove(task)}
-                                        className="bg-green-600 text-white px-4 py-2 rounded font-medium hover:bg-green-700 flex items-center gap-2"
+                                        className="flex-1 lg:flex-none justify-center bg-green-600 text-white px-4 py-2 rounded font-medium hover:bg-green-700 flex items-center gap-2"
                                     >
                                         <CheckCircle size={18} /> Approve
                                     </button>

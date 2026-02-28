@@ -1,7 +1,8 @@
 import { useState, useEffect } from 'react';
 import { useParams } from 'react-router-dom';
-import api from '../services/api';
+import api, { getImageUrl } from '../services/api';
 import { Package, CheckCircle, Clock, AlertCircle, FileText, Upload } from 'lucide-react';
+import ImageModal from '../components/ImageModal';
 
 const ProjectDetails = () => {
     const { id } = useParams();
@@ -9,6 +10,7 @@ const ProjectDetails = () => {
     const [tasks, setTasks] = useState([]);
     const [loading, setLoading] = useState(true);
     const [uploading, setUploading] = useState(false);
+    const [previewImage, setPreviewImage] = useState(null);
 
     useEffect(() => {
         fetchProjectDetails();
@@ -216,14 +218,13 @@ const ProjectDetails = () => {
                                         </div>
                                         <p className="text-xs text-gray-500 mb-2">{task.description}</p>
 
-                                        {/* Photos Preview */}
                                         {task.photos && Object.keys(task.photos).length > 0 && (
                                             <div className="flex gap-1 mt-2">
                                                 {Object.entries(task.photos).map(([type, url]) => (
-                                                    <a key={type} href={url} target="_blank" rel="noopener noreferrer" className="block w-8 h-8 bg-gray-200 rounded overflow-hidden border hover:border-blue-500" title={type}>
+                                                    <div key={type} onClick={() => setPreviewImage(getImageUrl(url))} className="cursor-pointer block w-8 h-8 bg-gray-200 rounded overflow-hidden border hover:border-blue-500" title={type}>
                                                         {/* Assuming URL is valid image, plain img tag */}
-                                                        <img src={url} alt={type} className="w-full h-full object-cover" />
-                                                    </a>
+                                                        <img src={getImageUrl(url)} alt={type} className="w-full h-full object-cover" />
+                                                    </div>
                                                 ))}
                                             </div>
                                         )}
@@ -239,6 +240,14 @@ const ProjectDetails = () => {
                     );
                 })}
             </div>
+
+            {/* Image Zoom Modal */}
+            <ImageModal
+                isOpen={!!previewImage}
+                onClose={() => setPreviewImage(null)}
+                imageUrl={previewImage}
+                altText="Photo Preview"
+            />
         </div>
     );
 };

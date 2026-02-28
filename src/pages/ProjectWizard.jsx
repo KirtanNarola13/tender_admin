@@ -225,22 +225,24 @@ const ProjectWizard = () => {
 
                 <div className="border-t pt-4">
                     <h4 className="font-bold mb-2">Scope of Supply</h4>
-                    <table className="w-full text-sm">
-                        <thead>
-                            <tr className="text-left text-gray-500">
-                                <th className="pb-2">Product</th>
-                                <th className="pb-2 text-right">Quantity</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            {selectedProducts.map((item, i) => (
-                                <tr key={i} className="border-t border-gray-200">
-                                    <td className="py-2">{item.product.name}</td>
-                                    <td className="py-2 text-right font-medium">{item.plannedQuantity}</td>
+                    <div className="overflow-x-auto">
+                        <table className="w-full text-sm">
+                            <thead>
+                                <tr className="text-left text-gray-500">
+                                    <th className="pb-2">Product</th>
+                                    <th className="pb-2 text-right">Quantity</th>
                                 </tr>
-                            ))}
-                        </tbody>
-                    </table>
+                            </thead>
+                            <tbody>
+                                {selectedProducts.map((item, i) => (
+                                    <tr key={i} className="border-t border-gray-200">
+                                        <td className="py-2">{item.product.name}</td>
+                                        <td className="py-2 text-right font-medium">{item.plannedQuantity}</td>
+                                    </tr>
+                                ))}
+                            </tbody>
+                        </table>
+                    </div>
                 </div>
 
                 <div className="bg-blue-50 p-3 rounded text-sm text-blue-700">
@@ -300,10 +302,11 @@ const ProjectWizard = () => {
 
             <div className="flex justify-between mt-8">
                 <button
-                    onClick={() => step === 1 ? navigate('/projects') : setStep(step - 1)}
-                    className="flex items-center px-6 py-2 rounded border text-gray-600 hover:bg-gray-50 transition-colors shadow-sm"
+                    onClick={() => setStep(step - 1)}
+                    disabled={step === 1}
+                    className="flex items-center px-6 py-2 rounded border text-gray-600 hover:bg-gray-50 disabled:opacity-50"
                 >
-                    <ChevronLeft size={20} /> {step === 1 ? 'Back to Projects' : 'Previous'}
+                    <ChevronLeft size={20} /> Previous
                 </button>
 
                 {step < 3 ? (

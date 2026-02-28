@@ -14,15 +14,39 @@ import Reports from './pages/Reports';
 
 import VerifyDashboard from './pages/VerifyDashboard';
 
+import { useState } from 'react';
+import { Menu } from 'lucide-react';
+
 const ProtectedRoute = ({ children }) => {
   const { user, loading } = useAuth();
+  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+
   if (loading) return <div>Loading...</div>;
   if (!user) return <Navigate to="/login" />;
+
   return (
     <div className="flex bg-gray-50 min-h-screen">
-      <Sidebar />
-      <div className="flex-1 p-8 overflow-auto">
-        {children}
+      <Sidebar isOpen={isSidebarOpen} setIsOpen={setIsSidebarOpen} />
+      
+      <div className="flex-1 flex flex-col min-h-screen overflow-hidden">
+        {/* Mobile Header */}
+        <div className="md:hidden bg-white border-b p-4 flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <button 
+                  onClick={() => setIsSidebarOpen(true)}
+                  className="p-2 -ml-2 rounded-lg hover:bg-gray-100 text-gray-600"
+              >
+                  <Menu size={24} />
+              </button>
+              <h1 className="text-xl font-bold text-primary">TMS Admin</h1>
+            </div>
+            {/* Optional: Add user avatar or other quick actions here for mobile */}
+        </div>
+
+        {/* Main Content Area */}
+        <div className="flex-1 p-4 md:p-8 overflow-auto">
+          {children}
+        </div>
       </div>
     </div>
   );
