@@ -9,6 +9,7 @@ import Projects from './pages/Projects';
 import TaskDetails from './pages/TaskDetails';
 import ProjectWizard from './pages/ProjectWizard';
 import ProjectDetails from './pages/ProjectDetails';
+import EditProjectWizard from './pages/EditProjectWizard';
 import Sidebar from './components/Sidebar';
 import Reports from './pages/Reports';
 
@@ -61,6 +62,7 @@ function App() {
           <Route path="/" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
           <Route path="/projects" element={<ProtectedRoute><Projects /></ProtectedRoute>} />
           <Route path="/projects/new" element={<ProtectedRoute><ProjectWizard /></ProtectedRoute>} />
+          <Route path="/projects/:id/edit" element={<ProtectedRoute><EditProjectWizard /></ProtectedRoute>} />
           <Route path="/projects/:id" element={<ProtectedRoute><ProjectDetails /></ProtectedRoute>} />
           <Route path="/tasks" element={<ProtectedRoute><Tasks /></ProtectedRoute>} />
           <Route path="/tasks/:id" element={<ProtectedRoute><TaskDetails /></ProtectedRoute>} />

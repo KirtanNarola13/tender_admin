@@ -1,15 +1,19 @@
 import { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useParams } from 'react-router-dom';
 import api from '../services/api';
 import { ChevronRight, ChevronLeft, Trash2, Box, ArrowLeft, CheckCircle, Loader } from 'lucide-react';
 
 const CATEGORIES = ['Primary', 'Upper Primary', 'Secondary', 'Higher Secondary', 'Residential'];
+const STATUSES = ['active', 'completed', 'on-hold'];
 
-const ProjectWizard = () => {
+const EditProjectWizard = () => {
+    const { id } = useParams();
     const navigate = useNavigate();
     const [step, setStep] = useState(1);
-    const [loading, setLoading] = useState(false);
+    const [loading, setLoading] = useState(true);   // initial data fetch
+    const [saving, setSaving] = useState(false);    // submit
 
+    // ── Core project fields ─────────────────────────────────────────
     const [projectData, setProjectData] = useState({
         name: '',
         client: '',
@@ -18,32 +22,72 @@ const ProjectWizard = () => {
         startDate: '',
         deadline: '',
         description: '',
+        status: 'active',
         assignedLeader: ''
     });
 
     const [availableProducts, setAvailableProducts] = useState([]);
     const [teamLeaders, setTeamLeaders] = useState([]);
+
+    // Selected products: [{ product: {_id, name, ...}, plannedQuantity: N }]
     const [selectedProducts, setSelectedProducts] = useState([]);
-    const [dataLoading, setDataLoading] = useState(true);
 
+    // ── Load existing project + master data ─────────────────────────
     useEffect(() => {
-        fetchInitialData();
-    }, []);
+        const load = async () => {
+            try {
+                const [projRes, prodRes, usersRes] = await Promise.all([
+                    api.get(`/projects/${id}`),
+                    api.get('/inventory/products'),
+                    api.get('/users?role=team_leader')
+                ]);
 
-    const fetchInitialData = async () => {
-        try {
-            const [prodRes, usersRes] = await Promise.all([
-                api.get('/inventory/products'),
-                api.get('/users?role=team_leader')
-            ]);
-            setAvailableProducts(prodRes.data);
-            setTeamLeaders(usersRes.data.filter(u => u.role === 'team_leader'));
-        } catch (e) {
-            console.error('Failed to load wizard data', e);
-        } finally {
-            setDataLoading(false);
-        }
-    };
+                const proj = projRes.data;
+                const products = prodRes.data;
+                const leaders = usersRes.data.filter(u => u.role === 'team_leader');
+
+                setAvailableProducts(products);
+                setTeamLeaders(leaders);
+
+                // Pre-fill project fields
+                setProjectData({
+                    name: proj.name || '',
+                    client: proj.client || '',
+                    category: proj.category || 'Primary',
+                    location: proj.location || '',
+                    startDate: proj.startDate ? proj.startDate.substring(0, 10) : '',
+                    deadline: proj.deadline ? proj.deadline.substring(0, 10) : '',
+                    description: proj.description || '',
+                    status: proj.status || 'active',
+                    assignedLeader: proj.assignedLeader?._id || proj.assignedLeader || ''
+                });
+
+                // Pre-fill selected products (populate from availableProducts)
+                if (proj.products && proj.products.length > 0) {
+                    const preSelected = proj.products
+                        .filter(item => item.product) // guard dangling refs
+                        .map(item => {
+                            // item.product may be populated object or just an id
+                            const populated = typeof item.product === 'object'
+                                ? item.product
+                                : products.find(p => p._id === item.product);
+                            return populated
+                                ? { product: populated, plannedQuantity: item.plannedQuantity || 1 }
+                                : null;
+                        })
+                        .filter(Boolean);
+                    setSelectedProducts(preSelected);
+                }
+            } catch (e) {
+                console.error('Failed to load project data', e);
+                alert('Failed to load project. Please try again.');
+                navigate(`/projects/${id}`);
+            } finally {
+                setLoading(false);
+            }
+        };
+        load();
+    }, [id]);
 
     // ── Product helpers ─────────────────────────────────────────────
     const addProduct = (productId) => {
@@ -65,12 +109,12 @@ const ProjectWizard = () => {
 
     // ── Submit ──────────────────────────────────────────────────────
     const handleSubmit = async () => {
-        if (!projectData.name || !projectData.assignedLeader || selectedProducts.length === 0) {
-            alert('Please fill in Name, assign a Leader, and add at least one Product.');
+        if (!projectData.name.trim()) {
+            alert('Site Name is required.');
             return;
         }
 
-        setLoading(true);
+        setSaving(true);
         try {
             const payload = {
                 ...projectData,
@@ -80,23 +124,23 @@ const ProjectWizard = () => {
                 }))
             };
 
-            await api.post('/projects', payload);
-            alert('Project Launched Successfully! 🚀');
-            navigate('/projects');
+            await api.put(`/projects/${id}`, payload);
+            alert('Project updated successfully! ✅');
+            navigate(`/projects/${id}`);
         } catch (e) {
             console.error(e);
-            alert('Failed to create project: ' + (e.response?.data?.message || e.message));
+            alert('Failed to update project: ' + (e.response?.data?.message || e.message));
         } finally {
-            setLoading(false);
+            setSaving(false);
         }
     };
 
-    // ── Step 1: Site Details ────────────────────────────────────────
+    // ── Step renders ────────────────────────────────────────────────
     const renderStep1 = () => (
         <div className="space-y-5">
             <div>
                 <h2 className="text-xl font-bold text-gray-900">Step 1: Site Details</h2>
-                <p className="text-sm text-gray-400 mt-0.5">Enter the core information for this project</p>
+                <p className="text-sm text-gray-400 mt-0.5">Update the core project information</p>
             </div>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -140,15 +184,27 @@ const ProjectWizard = () => {
                     />
                 </div>
                 <div>
-                    <label className="block text-xs font-semibold text-gray-600 mb-1.5 uppercase tracking-wide">Team Leader *</label>
+                    <label className="block text-xs font-semibold text-gray-600 mb-1.5 uppercase tracking-wide">Team Leader</label>
                     <select
                         className="w-full border border-gray-200 p-2.5 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary bg-white"
                         value={projectData.assignedLeader}
                         onChange={e => setProjectData({ ...projectData, assignedLeader: e.target.value })}
                     >
-                        <option value="">— Select Team Leader —</option>
+                        <option value="">— Unassigned —</option>
                         {teamLeaders.map(u => (
                             <option key={u._id} value={u._id}>{u.name}</option>
+                        ))}
+                    </select>
+                </div>
+                <div>
+                    <label className="block text-xs font-semibold text-gray-600 mb-1.5 uppercase tracking-wide">Status</label>
+                    <select
+                        className="w-full border border-gray-200 p-2.5 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary bg-white"
+                        value={projectData.status}
+                        onChange={e => setProjectData({ ...projectData, status: e.target.value })}
+                    >
+                        {STATUSES.map(s => (
+                            <option key={s} value={s}>{s.charAt(0).toUpperCase() + s.slice(1)}</option>
                         ))}
                     </select>
                 </div>
@@ -185,13 +241,12 @@ const ProjectWizard = () => {
         </div>
     );
 
-    // ── Step 2: Products ────────────────────────────────────────────
     const renderStep2 = () => (
         <div className="space-y-6">
             <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
                 <div>
                     <h2 className="text-xl font-bold text-gray-900">Step 2: Products</h2>
-                    <p className="text-sm text-gray-400 mt-0.5">Add products to this project's scope of supply</p>
+                    <p className="text-sm text-gray-400 mt-0.5">Add or remove products for this project</p>
                 </div>
                 <select
                     className="border border-gray-200 p-2.5 rounded-lg text-sm w-full sm:w-64 bg-white focus:outline-none focus:ring-2 focus:ring-primary"
@@ -215,7 +270,7 @@ const ProjectWizard = () => {
             {selectedProducts.length === 0 ? (
                 <div className="text-center py-12 bg-gray-50 border border-dashed border-gray-300 rounded-xl text-gray-400">
                     <Box size={32} className="mx-auto mb-2 opacity-40" />
-                    <p className="text-sm">No products added yet. Select a product above.</p>
+                    <p className="text-sm">No products added. Select a product above.</p>
                 </div>
             ) : (
                 <div className="space-y-3">
@@ -227,7 +282,7 @@ const ProjectWizard = () => {
                                 className={`flex items-center justify-between border p-4 rounded-xl bg-white shadow-sm transition ${isStockLow ? 'border-red-300 bg-red-50' : 'border-gray-200'}`}
                             >
                                 <div className="flex items-center gap-4">
-                                    <div className="bg-blue-50 p-2 rounded-lg text-primary flex-shrink-0">
+                                    <div className="bg-blue-50 p-2 rounded-lg text-primary">
                                         <Box size={22} />
                                     </div>
                                     <div>
@@ -267,12 +322,11 @@ const ProjectWizard = () => {
         </div>
     );
 
-    // ── Step 3: Review ──────────────────────────────────────────────
     const renderStep3 = () => (
         <div className="space-y-5">
             <div>
-                <h2 className="text-xl font-bold text-gray-900">Step 3: Review & Launch</h2>
-                <p className="text-sm text-gray-400 mt-0.5">Confirm all details before launching the project</p>
+                <h2 className="text-xl font-bold text-gray-900">Step 3: Review & Save</h2>
+                <p className="text-sm text-gray-400 mt-0.5">Confirm all details before saving</p>
             </div>
 
             <div className="bg-gray-50 p-6 rounded-xl border border-gray-200 space-y-5">
@@ -282,13 +336,14 @@ const ProjectWizard = () => {
                         { label: 'Client', value: projectData.client },
                         { label: 'Category', value: projectData.category },
                         { label: 'Location', value: projectData.location },
+                        { label: 'Status', value: projectData.status },
                         { label: 'Team Leader', value: teamLeaders.find(u => u._id === projectData.assignedLeader)?.name || 'Unassigned' },
                         { label: 'Start Date', value: projectData.startDate || '—' },
                         { label: 'Deadline', value: projectData.deadline || '—' },
                     ].map(({ label, value }) => (
                         <div key={label}>
                             <span className="text-gray-400 block text-xs uppercase tracking-wide">{label}</span>
-                            <span className="font-semibold text-gray-800">{value || '—'}</span>
+                            <span className="font-semibold text-gray-800 capitalize">{value || '—'}</span>
                         </div>
                     ))}
                 </div>
@@ -302,38 +357,43 @@ const ProjectWizard = () => {
 
                 <div className="border-t pt-4">
                     <h4 className="font-bold text-sm mb-3">Scope of Supply ({selectedProducts.length} products)</h4>
-                    <div className="overflow-x-auto">
-                        <table className="w-full text-sm">
-                            <thead>
-                                <tr className="text-left text-gray-400 border-b">
-                                    <th className="pb-2 font-medium">Product</th>
-                                    <th className="pb-2 font-medium text-right">Qty</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                {selectedProducts.map((item, i) => (
-                                    <tr key={i} className="border-b border-gray-100">
-                                        <td className="py-2">{item.product.name}</td>
-                                        <td className="py-2 text-right font-semibold">{item.plannedQuantity}</td>
+                    {selectedProducts.length === 0 ? (
+                        <p className="text-sm text-gray-400 italic">No products selected.</p>
+                    ) : (
+                        <div className="overflow-x-auto">
+                            <table className="w-full text-sm">
+                                <thead>
+                                    <tr className="text-left text-gray-400 border-b">
+                                        <th className="pb-2 font-medium">Product</th>
+                                        <th className="pb-2 font-medium text-right">Qty</th>
                                     </tr>
-                                ))}
-                            </tbody>
-                        </table>
-                    </div>
+                                </thead>
+                                <tbody>
+                                    {selectedProducts.map((item, i) => (
+                                        <tr key={i} className="border-b border-gray-100">
+                                            <td className="py-2">{item.product.name}</td>
+                                            <td className="py-2 text-right font-semibold">{item.plannedQuantity}</td>
+                                        </tr>
+                                    ))}
+                                </tbody>
+                            </table>
+                        </div>
+                    )}
                 </div>
 
-                <div className="bg-blue-50 border border-blue-200 p-3 rounded-lg text-sm text-blue-700 flex items-start gap-2">
-                    <span className="text-base mt-0.5">ℹ️</span>
-                    <span><b>Note:</b> Launching this project will automatically generate task lists for the Team Leader based on the standard installation steps for each product.</span>
+                <div className="bg-amber-50 border border-amber-200 p-3 rounded-lg text-sm text-amber-700 flex items-start gap-2">
+                    <span className="text-base mt-0.5">⚠️</span>
+                    <span><b>Note:</b> Updating products may affect existing task assignments. Existing task progress will not be deleted.</span>
                 </div>
             </div>
         </div>
     );
 
-    if (dataLoading) return (
+    // ── Loading skeleton ────────────────────────────────────────────
+    if (loading) return (
         <div className="flex flex-col items-center justify-center min-h-64 gap-3 text-gray-400">
             <Loader size={28} className="animate-spin" />
-            <p className="text-sm">Loading data...</p>
+            <p className="text-sm">Loading project data...</p>
         </div>
     );
 
@@ -343,15 +403,15 @@ const ProjectWizard = () => {
             {/* ── Header ─────────────────────────────────────────────── */}
             <div className="flex items-center gap-3 mb-8">
                 <button
-                    onClick={() => navigate('/projects')}
+                    onClick={() => navigate(`/projects/${id}`)}
                     className="flex items-center gap-1.5 px-3 py-2 rounded-lg border border-gray-200 bg-white text-gray-600 hover:bg-gray-50 transition text-sm font-medium shadow-sm"
                 >
                     <ArrowLeft size={16} />
                     <span className="hidden sm:inline">Back</span>
                 </button>
                 <div>
-                    <h1 className="text-xl font-bold text-gray-900">Create Project</h1>
-                    <p className="text-xs text-gray-400">Set up a new project site from scratch</p>
+                    <h1 className="text-xl font-bold text-gray-900">Edit Project</h1>
+                    <p className="text-xs text-gray-400">Updating: <span className="font-semibold text-primary">{projectData.name}</span></p>
                 </div>
             </div>
 
@@ -399,7 +459,7 @@ const ProjectWizard = () => {
             {/* ── Navigation Footer ────────────────────────────────────── */}
             <div className="flex justify-between mt-6">
                 <button
-                    onClick={() => step === 1 ? navigate('/projects') : setStep(step - 1)}
+                    onClick={() => step === 1 ? navigate(`/projects/${id}`) : setStep(step - 1)}
                     className="flex items-center gap-2 px-5 py-2.5 rounded-lg border border-gray-200 text-gray-600 hover:bg-gray-50 transition text-sm font-medium"
                 >
                     <ChevronLeft size={18} />
@@ -409,7 +469,7 @@ const ProjectWizard = () => {
                 {step < 3 ? (
                     <button
                         onClick={() => setStep(step + 1)}
-                        disabled={step === 1 && (!projectData.name.trim() || !projectData.assignedLeader)}
+                        disabled={step === 1 && !projectData.name.trim()}
                         className="flex items-center gap-2 px-7 py-2.5 rounded-lg bg-primary text-white font-semibold text-sm hover:bg-opacity-90 transition disabled:opacity-50 shadow"
                     >
                         Next <ChevronRight size={18} />
@@ -417,13 +477,13 @@ const ProjectWizard = () => {
                 ) : (
                     <button
                         onClick={handleSubmit}
-                        disabled={loading}
+                        disabled={saving}
                         className="flex items-center gap-2 px-7 py-2.5 rounded-lg bg-green-600 text-white font-bold text-sm hover:bg-green-700 transition disabled:opacity-60 shadow"
                     >
-                        {loading ? (
-                            <><Loader size={16} className="animate-spin" /> Creating...</>
+                        {saving ? (
+                            <><Loader size={16} className="animate-spin" /> Saving...</>
                         ) : (
-                            <>🚀 Launch Project</>
+                            <><CheckCircle size={16} /> Save Changes</>
                         )}
                     </button>
                 )}
@@ -432,4 +492,4 @@ const ProjectWizard = () => {
     );
 };
 
-export default ProjectWizard;
+export default EditProjectWizard;
