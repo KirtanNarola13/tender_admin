@@ -18,8 +18,8 @@ const VerifyDashboard = () => {
     const fetchTasks = async () => {
         try {
             // Fetch tasks waiting for verification
-            // Fetch tasks waiting for verification (both new 'submitted' and legacy 'completed')
-            const res = await api.get('/tasks?status=submitted,completed');
+            // Fetch tasks waiting for verification (now only 'submitted')
+            const res = await api.get('/tasks?status=submitted');
             setTasks(res.data);
         } catch (error) {
             console.error(error);
@@ -86,6 +86,12 @@ const VerifyDashboard = () => {
                                     <p className="text-gray-500 text-sm">
                                         Leader: <span className="font-semibold">{task.assignedTo?.name}</span>
                                     </p>
+                                    {task.submissionText && (
+                                        <div className="mt-3 bg-blue-50 p-3 rounded-lg border border-blue-100 flex items-start gap-2">
+                                            <div className="bg-blue-200 text-blue-800 text-[10px] font-bold px-1.5 py-0.5 rounded uppercase flex-shrink-0 mt-0.5">Note</div>
+                                            <p className="text-blue-900 text-sm leading-relaxed italic">"{task.submissionText}"</p>
+                                        </div>
+                                    )}
                                 </div>
                                 <div className="flex gap-2 w-full lg:w-auto">
                                     <button

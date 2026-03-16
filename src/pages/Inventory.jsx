@@ -15,7 +15,13 @@ const Inventory = () => {
     const [showWarehouseStockModal, setShowWarehouseStockModal] = useState(false);
     const [selectedWarehouse, setSelectedWarehouse] = useState(null);
 
-    const [newProduct, setNewProduct] = useState({ name: '', sku: '', category: '', description: '' });
+    const [newProduct, setNewProduct] = useState({ 
+        name: '', 
+        sku: '', 
+        category: '', 
+        description: '',
+        initialStock: { warehouseId: '', quantity: '' }
+    });
     const [newWarehouse, setNewWarehouse] = useState({ name: '', location: '' });
 
     useEffect(() => {
@@ -204,6 +210,7 @@ const Inventory = () => {
             description: product.description || '',
             images: product.images || [],
             steps: product.steps ? product.steps.map(s => ({ ...s })) : [],
+            additionalStock: { warehouseId: '', quantity: '' }
         });
         setShowEditModal(true);
     };
@@ -675,6 +682,34 @@ const Inventory = () => {
                             onChange={e => setNewProduct({ ...newProduct, images: [e.target.value] })}
                         />
 
+                        {/* Initial Stock Section */}
+                        <div className="mt-4 border-t pt-4">
+                            <label className="block text-sm font-bold mb-2">Initial Stock (Optional)</label>
+                            <div className="grid grid-cols-2 gap-4">
+                                <select 
+                                    className="border p-2 rounded text-sm" 
+                                    value={newProduct.initialStock.warehouseId}
+                                    onChange={e => setNewProduct({ 
+                                        ...newProduct, 
+                                        initialStock: { ...newProduct.initialStock, warehouseId: e.target.value } 
+                                    })}
+                                >
+                                    <option value="">Select Warehouse</option>
+                                    {warehouses.map(w => <option key={w._id} value={w._id}>{w.name}</option>)}
+                                </select>
+                                <input 
+                                    type="number" 
+                                    className="border p-2 rounded text-sm" 
+                                    placeholder="Initial Quantity" 
+                                    value={newProduct.initialStock.quantity}
+                                    onChange={e => setNewProduct({ 
+                                        ...newProduct, 
+                                        initialStock: { ...newProduct.initialStock, quantity: e.target.value } 
+                                    })}
+                                />
+                            </div>
+                        </div>
+
                         <div className="mt-4 border-t pt-4">
                             <label className="block text-sm font-bold mb-2">Process Steps (Tasks)</label>
                             <p className="text-xs text-gray-500 mb-2">Define the lifecycle tasks for this product (e.g. Manufacture, Deliver, Install)</p>
@@ -989,6 +1024,34 @@ const Inventory = () => {
                                 value={editProduct.description}
                                 onChange={e => setEditProduct({ ...editProduct, description: e.target.value })}
                             />
+                        </div>
+
+                        {/* Add Stock Section */}
+                        <div className="mt-4 border-t pt-4 mb-4">
+                            <label className="block text-sm font-bold mb-2">Add Stock (Optional)</label>
+                            <div className="grid grid-cols-2 gap-4">
+                                <select 
+                                    className="border p-2 rounded text-sm" 
+                                    value={editProduct.additionalStock.warehouseId}
+                                    onChange={e => setEditProduct({ 
+                                        ...editProduct, 
+                                        additionalStock: { ...editProduct.additionalStock, warehouseId: e.target.value } 
+                                    })}
+                                >
+                                    <option value="">Select Warehouse</option>
+                                    {warehouses.map(w => <option key={w._id} value={w._id}>{w.name}</option>)}
+                                </select>
+                                <input 
+                                    type="number" 
+                                    className="border p-2 rounded text-sm" 
+                                    placeholder="Add Quantity" 
+                                    value={editProduct.additionalStock.quantity}
+                                    onChange={e => setEditProduct({ 
+                                        ...editProduct, 
+                                        additionalStock: { ...editProduct.additionalStock, quantity: e.target.value } 
+                                    })}
+                                />
+                            </div>
                         </div>
 
                         {/* Steps */}

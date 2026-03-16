@@ -17,6 +17,15 @@ const COLORS = ['#FFBB28', '#00C49F']; // Pending (Orange), Completed (Green)
 const Dashboard = () => {
     const [stats, setStats] = useState(null);
     const [loading, setLoading] = useState(true);
+    const [windowWidth, setWindowWidth] = useState(window.innerWidth);
+
+    useEffect(() => {
+        const handleResize = () => setWindowWidth(window.innerWidth);
+        window.addEventListener('resize', handleResize);
+        return () => window.removeEventListener('resize', handleResize);
+    }, []);
+
+    const isMobile = windowWidth < 768;
 
     useEffect(() => {
         const fetchStats = async () => {
@@ -115,22 +124,31 @@ const Dashboard = () => {
                                 <BarChart 
                                     data={stats.inventoryStats || []} 
                                     layout="vertical"
-                                    margin={{ top: 5, right: 30, left: 40, bottom: 5 }}
+                                    margin={{ 
+                                        top: 5, 
+                                        right: isMobile ? 45 : 75, 
+                                        left: isMobile ? -20 : 10, 
+                                        bottom: 5 
+                                    }}
                                 >
                                     <CartesianGrid strokeDasharray="3 3" horizontal={false} stroke="#f3f4f6" />
                                     <XAxis 
                                         type="number"
                                         axisLine={{ stroke: '#e5e7eb' }}
                                         tickLine={false}
-                                        tick={{ fill: '#9ca3af', fontSize: 12 }}
+                                        tick={{ fill: '#9ca3af', fontSize: isMobile ? 10 : 12 }}
                                     />
                                     <YAxis 
                                         dataKey="name" 
                                         type="category"
-                                        width={120}
+                                        width={isMobile ? 100 : 160}
                                         axisLine={{ stroke: '#e5e7eb' }}
                                         tickLine={false}
-                                        tick={{ fill: '#4b5563', fontSize: 11, fontWeight: 500 }}
+                                        tick={{ 
+                                            fill: '#4b5563', 
+                                            fontSize: isMobile ? 10 : 11, 
+                                            fontWeight: 500 
+                                        }}
                                     />
                                     <Tooltip
                                         cursor={{ fill: '#f9fafb' }}

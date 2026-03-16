@@ -65,7 +65,7 @@ const Tasks = () => {
         if (!window.confirm(`Are you sure you want to ${status === 'verified' ? 'approve' : 'reject'} this task?`)) return;
 
         try {
-            await api.post(`/tasks/${taskId}/verify`, { status, rejectionReason: reason });
+            await api.put(`/tasks/${taskId}`, { status, rejectionReason: reason });
             // Optimistic Update
             setTasks(prev => prev.map(t => t._id === taskId ? { ...t, status: status } : t));
         } catch (error) {
