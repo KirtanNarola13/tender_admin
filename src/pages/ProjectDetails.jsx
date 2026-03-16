@@ -3,9 +3,10 @@ import { useParams, useNavigate } from 'react-router-dom';
 import api, { getImageUrl } from '../services/api';
 import {
     Package, CheckCircle, Clock, AlertCircle,
-    FileText, Upload, ArrowLeft, Pencil
+    FileText, Upload, ArrowLeft, Pencil, Trash2
 } from 'lucide-react';
 import ImageModal from '../components/ImageModal';
+import DeleteConfirmModal from '../components/DeleteConfirmModal';
 
 const CATEGORIES = ['Primary', 'Upper Primary', 'Secondary', 'Higher Secondary', 'Residential'];
 const STATUSES = ['active', 'completed', 'on-hold'];
@@ -18,6 +19,21 @@ const ProjectDetails = () => {
     const [loading, setLoading] = useState(true);
     const [uploading, setUploading] = useState(false);
     const [previewImage, setPreviewImage] = useState(null);
+    const [showDeleteModal, setShowDeleteModal] = useState(false);
+
+    const handleDelete = async () => {
+        setShowDeleteModal(true);
+    };
+
+    const confirmDelete = async () => {
+        try {
+            await api.delete(`/projects/${id}`);
+            alert('Project deleted successfully.');
+            navigate('/projects');
+        } catch (error) {
+            alert('Failed to delete project: ' + (error.response?.data?.message || error.message));
+        }
+    };
 
     useEffect(() => {
         fetchProjectDetails();
@@ -120,14 +136,24 @@ const ProjectDetails = () => {
                     </div>
                 </div>
 
-                {/* Edit Button */}
-                <button
-                    onClick={() => navigate(`/projects/${id}/edit`)}
-                    className="flex items-center gap-2 px-4 py-2 rounded-lg bg-primary text-white hover:bg-opacity-90 transition text-sm font-semibold shadow"
-                >
-                    <Pencil size={15} />
-                    <span>Edit Project</span>
-                </button>
+                {/* Action Buttons */}
+                <div className="flex items-center gap-2">
+                    <button
+                        onClick={handleDelete}
+                        className="flex items-center gap-2 px-4 py-2 rounded-lg border border-red-200 bg-red-50 text-red-600 hover:bg-red-100 transition text-sm font-semibold shadow-sm"
+                        title="Delete Project"
+                    >
+                        <Trash2 size={15} />
+                        <span className="hidden sm:inline">Delete Project</span>
+                    </button>
+                    <button
+                        onClick={() => navigate(`/projects/${id}/edit`)}
+                        className="flex items-center gap-2 px-4 py-2 rounded-lg bg-primary text-white hover:bg-opacity-90 transition text-sm font-semibold shadow"
+                    >
+                        <Pencil size={15} />
+                        <span>Edit Project</span>
+                    </button>
+                </div>
             </div>
 
             {/* Description */}
@@ -210,7 +236,7 @@ const ProjectDetails = () => {
                 {project.products?.filter(item => item.product).map((item) => {
                     const prodTasks = tasksByProduct[item.product._id] || [];
                     prodTasks.sort((a, b) => a.sequence - b.sequence);
-                    const completed = prodTasks.filter(t => t.status === 'completed' || t.status === 'verified').length;
+                    const completed = prodTasks.filter(t => t.status === 'completed' || t.status === 'verified' || t.status === 'submitted').length;
                     const total = prodTasks.length;
                     const percent = total > 0 ? Math.round((completed / total) * 100) : 0;
 
@@ -254,25 +280,39 @@ const ProjectDetails = () => {
                                         }`}
                                     >
                                         <div className="flex justify-between items-start mb-2">
-                                            <span className="font-bold text-xs">Step {task.sequence}: {task.stepName}</span>
-                                            {(task.status === 'completed' || task.status === 'verified') && <CheckCircle size={14} className="text-green-600 flex-shrink-0" />}
-                                            {(task.status === 'pending' || task.status === 'in-progress') && <Clock size={14} className="text-blue-600 flex-shrink-0" />}
-                                            {task.status === 'locked' && <AlertCircle size={14} className="text-gray-400 flex-shrink-0" />}
+                                            <span className="font-bold text-[13px] text-gray-800">Step {task.sequence}: {task.stepName}</span>
+                                            {task.status === 'verified' && <CheckCircle size={16} className="text-green-600 flex-shrink-0" />}
+                                            {(task.status === 'completed' || task.status === 'submitted') && <Clock size={16} className="text-blue-600 flex-shrink-0" />}
+                                            {task.status === 'in-progress' && <Clock size={16} className="text-yellow-600 flex-shrink-0" />}
+                                            {task.status === 'locked' && <AlertCircle size={16} className="text-gray-400 flex-shrink-0" />}
                                         </div>
                                         <p className="text-xs text-gray-500 mb-2">{task.description}</p>
 
                                         {task.photos && Object.keys(task.photos).length > 0 && (
-                                            <div className="flex gap-1 mt-2 flex-wrap">
-                                                {Object.entries(task.photos).map(([type, url]) => (
-                                                    <div
-                                                        key={type}
-                                                        onClick={() => setPreviewImage(getImageUrl(url))}
-                                                        className="cursor-pointer w-8 h-8 bg-gray-200 rounded overflow-hidden border hover:border-blue-500"
-                                                        title={type}
-                                                    >
-                                                        <img src={getImageUrl(url)} alt={type} className="w-full h-full object-cover" />
-                                                    </div>
-                                                ))}
+                                            <div className="mt-3">
+                                                <p className="text-[10px] font-bold text-gray-400 uppercase tracking-tighter mb-1.5">Proof Photos:</p>
+                                                <div className="grid grid-cols-3 gap-1.5">
+                                                    {Object.entries(task.photos).map(([type, url]) => (
+                                                        <div
+                                                            key={type}
+                                                            onClick={(e) => {
+                                                                e.stopPropagation();
+                                                                setPreviewImage(getImageUrl(url));
+                                                            }}
+                                                            className="relative group cursor-pointer aspect-square bg-gray-100 rounded-md border border-gray-200 overflow-hidden hover:border-blue-400 transition-colors"
+                                                            title={type}
+                                                        >
+                                                            <img
+                                                                src={getImageUrl(url)}
+                                                                alt={type}
+                                                                className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                                                            />
+                                                            <div className="absolute inset-x-0 bottom-0 bg-black/40 text-white text-[8px] py-0.5 text-center font-bold uppercase">
+                                                                {type}
+                                                            </div>
+                                                        </div>
+                                                    ))}
+                                                </div>
                                             </div>
                                         )}
 
@@ -296,6 +336,14 @@ const ProjectDetails = () => {
                 onClose={() => setPreviewImage(null)}
                 imageUrl={previewImage}
                 altText="Photo Preview"
+            />
+
+            <DeleteConfirmModal 
+                isOpen={showDeleteModal}
+                onClose={() => setShowDeleteModal(false)}
+                onConfirm={confirmDelete}
+                itemName={project?.name}
+                title="Delete Project?"
             />
 
         </div>

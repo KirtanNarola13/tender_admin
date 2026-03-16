@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import api from '../services/api';
 import {
     PieChart, Pie, Cell, ResponsiveContainer, Tooltip, Legend,
-    BarChart, Bar, XAxis, YAxis, CartesianGrid
+    BarChart, Bar, XAxis, YAxis, CartesianGrid, LabelList
 } from 'recharts';
 import {
     Briefcase,
@@ -109,19 +109,57 @@ const Dashboard = () => {
                 {/* Inventory Stock Chart */}
                 <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100 lg:col-span-2">
                     <h3 className="text-lg font-semibold text-gray-700 mb-4">Inventory Stock Levels</h3>
-                    <div className="h-64">
-                        <ResponsiveContainer width="100%" height="100%">
-                            <BarChart data={stats.inventoryStats || []} margin={{ top: 20, right: 30, left: 20, bottom: 5 }}>
-                                <CartesianGrid strokeDasharray="3 3" vertical={false} />
-                                <XAxis dataKey="name" tick={{ fontSize: 12 }} interval={0} />
-                                <YAxis allowDecimals={false} />
-                                <Tooltip
-                                    cursor={{ fill: '#f3f4f6' }}
-                                    contentStyle={{ borderRadius: '8px', border: 'none', boxShadow: '0 4px 12px rgba(0,0,0,0.1)' }}
-                                />
-                                <Bar dataKey="totalStock" fill="#6366f1" radius={[4, 4, 0, 0]} name="Stock Units" barSize={40} />
-                            </BarChart>
-                        </ResponsiveContainer>
+                    <div className="h-80 overflow-y-auto pr-2 custom-scrollbar">
+                        <div style={{ height: `${Math.max(300, (stats.inventoryStats?.length || 0) * 45)}px`, width: '100%' }}>
+                            <ResponsiveContainer width="100%" height="100%">
+                                <BarChart 
+                                    data={stats.inventoryStats || []} 
+                                    layout="vertical"
+                                    margin={{ top: 5, right: 30, left: 40, bottom: 5 }}
+                                >
+                                    <CartesianGrid strokeDasharray="3 3" horizontal={false} stroke="#f3f4f6" />
+                                    <XAxis 
+                                        type="number"
+                                        axisLine={{ stroke: '#e5e7eb' }}
+                                        tickLine={false}
+                                        tick={{ fill: '#9ca3af', fontSize: 12 }}
+                                    />
+                                    <YAxis 
+                                        dataKey="name" 
+                                        type="category"
+                                        width={120}
+                                        axisLine={{ stroke: '#e5e7eb' }}
+                                        tickLine={false}
+                                        tick={{ fill: '#4b5563', fontSize: 11, fontWeight: 500 }}
+                                    />
+                                    <Tooltip
+                                        cursor={{ fill: '#f9fafb' }}
+                                        contentStyle={{ 
+                                            borderRadius: '12px', 
+                                            border: 'none', 
+                                            boxShadow: '0 10px 15px -3px rgba(0, 0, 0, 0.1)',
+                                            padding: '12px'
+                                        }}
+                                    />
+                                    <Bar 
+                                        dataKey="totalStock" 
+                                        fill="#6366f1" 
+                                        radius={[0, 6, 6, 0]} 
+                                        name="Stock Units" 
+                                        barSize={24} 
+                                    >
+                                        <LabelList 
+                                            dataKey="totalStock" 
+                                            position="right" 
+                                            offset={10} 
+                                            fill="#4b5563" 
+                                            fontSize={12} 
+                                            fontWeight={600}
+                                        />
+                                    </Bar>
+                                </BarChart>
+                            </ResponsiveContainer>
+                        </div>
                     </div>
                 </div>
             </div>

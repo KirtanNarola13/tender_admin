@@ -18,8 +18,8 @@ const VerifyDashboard = () => {
     const fetchTasks = async () => {
         try {
             // Fetch tasks waiting for verification
-            // Assuming API supports filtering by status
-            const res = await api.get('/tasks?status=completed');
+            // Fetch tasks waiting for verification (both new 'submitted' and legacy 'completed')
+            const res = await api.get('/tasks?status=submitted,completed');
             setTasks(res.data);
         } catch (error) {
             console.error(error);
@@ -103,48 +103,41 @@ const VerifyDashboard = () => {
                                 </div>
                             </div>
 
-                            {/* Photos Comparison */}
-                            <div className="grid grid-cols-2 gap-4 bg-gray-50 p-4 rounded border">
-                                <div>
-                                    <span className="block text-xs font-bold text-gray-400 mb-2 uppercase">Reference / Before</span>
-                                    {task.photos?.before ? (
-                                        <img
-                                            src={getImageUrl(task.photos.before)}
-                                            alt="Before"
-                                            className="h-48 object-cover rounded border bg-white cursor-zoom-in hover:opacity-90 transition"
-                                            onClick={() => setPreviewImage(getImageUrl(task.photos.before))}
-                                        />
-                                    ) : (
-                                        <div className="h-48 bg-gray-200 rounded flex items-center justify-center text-gray-400 text-xs text-center p-4">
-                                            No Standard Photo
-                                        </div>
-                                    )}
-                                </div>
-                                <div>
-                                    <span className="block text-xs font-bold text-gray-400 mb-2 uppercase">Actual / Site Photo</span>
-                                    {task.photos?.siteCapture ? (
-                                        <img
-                                            src={getImageUrl(task.photos.siteCapture)}
-                                            alt="Site"
-                                            className="h-48 object-cover rounded border bg-white cursor-zoom-in hover:opacity-90 transition"
-                                            onClick={() => setPreviewImage(getImageUrl(task.photos.siteCapture))}
-                                        />
-                                    ) : (
-                                        // Fallback if 'siteCapture' key varies, try getting first available 'after' or dynamic
-                                        task.photos?.after ? (
-                                            <img
-                                                src={getImageUrl(task.photos.after)}
-                                                alt="After"
-                                                className="h-48 object-cover rounded border bg-white cursor-zoom-in hover:opacity-90 transition"
-                                                onClick={() => setPreviewImage(getImageUrl(task.photos.after))}
-                                            />
-                                        ) : (
-                                            <div className="h-48 bg-red-50 border border-red-200 rounded flex items-center justify-center text-red-400 text-xs font-bold">
-                                                MISSING PHOTO
+                            {/* Photos Comparison / Proof Gallery */}
+                            <div className="bg-gray-50 p-5 rounded-xl border border-gray-100">
+                                <span className="block text-[11px] font-bold text-gray-400 uppercase tracking-wider mb-4">Proof Gallery / Verification Photos</span>
+                                {task.photos && Object.keys(task.photos).length > 0 ? (
+                                    <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+                                        {Object.entries(task.photos).map(([type, url]) => (
+                                            <div key={type} className="space-y-2">
+                                                <span className="block text-[10px] font-bold text-gray-500 uppercase text-center bg-gray-200 py-0.5 rounded">{type}</span>
+                                                <div 
+                                                    className="relative group cursor-zoom-in overflow-hidden rounded-lg border border-gray-200 bg-white shadow-sm aspect-square"
+                                                    onClick={() => setPreviewImage(getImageUrl(url))}
+                                                >
+                                                    <img
+                                                        src={getImageUrl(url)}
+                                                        alt={type}
+                                                        className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                                                        onError={(e) => {
+                                                            e.target.onerror = null;
+                                                            e.target.src = 'https://placehold.co/400x400/fecaca/991b1b?text=Broken+Image';
+                                                        }}
+                                                    />
+                                                    <div className="absolute inset-0 bg-black/0 group-hover:bg-black/5 transition-colors" />
+                                                </div>
                                             </div>
-                                        )
-                                    )}
-                                </div>
+                                        ))}
+                                    </div>
+                                ) : (
+                                    <div className="bg-red-50 border-2 border-dashed border-red-200 rounded-lg p-8 flex flex-col items-center justify-center text-red-500 gap-2">
+                                        <XCircle size={32} />
+                                        <div className="text-center">
+                                            <p className="font-bold text-sm">NO PROOF PHOTOS UPLOADED</p>
+                                            <p className="text-[10px] opacity-75">This task was marked complete without any proof photos.</p>
+                                        </div>
+                                    </div>
+                                )}
                             </div>
                         </div>
                     ))}

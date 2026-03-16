@@ -16,7 +16,7 @@ const ImageModal = ({ isOpen, onClose, imageUrl, altText }) => {
     if (!isOpen) return null;
 
     return (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-90 backdrop-blur-sm p-4 animate-in fade-in duration-200">
+        <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-black bg-opacity-90 backdrop-blur-sm p-4 animate-in fade-in duration-200">
             {/* Toolbar */}
             <div className="absolute top-4 right-4 flex items-center gap-2 z-50">
                 <button

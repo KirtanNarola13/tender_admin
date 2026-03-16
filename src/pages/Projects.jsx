@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import api from '../services/api';
 import { Plus, Trash2, Home } from 'lucide-react';
+import DeleteConfirmModal from '../components/DeleteConfirmModal';
 
 const Projects = () => {
     const [projects, setProjects] = useState([]);
@@ -14,6 +15,10 @@ const Projects = () => {
     const [newSchool, setNewSchool] = useState({ name: '', address: '', project: '' });
     const [users, setUsers] = useState([]); // Team Leaders
     const [selectedLeader, setSelectedLeader] = useState('');
+    
+    // Delete Confirmation
+    const [showDeleteModal, setShowDeleteModal] = useState(false);
+    const [projectToDelete, setProjectToDelete] = useState(null);
 
     useEffect(() => {
         fetchProjects();
@@ -87,7 +92,20 @@ const Projects = () => {
 
     const [filterCategory, setFilterCategory] = useState('All');
 
-    // Filter Logic
+    const handleDelete = async (id, name) => {
+        setProjectToDelete({ id, name });
+        setShowDeleteModal(true);
+    };
+
+    const confirmDelete = async () => {
+        if (!projectToDelete) return;
+        try {
+            await api.delete(`/projects/${projectToDelete.id}`);
+            fetchProjects();
+        } catch (error) {
+            alert('Failed to delete project: ' + (error.response?.data?.message || error.message));
+        }
+    };
     const filteredProjects = projects.filter(project => {
         if (filterCategory === 'All') return true;
         return project.category === filterCategory;
@@ -135,20 +153,22 @@ const Projects = () => {
                                 <span>Status: <span className={`font-semibold capitalize ${project.status === 'active' ? 'text-green-600' : 'text-gray-500'}`}>{project.status}</span></span>
                                 <span className="mt-1">Leader: <span className="font-semibold text-gray-800">{project.assignedLeader?.name || 'Unassigned'}</span></span>
                             </div>
-                            <div className="flex gap-2">
+                            <div className="flex gap-4 items-center">
                                 <Link to={`/projects/${project._id}`} className="text-blue-600 hover:text-blue-800 text-sm font-medium">
                                     View Details
                                 </Link>
-                                {/* <button className="text-red-500 hover:text-red-700">
+                                <button
+                                    onClick={() => handleDelete(project._id, project.name)}
+                                    className="text-red-500 hover:text-red-700 transition-colors"
+                                    title="Delete Project"
+                                >
                                     <Trash2 size={18} />
-                                </button> */}
+                                </button>
                             </div>
                         </div>
                     </div>
                 ))}
             </div>
-
-            {/* Create Project Modal */}
             {isModalOpen && (
                 <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4">
                     <div className="bg-white p-6 rounded-lg w-full max-w-md">
@@ -212,6 +232,14 @@ const Projects = () => {
                     </div>
                 </div>
             )}
+
+            <DeleteConfirmModal 
+                isOpen={showDeleteModal}
+                onClose={() => setShowDeleteModal(false)}
+                onConfirm={confirmDelete}
+                itemName={projectToDelete?.name}
+                title="Delete Project?"
+            />
         </div>
     );
 };

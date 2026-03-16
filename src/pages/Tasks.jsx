@@ -154,14 +154,21 @@ const Tasks = () => {
                         </thead>
                         <tbody className="divide-y divide-gray-100">
                             {filteredTasks.map((task) => (
-                                <tr key={task._id} className="hover:bg-gray-50 transition-colors group">
+                                <tr 
+                                    key={task._id} 
+                                    className="hover:bg-blue-50/50 transition-colors group cursor-pointer border-b border-gray-100 last:border-b-0"
+                                    onClick={() => navigate(`/tasks/${task._id}`)}
+                                >
                                     <td className="px-6 py-4">
                                         <div className="flex flex-col">
-                                            <div className="flex items-center gap-2 font-medium text-gray-900">
-                                                <Briefcase size={16} className="text-blue-500" />
+                                            <div className="flex items-center gap-2 font-bold text-gray-900 text-base group-hover:text-primary transition-colors">
+                                                {task.stepName || 'Unnamed Step'}
+                                            </div>
+                                            <div className="flex items-center gap-2 text-sm font-medium text-gray-600 mt-0.5">
+                                                <Briefcase size={14} className="text-blue-500" />
                                                 {task.project?.name || 'Unknown Project'}
                                             </div>
-                                            <span className="text-xs text-gray-500 ml-6 flex items-center gap-1 mt-1">
+                                            <span className="text-xs text-gray-400 flex items-center gap-1 mt-1">
                                                 <Calendar size={12} />
                                                 {task.project?.location || 'No Location'}
                                             </span>
@@ -188,7 +195,10 @@ const Tasks = () => {
                                         </span>
                                     </td>
                                     <td className="px-6 py-4 text-right">
-                                        <div className="flex items-center justify-end gap-2 opacity-100 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity">
+                                        <div 
+                                            className="flex items-center justify-end gap-2 opacity-100 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity"
+                                            onClick={(e) => e.stopPropagation()}
+                                        >
                                             <button
                                                 onClick={() => navigate(`/tasks/${task._id}`)}
                                                 className="p-2 rounded-lg hover:bg-blue-50 text-blue-600 transition-colors"
@@ -196,25 +206,6 @@ const Tasks = () => {
                                             >
                                                 <Eye size={18} />
                                             </button>
-
-                                            {task.status === 'submitted' && (
-                                                <>
-                                                    <button
-                                                        onClick={() => verifyTask(task._id, 'verified')}
-                                                        className="p-2 rounded-lg hover:bg-green-50 text-green-600 transition-colors"
-                                                        title="Approve Task"
-                                                    >
-                                                        <CheckCircle size={18} />
-                                                    </button>
-                                                    <button
-                                                        onClick={() => verifyTask(task._id, 'in-progress', 'Rejected')}
-                                                        className="p-2 rounded-lg hover:bg-red-50 text-red-600 transition-colors"
-                                                        title="Reject Task"
-                                                    >
-                                                        <XCircle size={18} />
-                                                    </button>
-                                                </>
-                                            )}
                                         </div>
                                     </td>
                                 </tr>
