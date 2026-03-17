@@ -44,10 +44,7 @@ const Dashboard = () => {
     if (loading) return <div className="p-8 text-center">Loading Dashboard...</div>;
     if (!stats) return <div className="p-8 text-center text-red-500">Failed to load data</div>;
 
-    const taskData = [
-        { name: 'Pending', value: stats.pendingTasks },
-        { name: 'Completed', value: stats.completedTasks },
-    ];
+    // Previous taskData is no longer needed for Pie chart
 
     return (
         <div className="space-y-8">
@@ -89,29 +86,45 @@ const Dashboard = () => {
 
             {/* Charts Section */}
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-                {/* Task Distribution */}
-                <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100 lg:col-span-1">
-                    <h3 className="text-lg font-semibold text-gray-700 mb-4">Task Overview</h3>
-                    <div className="h-64">
-                        <ResponsiveContainer width="100%" height="100%">
-                            <PieChart>
-                                <Pie
-                                    data={taskData}
-                                    cx="50%"
-                                    cy="50%"
-                                    innerRadius={60}
-                                    outerRadius={80}
-                                    paddingAngle={5}
-                                    dataKey="value"
+                {/* Project Progress Overview */}
+                <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100 lg:col-span-1 flex flex-col">
+                    <h3 className="text-lg font-semibold text-gray-700 mb-4">Project Progress</h3>
+                    <div className="flex-grow overflow-y-auto pr-2 custom-scrollbar" style={{ maxHeight: '400px' }}>
+                        <div style={{ height: `${Math.max(300, (stats.projectStats?.length || 0) * 45)}px`, width: '100%' }}>
+                            <ResponsiveContainer width="100%" height="100%">
+                                <BarChart
+                                    data={stats.projectStats || []}
+                                    layout="vertical"
+                                    margin={{ top: 5, right: 50, left: 10, bottom: 5 }}
                                 >
-                                    {taskData.map((entry, index) => (
-                                        <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
-                                    ))}
-                                </Pie>
-                                <Tooltip />
-                                <Legend verticalAlign="bottom" height={36} />
-                            </PieChart>
-                        </ResponsiveContainer>
+                                    <CartesianGrid strokeDasharray="3 3" horizontal={false} stroke="#f3f4f6" />
+                                    <XAxis type="number" domain={[0, 100]} hide />
+                                    <YAxis
+                                        dataKey="name"
+                                        type="category"
+                                        width={120}
+                                        tick={{ fill: '#4b5563', fontSize: 11, fontWeight: 500 }}
+                                        axisLine={{ stroke: '#e5e7eb' }}
+                                        tickLine={false}
+                                    />
+                                    <Tooltip
+                                        cursor={{ fill: '#f9fafb' }}
+                                        formatter={(value, name, props) => {
+                                            if (name === 'Progress') return [`${value}%`, name];
+                                            return [value, name];
+                                        }}
+                                        labelFormatter={(label) => {
+                                            const project = stats.projectStats?.find(p => p.name === label);
+                                            return `${label} (${project?.completedTasks}/${project?.totalTasks} Tasks)`;
+                                        }}
+                                        contentStyle={{ borderRadius: '8px', border: 'none', boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)' }}
+                                    />
+                                    <Bar dataKey="progress" fill="#10b981" radius={[0, 4, 4, 0]} barSize={24}>
+                                        <LabelList dataKey="progress" position="right" formatter={(v) => `${v}%`} fill="#4b5563" fontSize={11} fontWeight={600} />
+                                    </Bar>
+                                </BarChart>
+                            </ResponsiveContainer>
+                        </div>
                     </div>
                 </div>
 
