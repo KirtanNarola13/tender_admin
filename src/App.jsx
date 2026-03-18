@@ -19,11 +19,16 @@ import { useState } from 'react';
 import { Menu } from 'lucide-react';
 
 const ProtectedRoute = ({ children }) => {
-  const { user, loading } = useAuth();
+  const { user, loading, logout } = useAuth();
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
 
   if (loading) return <div>Loading...</div>;
   if (!user) return <Navigate to="/login" />;
+  
+  if (user.role !== 'admin') {
+    logout();
+    return <Navigate to="/login" />;
+  }
 
   return (
     <div className="flex bg-gray-50 min-h-screen">

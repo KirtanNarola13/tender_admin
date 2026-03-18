@@ -8,7 +8,7 @@ const Login = () => {
     const [password, setPassword] = useState('');
     const [isLoading, setIsLoading] = useState(false);
     const [error, setError] = useState('');
-    const { login } = useAuth();
+    const { login, logout } = useAuth();
     const navigate = useNavigate();
 
     const handleSubmit = async (e) => {
@@ -17,7 +17,12 @@ const Login = () => {
         setError('');
 
         try {
-            await login(email, password);
+            const userData = await login(email, password);
+            if (userData.role !== 'admin') {
+                logout();
+                setError('Access denied. Admin privileges required to access this dashboard.');
+                return;
+            }
             navigate('/');
         } catch (error) {
             setError('Invalid email or password. Please try again.');
