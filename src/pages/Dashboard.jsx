@@ -134,57 +134,57 @@ const Dashboard = () => {
                     <div className="h-80 overflow-y-auto pr-2 custom-scrollbar">
                         <div style={{ height: `${Math.max(300, (stats.inventoryStats?.length || 0) * 45)}px`, width: '100%' }}>
                             <ResponsiveContainer width="100%" height="100%">
-                                <BarChart 
-                                    data={stats.inventoryStats || []} 
+                                <BarChart
+                                    data={stats.inventoryStats || []}
                                     layout="vertical"
-                                    margin={{ 
-                                        top: 5, 
-                                        right: isMobile ? 45 : 75, 
-                                        left: isMobile ? -20 : 10, 
-                                        bottom: 5 
+                                    margin={{
+                                        top: 5,
+                                        right: isMobile ? 45 : 75,
+                                        left: isMobile ? -20 : 10,
+                                        bottom: 5
                                     }}
                                 >
                                     <CartesianGrid strokeDasharray="3 3" horizontal={false} stroke="#f3f4f6" />
-                                    <XAxis 
+                                    <XAxis
                                         type="number"
                                         axisLine={{ stroke: '#e5e7eb' }}
                                         tickLine={false}
                                         tick={{ fill: '#9ca3af', fontSize: isMobile ? 10 : 12 }}
                                     />
-                                    <YAxis 
-                                        dataKey="name" 
+                                    <YAxis
+                                        dataKey="name"
                                         type="category"
                                         width={isMobile ? 100 : 160}
                                         axisLine={{ stroke: '#e5e7eb' }}
                                         tickLine={false}
-                                        tick={{ 
-                                            fill: '#4b5563', 
-                                            fontSize: isMobile ? 10 : 11, 
-                                            fontWeight: 500 
+                                        tick={{
+                                            fill: '#4b5563',
+                                            fontSize: isMobile ? 10 : 11,
+                                            fontWeight: 500
                                         }}
                                     />
                                     <Tooltip
                                         cursor={{ fill: '#f9fafb' }}
-                                        contentStyle={{ 
-                                            borderRadius: '12px', 
-                                            border: 'none', 
+                                        contentStyle={{
+                                            borderRadius: '12px',
+                                            border: 'none',
                                             boxShadow: '0 10px 15px -3px rgba(0, 0, 0, 0.1)',
                                             padding: '12px'
                                         }}
                                     />
-                                    <Bar 
-                                        dataKey="totalStock" 
-                                        fill="#6366f1" 
-                                        radius={[0, 6, 6, 0]} 
-                                        name="Stock Units" 
-                                        barSize={24} 
+                                    <Bar
+                                        dataKey="totalStock"
+                                        fill="#6366f1"
+                                        radius={[0, 6, 6, 0]}
+                                        name="Stock Units"
+                                        barSize={24}
                                     >
-                                        <LabelList 
-                                            dataKey="totalStock" 
-                                            position="right" 
-                                            offset={10} 
-                                            fill="#4b5563" 
-                                            fontSize={12} 
+                                        <LabelList
+                                            dataKey="totalStock"
+                                            position="right"
+                                            offset={10}
+                                            fill="#4b5563"
+                                            fontSize={12}
                                             fontWeight={600}
                                         />
                                     </Bar>
@@ -195,26 +195,6 @@ const Dashboard = () => {
                 </div>
             </div>
 
-            {/* Quick Actions Row */}
-            <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100 flex flex-col md:flex-row justify-between items-center gap-4">
-                <div>
-                    <h3 className="text-lg font-semibold text-gray-700">Quick Actions</h3>
-                    <p className="text-gray-500 text-sm">
-                        Pending tasks require your attention. Quickly review and verify completions.
-                    </p>
-                </div>
-
-                <a
-                    href="/verify"
-                    className="flex items-center gap-3 px-6 py-3 bg-indigo-50 rounded-lg hover:bg-indigo-100 transition-colors group"
-                >
-                    <div className="flex items-center gap-3">
-                        <CheckCircle className="text-indigo-600" size={20} />
-                        <span className="text-indigo-900 font-bold">Verify Pending Tasks</span>
-                    </div>
-                    <TrendingUp className="text-indigo-400 group-hover:translate-x-1 transition-transform" size={18} />
-                </a>
-            </div>
         </div>
     );
 };
