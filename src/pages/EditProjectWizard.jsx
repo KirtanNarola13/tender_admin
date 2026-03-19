@@ -214,7 +214,14 @@ const EditProjectWizard = () => {
                         type="date"
                         className="w-full border border-gray-200 p-2.5 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary"
                         value={projectData.startDate}
-                        onChange={e => setProjectData({ ...projectData, startDate: e.target.value })}
+                        onChange={e => {
+                            const newStartDate = e.target.value;
+                            const updates = { startDate: newStartDate };
+                            if (newStartDate && projectData.deadline && new Date(projectData.deadline) < new Date(newStartDate)) {
+                                updates.deadline = '';
+                            }
+                            setProjectData({ ...projectData, ...updates });
+                        }}
                     />
                 </div>
                 <div>
@@ -223,6 +230,7 @@ const EditProjectWizard = () => {
                         type="date"
                         className="w-full border border-gray-200 p-2.5 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary"
                         value={projectData.deadline}
+                        min={projectData.startDate || ''}
                         onChange={e => setProjectData({ ...projectData, deadline: e.target.value })}
                     />
                 </div>
@@ -468,7 +476,15 @@ const EditProjectWizard = () => {
 
                 {step < 3 ? (
                     <button
-                        onClick={() => setStep(step + 1)}
+                        onClick={() => {
+                            if (step === 1 && projectData.startDate && projectData.deadline) {
+                                if (new Date(projectData.deadline) < new Date(projectData.startDate)) {
+                                    alert('End Date cannot be before Start Date.');
+                                    return;
+                                }
+                            }
+                            setStep(step + 1);
+                        }}
                         disabled={step === 1 && !projectData.name.trim()}
                         className="flex items-center gap-2 px-7 py-2.5 rounded-lg bg-primary text-white font-semibold text-sm hover:bg-opacity-90 transition disabled:opacity-50 shadow"
                     >
