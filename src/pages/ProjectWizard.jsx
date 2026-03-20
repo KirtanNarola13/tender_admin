@@ -5,6 +5,8 @@ import { ChevronRight, ChevronLeft, Trash2, Box, ArrowLeft, CheckCircle, Loader 
 
 const CATEGORIES = ['Primary', 'Upper Primary', 'Secondary', 'Higher Secondary', 'Residential'];
 
+const today = new Date().toISOString().split('T')[0];
+
 const ProjectWizard = () => {
     const navigate = useNavigate();
     const [step, setStep] = useState(1);
@@ -158,6 +160,7 @@ const ProjectWizard = () => {
                         type="date"
                         className="w-full border border-gray-200 p-2.5 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary"
                         value={projectData.startDate}
+                        min={today}
                         onChange={e => {
                             const newStartDate = e.target.value;
                             const updates = { startDate: newStartDate };
@@ -174,7 +177,7 @@ const ProjectWizard = () => {
                         type="date"
                         className="w-full border border-gray-200 p-2.5 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary"
                         value={projectData.deadline}
-                        min={projectData.startDate || ''}
+                        min={projectData.startDate || today}
                         onChange={e => setProjectData({ ...projectData, deadline: e.target.value })}
                     />
                 </div>
