@@ -5,6 +5,9 @@ import {
     Package, CheckCircle, Clock, AlertCircle,
     FileText, Upload, ArrowLeft, Pencil, Trash2, ChevronDown
 } from 'lucide-react';
+import {
+    PieChart, Pie, Cell, ResponsiveContainer, Tooltip
+} from 'recharts';
 import { useAuth } from '../context/AuthContext';
 import ImageModal from '../components/ImageModal';
 import DeleteConfirmModal from '../components/DeleteConfirmModal';
@@ -127,6 +130,11 @@ const ProjectDetails = () => {
     const pendingTasksCount = totalTasksCount - completedTasksCount;
     const projectProgressPercent = totalTasksCount > 0 ? Math.round((completedTasksCount / totalTasksCount) * 100) : 0;
 
+    const chartData = [
+        { name: 'Completed', value: completedTasksCount, color: '#10B981' },
+        { name: 'Pending', value: pendingTasksCount, color: '#F59E0B' }
+    ].filter(d => d.value > 0);
+
     return (
         <div className="w-full max-w-7xl mx-auto space-y-4 sm:space-y-6 pb-8">
 
@@ -204,31 +212,89 @@ const ProjectDetails = () => {
                 </div>
             </div>
 
-            {/* ── Overall Progress ──────────────────────────────────── */}
-            <div className="bg-white p-4 sm:p-5 rounded-lg shadow-sm border border-gray-100 flex flex-col md:flex-row justify-between items-start md:items-center gap-4 sm:gap-5">
-                <div className="flex items-center gap-3 sm:gap-4 w-full md:w-auto">
-                    <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-full bg-blue-50 flex items-center justify-center shrink-0">
-                        <CheckCircle className="text-blue-600" size={24} />
+            {/* ── Overall Progress & Task Chart ────────────────────────── */}
+            <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100 grid grid-cols-1 md:grid-cols-12 gap-6 items-center">
+                <div className="md:col-span-7 space-y-6">
+                    <div className="flex items-center gap-4">
+                        <div className="w-12 h-12 rounded-2xl bg-blue-50 flex items-center justify-center shrink-0 border border-blue-100 shadow-sm">
+                            <CheckCircle className="text-blue-600" size={24} />
+                        </div>
+                        <div>
+                            <h2 className="text-lg font-bold text-gray-900">Project Vitality</h2>
+                            <p className="text-sm text-gray-400">At-a-glance task distribution and completion status.</p>
+                        </div>
                     </div>
-                    <div>
-                        <h2 className="text-base font-bold text-gray-900 mb-1">Overall Tasks Overview</h2>
-                        <div className="flex flex-wrap items-center gap-2 text-xs font-semibold">
-                            <span className="px-2 py-1 rounded bg-gray-100 text-gray-600">Total: {totalTasksCount}</span>
-                            <span className="px-2 py-1 rounded bg-blue-50 text-blue-600">Completed: {completedTasksCount}</span>
-                            <span className="px-2 py-1 rounded bg-orange-50 text-orange-600">Pending: {pendingTasksCount}</span>
+
+                    <div className="grid grid-cols-3 gap-4">
+                        <div className="bg-gray-50/50 p-3 rounded-xl border border-gray-100">
+                            <span className="text-[10px] font-bold text-gray-400 uppercase tracking-wider block mb-1">Total Tasks</span>
+                            <span className="text-xl font-bold text-gray-800">{totalTasksCount}</span>
+                        </div>
+                        <div className="bg-green-50/50 p-3 rounded-xl border border-green-100">
+                            <span className="text-[10px] font-bold text-green-500 uppercase tracking-wider block mb-1">Completed</span>
+                            <span className="text-xl font-bold text-green-600">{completedTasksCount}</span>
+                        </div>
+                        <div className="bg-orange-50/50 p-3 rounded-xl border border-orange-100">
+                            <span className="text-[10px] font-bold text-orange-500 uppercase tracking-wider block mb-1">Pending</span>
+                            <span className="text-xl font-bold text-orange-600">{pendingTasksCount}</span>
+                        </div>
+                    </div>
+
+                    <div className="space-y-2">
+                        <div className="flex justify-between items-end">
+                            <span className="text-sm font-bold text-gray-700">Completion Velocity</span>
+                            <span className="text-sm font-black text-primary">{projectProgressPercent}%</span>
+                        </div>
+                        <div className="w-full bg-gray-100 rounded-full h-3 overflow-hidden shadow-inner">
+                            <div 
+                                className={`h-full rounded-full transition-all duration-1000 ease-out shadow-sm ${projectProgressPercent === 100 ? 'bg-green-500' : 'bg-primary'}`} 
+                                style={{ width: `${projectProgressPercent}%` }}
+                            />
                         </div>
                     </div>
                 </div>
-                <div className="w-full sm:w-1/2 flex items-center gap-4 mt-2 sm:mt-0">
-                    <div className="w-full bg-gray-100 rounded-full h-2.5 overflow-hidden">
-                        <div 
-                            className={`h-full rounded-full transition-all duration-500 ${projectProgressPercent === 100 ? 'bg-green-500' : 'bg-primary'}`} 
-                            style={{ width: `${projectProgressPercent}%` }}
-                        ></div>
-                    </div>
-                    <span className="text-sm font-bold text-gray-700 w-10 text-right">
-                        {projectProgressPercent}%
-                    </span>
+
+                <div className="md:col-span-5 h-48 md:h-56 relative group">
+                    {totalTasksCount > 0 ? (
+                        <ResponsiveContainer width="100%" height="100%">
+                            <PieChart>
+                                <Pie
+                                    data={chartData}
+                                    innerRadius="65%"
+                                    outerRadius="90%"
+                                    paddingAngle={5}
+                                    dataKey="value"
+                                    animationBegin={200}
+                                    animationDuration={1200}
+                                >
+                                    {chartData.map((entry, index) => (
+                                        <Cell key={`cell-${index}`} fill={entry.color} stroke="none" />
+                                    ))}
+                                </Pie>
+                                <Tooltip 
+                                    contentStyle={{ 
+                                        borderRadius: '12px', 
+                                        border: 'none', 
+                                        boxShadow: '0 10px 15px -3px rgba(0, 0, 0, 0.1)',
+                                        fontSize: '12px',
+                                        fontWeight: 'bold'
+                                    }} 
+                                    itemStyle={{ padding: '2px 0' }}
+                                />
+                            </PieChart>
+                        </ResponsiveContainer>
+                    ) : (
+                        <div className="h-full flex flex-col items-center justify-center text-gray-300 gap-2">
+                            <Clock size={32} strokeWidth={1} />
+                            <span className="text-xs font-medium">No tasks generated yet</span>
+                        </div>
+                    )}
+                    {totalTasksCount > 0 && (
+                        <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
+                            <span className="text-2xl font-black text-gray-800">{projectProgressPercent}%</span>
+                            <span className="text-[10px] font-bold text-gray-400 uppercase tracking-tighter">Progress</span>
+                        </div>
+                    )}
                 </div>
             </div>
 
