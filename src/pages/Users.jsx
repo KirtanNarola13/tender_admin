@@ -1,20 +1,24 @@
 import { useState, useEffect } from 'react';
 import api from '../services/api';
-import { Plus, Search, Users as UsersIcon, Shield, UserCheck, User } from 'lucide-react';
+import { useAuth } from '../context/AuthContext';
+import { Plus, Search, Users as UsersIcon, Shield, UserCheck, User, Eye } from 'lucide-react';
 
 const ROLE_COLORS = {
     admin: 'bg-purple-100 text-purple-700 border-purple-200',
     team_leader: 'bg-indigo-100 text-indigo-700 border-indigo-200',
     employee: 'bg-green-100 text-green-700 border-green-200',
+    admin_viewer: 'bg-teal-100 text-teal-700 border-teal-200',
 };
 
 const ROLE_LABELS = {
     admin: 'Admin',
     team_leader: 'Team Leader',
     employee: 'Employee',
+    admin_viewer: 'Admin Viewer',
 };
 
 const Users = () => {
+    const { user: currentUser } = useAuth();
     const [users, setUsers] = useState([]);
     const [teamLeaders, setTeamLeaders] = useState([]);
     const [searchTerm, setSearchTerm] = useState('');
@@ -102,6 +106,7 @@ const Users = () => {
         admin: users.filter(u => u.role === 'admin').length,
         team_leader: users.filter(u => u.role === 'team_leader').length,
         employee: users.filter(u => u.role === 'employee').length,
+        admin_viewer: users.filter(u => u.role === 'admin_viewer').length,
     };
 
     const tabs = [
@@ -109,6 +114,7 @@ const Users = () => {
         { key: 'admin', label: 'Admins', icon: <Shield size={14} /> },
         { key: 'team_leader', label: 'Team Leaders', icon: <UserCheck size={14} /> },
         { key: 'employee', label: 'Employees', icon: <User size={14} /> },
+        { key: 'admin_viewer', label: 'Viewers', icon: <Eye size={14} /> },
     ];
 
     return (
@@ -119,12 +125,14 @@ const Users = () => {
                     <h1 className="text-2xl font-bold text-gray-800">User Management</h1>
                     <p className="text-gray-500 text-sm">Manage admins, team leaders, and employees.</p>
                 </div>
-                <button
-                    onClick={() => handleOpenModal()}
-                    className="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-lg flex items-center gap-2 transition-colors shadow-sm"
-                >
-                    <Plus size={18} /> Create User
-                </button>
+                {currentUser?.role !== 'admin_viewer' && (
+                    <button
+                        onClick={() => handleOpenModal()}
+                        className="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-lg flex items-center gap-2 transition-colors shadow-sm"
+                    >
+                        <Plus size={18} /> Create User
+                    </button>
+                )}
             </div>
 
             {/* Search + Role Tabs */}
@@ -200,21 +208,25 @@ const Users = () => {
                                                 : <span className="text-gray-300">—</span>}
                                         </td>
                                         <td className="p-4">
-                                            <div className="flex justify-end gap-2">
-                                                <button
-                                                    onClick={() => handleOpenModal(user)}
-                                                    className="px-3 py-1.5 text-xs font-bold text-indigo-600 bg-indigo-50 hover:bg-indigo-100 border border-indigo-200 rounded-lg transition-colors"
-                                                >
-                                                    ✏️ Edit
-                                                </button>
-                                                <button
-                                                    onClick={() => handleDelete(user)}
-                                                    disabled={deletingId === user._id}
-                                                    className="px-3 py-1.5 text-xs font-bold text-red-600 bg-red-50 hover:bg-red-100 border border-red-200 rounded-lg transition-colors disabled:opacity-50"
-                                                >
-                                                    {deletingId === user._id ? '...' : '🗑 Delete'}
-                                                </button>
-                                            </div>
+                                            {currentUser?.role !== 'admin_viewer' ? (
+                                                <div className="flex justify-end gap-2">
+                                                    <button
+                                                        onClick={() => handleOpenModal(user)}
+                                                        className="px-3 py-1.5 text-xs font-bold text-indigo-600 bg-indigo-50 hover:bg-indigo-100 border border-indigo-200 rounded-lg transition-colors"
+                                                    >
+                                                        ✏️ Edit
+                                                    </button>
+                                                    <button
+                                                        onClick={() => handleDelete(user)}
+                                                        disabled={deletingId === user._id}
+                                                        className="px-3 py-1.5 text-xs font-bold text-red-600 bg-red-50 hover:bg-red-100 border border-red-200 rounded-lg transition-colors disabled:opacity-50"
+                                                    >
+                                                        {deletingId === user._id ? '...' : '🗑 Delete'}
+                                                    </button>
+                                                </div>
+                                            ) : (
+                                                <div className="text-right text-gray-400 text-xs italic">View Only</div>
+                                            )}
                                         </td>
                                     </tr>
                                 ))
@@ -284,6 +296,7 @@ const Users = () => {
                                     <option value="employee">👷 Employee</option>
                                     <option value="team_leader">👨‍💼 Team Leader</option>
                                     <option value="admin">🛡 Admin</option>
+                                    <option value="admin_viewer">👁 Admin Viewer</option>
                                 </select>
                             </div>
 

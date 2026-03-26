@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import api from '../services/api';
+import { useAuth } from '../context/AuthContext';
 import { ChevronRight, ChevronLeft, Trash2, Box, ArrowLeft, CheckCircle, Loader } from 'lucide-react';
 
 const CATEGORIES = ['Primary', 'Upper Primary', 'Secondary', 'Higher Secondary', 'Residential'];
@@ -8,6 +9,7 @@ const STATUSES = ['active', 'completed', 'on-hold'];
 const today = new Date().toISOString().split('T')[0];
 
 const EditProjectWizard = () => {
+    const { user: currentUser } = useAuth();
     const { id } = useParams();
     const navigate = useNavigate();
     const [step, setStep] = useState(1);
@@ -35,6 +37,10 @@ const EditProjectWizard = () => {
 
     // ── Load existing project + master data ─────────────────────────
     useEffect(() => {
+        if (currentUser?.role === 'admin_viewer') {
+            navigate(`/projects/${id}`);
+            return;
+        }
         const load = async () => {
             try {
                 const [projRes, prodRes, usersRes] = await Promise.all([

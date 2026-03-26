@@ -25,18 +25,18 @@ const ProtectedRoute = ({ children }) => {
   if (loading) return <div>Loading...</div>;
   if (!user) return <Navigate to="/login" />;
   
-  if (user.role !== 'admin') {
+  if (user.role !== 'admin' && user.role !== 'admin_viewer') {
     logout();
     return <Navigate to="/login" />;
   }
 
   return (
-    <div className="flex bg-gray-50 min-h-screen">
+    <div className="flex bg-gray-50 h-screen overflow-hidden">
       <Sidebar isOpen={isSidebarOpen} setIsOpen={setIsSidebarOpen} />
       
-      <div className="flex-1 flex flex-col min-h-screen overflow-hidden">
+      <div className="flex-1 flex flex-col h-screen overflow-hidden">
         {/* Mobile Header */}
-        <div className="md:hidden bg-white border-b p-4 flex items-center justify-between">
+        <div className="md:hidden bg-white border-b p-4 flex items-center justify-between z-10">
             <div className="flex items-center gap-3">
               <button 
                   onClick={() => setIsSidebarOpen(true)}
@@ -46,11 +46,10 @@ const ProtectedRoute = ({ children }) => {
               </button>
               <h1 className="text-xl font-bold text-primary">TMS Admin</h1>
             </div>
-            {/* Optional: Add user avatar or other quick actions here for mobile */}
         </div>
 
         {/* Main Content Area */}
-        <div className="flex-1 p-4 md:p-8 overflow-auto">
+        <div className="flex-1 p-4 md:p-8 overflow-y-auto w-full relative">
           {children}
         </div>
       </div>

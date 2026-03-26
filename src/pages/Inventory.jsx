@@ -1,9 +1,10 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import api from '../services/api';
-import { Plus, Package, Trash2, Upload, Download, CheckCircle, XCircle, Loader2 } from 'lucide-react';
-import { useRef } from 'react';
+import { useAuth } from '../context/AuthContext';
+import { Plus, Package, Trash2, Upload, Download, CheckCircle, XCircle, Loader2, Search, Filter, Warehouse, List, ArrowDownUp, AlertCircle, RefreshCw, Layers } from 'lucide-react';
 
 const Inventory = () => {
+    const { user: currentUser } = useAuth();
     const [products, setProducts] = useState([]);
     const [warehouses, setWarehouses] = useState([]);
     const [activeTab, setActiveTab] = useState('products'); // 'products' or 'warehouses' or 'logs'
@@ -324,51 +325,53 @@ const Inventory = () => {
                     <p className="text-gray-500 text-sm">Manage products, warehouses, and stock levels.</p>
                 </div>
 
-                <div className="flex flex-wrap gap-2">
-                    <button onClick={() => setShowAddStockModal(true)} className="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded flex items-center gap-2 transition-colors">
-                        <Plus size={18} /> Add Stock
-                    </button>
-                    <button onClick={() => setShowTransferStockModal(true)} className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded flex items-center gap-2 transition-colors">
-                        <Package size={18} /> Transfer
-                    </button>
-                    {/* CSV Buttons */}
-                    <button
-                        onClick={downloadTemplate}
-                        className="bg-gray-600 hover:bg-gray-700 text-white px-4 py-2 rounded flex items-center gap-2 transition-colors"
-                        title="Download CSV Template"
-                    >
-                        <Download size={18} /> CSV Template
-                    </button>
-                    <button
-                        onClick={() => csvInputRef.current?.click()}
-                        disabled={csvUploading}
-                        className="bg-orange-500 hover:bg-orange-600 disabled:opacity-60 text-white px-4 py-2 rounded flex items-center gap-2 transition-colors"
-                        title="Bulk Upload Products via CSV"
-                    >
-                        {csvUploading
-                            ? <><Loader2 size={18} className="animate-spin" /> Uploading {csvProgress.current}/{csvProgress.total}...</>
-                            : <><Upload size={18} /> Bulk Upload</>}
-                    </button>
-                    <input
-                        ref={csvInputRef}
-                        type="file"
-                        accept=".csv"
-                        className="hidden"
-                        onChange={handleCSVUpload}
-                    />
-                    <button
-                        onClick={() => { setActiveTab('products'); setShowProductModal(true); }}
-                        className="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded flex items-center gap-2 transition-colors"
-                    >
-                        <Plus size={18} /> New Product
-                    </button>
-                    <button
-                        onClick={() => { setActiveTab('warehouses'); setShowWarehouseModal(true); }}
-                        className="bg-purple-600 hover:bg-purple-700 text-white px-4 py-2 rounded flex items-center gap-2 transition-colors"
-                    >
-                        <Plus size={18} /> New Warehouse
-                    </button>
-                </div>
+                {currentUser?.role !== 'admin_viewer' && (
+                    <div className="flex flex-wrap gap-2">
+                        <button onClick={() => setShowAddStockModal(true)} className="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg text-sm font-medium flex items-center gap-2 transition-colors">
+                            <Plus size={18} /> Add Stock
+                        </button>
+                        <button onClick={() => setShowTransferStockModal(true)} className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg text-sm font-medium flex items-center gap-2 transition-colors">
+                            <Package size={18} /> Transfer
+                        </button>
+                        {/* CSV Buttons */}
+                        <button
+                            onClick={downloadTemplate}
+                            className="bg-gray-600 hover:bg-gray-700 text-white px-4 py-2 rounded-lg text-sm font-medium flex items-center gap-2 transition-colors"
+                            title="Download CSV Template"
+                        >
+                            <Download size={18} /> CSV Template
+                        </button>
+                        <button
+                            onClick={() => csvInputRef.current?.click()}
+                            disabled={csvUploading}
+                            className="bg-orange-500 hover:bg-orange-600 disabled:opacity-60 text-white px-4 py-2 rounded-lg text-sm font-medium flex items-center gap-2 transition-colors"
+                            title="Bulk Upload Products via CSV"
+                        >
+                            {csvUploading
+                                ? <><Loader2 size={18} className="animate-spin" /> Uploading {csvProgress.current}/{csvProgress.total}...</>
+                                : <><Upload size={18} /> Bulk Upload</>}
+                        </button>
+                        <input
+                            ref={csvInputRef}
+                            type="file"
+                            accept=".csv"
+                            className="hidden"
+                            onChange={handleCSVUpload}
+                        />
+                        <button
+                            onClick={() => { setActiveTab('products'); setShowProductModal(true); }}
+                            className="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-lg text-sm font-medium flex items-center gap-2 transition-colors"
+                        >
+                            <Plus size={18} /> New Product
+                        </button>
+                        <button
+                            onClick={() => { setActiveTab('warehouses'); setShowWarehouseModal(true); }}
+                            className="bg-purple-600 hover:bg-purple-700 text-white px-4 py-2 rounded-lg text-sm font-medium flex items-center gap-2 transition-colors"
+                        >
+                            <Plus size={18} /> New Warehouse
+                        </button>
+                    </div>
+                )}
             </div>
 
             {/* Tabs */}
@@ -513,21 +516,25 @@ const Inventory = () => {
                                                 </td>
                                                 {/* Actions */}
                                                 <td className="p-4">
-                                                    <div className="flex items-center justify-end gap-2">
-                                                        <button
-                                                            onClick={() => openEditModal(p)}
-                                                            className="px-3 py-1.5 text-xs font-bold text-indigo-600 bg-indigo-50 hover:bg-indigo-100 border border-indigo-200 rounded-lg transition-colors"
-                                                        >
-                                                            ✏️ Edit
-                                                        </button>
-                                                        <button
-                                                            onClick={() => handleDeleteProduct(p)}
-                                                            disabled={deletingId === p._id}
-                                                            className="px-3 py-1.5 text-xs font-bold text-red-600 bg-red-50 hover:bg-red-100 border border-red-200 rounded-lg transition-colors disabled:opacity-50"
-                                                        >
-                                                            {deletingId === p._id ? '...' : '🗑 Delete'}
-                                                        </button>
-                                                    </div>
+                                                    {currentUser?.role !== 'admin_viewer' ? (
+                                                        <div className="flex items-center justify-end gap-2">
+                                                            <button
+                                                                onClick={() => openEditModal(p)}
+                                                                className="px-3 py-1.5 text-xs font-bold text-indigo-600 bg-indigo-50 hover:bg-indigo-100 border border-indigo-200 rounded-lg transition-colors"
+                                                            >
+                                                                ✏️ Edit
+                                                            </button>
+                                                            <button
+                                                                onClick={() => handleDeleteProduct(p)}
+                                                                disabled={deletingId === p._id}
+                                                                className="px-3 py-1.5 text-xs font-bold text-red-600 bg-red-50 hover:bg-red-100 border border-red-200 rounded-lg transition-colors disabled:opacity-50"
+                                                            >
+                                                                {deletingId === p._id ? '...' : '🗑 Delete'}
+                                                            </button>
+                                                        </div>
+                                                    ) : (
+                                                        <div className="text-right text-gray-400 text-xs italic">View Only</div>
+                                                    )}
                                                 </td>
                                             </tr>
                                         );
@@ -665,8 +672,8 @@ const Inventory = () => {
 
             {/* Product Modal */}
             {showProductModal && (
-                <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 overflow-y-auto">
-                    <div className="bg-white p-6 rounded-lg w-full max-w-lg my-8">
+                <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center p-4 overflow-y-auto">
+                    <div className="bg-white p-6 rounded-xl shadow-xl w-full max-w-lg my-8">
                         <h3 className="text-xl font-bold mb-4">Add Product</h3>
                         <div className="grid grid-cols-2 gap-4">
                             <input className="border p-2 mb-2 rounded" placeholder="Name" onChange={e => setNewProduct({ ...newProduct, name: e.target.value })} />
@@ -807,8 +814,8 @@ const Inventory = () => {
 
             {/* Warehouse Modal */}
             {showWarehouseModal && (
-                <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4">
-                    <div className="bg-white p-6 rounded-lg w-full max-w-md">
+                <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center p-4">
+                    <div className="bg-white p-6 rounded-xl shadow-xl w-full max-w-md">
                         <h3 className="text-xl font-bold mb-4">Add Warehouse</h3>
                         <input className="w-full border p-2 mb-2 rounded" placeholder="Name" onChange={e => setNewWarehouse({ ...newWarehouse, name: e.target.value })} />
                         <input className="w-full border p-2 mb-2 rounded" placeholder="Location" onChange={e => setNewWarehouse({ ...newWarehouse, location: e.target.value })} />
@@ -822,8 +829,8 @@ const Inventory = () => {
 
             {/* Stock Operations Modals */}
             {showAddStockModal && (
-                <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
-                    <div className="bg-white p-6 rounded-lg w-full max-w-md">
+                <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center p-4 z-50">
+                    <div className="bg-white p-6 rounded-xl shadow-xl w-full max-w-md">
                         <h3 className="text-xl font-bold mb-4">Add Stock</h3>
                         <select className="w-full border p-2 mb-2 rounded" onChange={e => setStockData({ ...stockData, productId: e.target.value })}>
                             <option value="">Select Product</option>
@@ -843,8 +850,8 @@ const Inventory = () => {
             )}
 
             {showTransferStockModal && (
-                <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
-                    <div className="bg-white p-6 rounded-lg w-full max-w-md">
+                <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center p-4 z-50">
+                    <div className="bg-white p-6 rounded-xl shadow-xl w-full max-w-md">
                         <h3 className="text-xl font-bold mb-4">Transfer Stock</h3>
                         <select className="w-full border p-2 mb-2 rounded" onChange={e => setTransferData({ ...transferData, productId: e.target.value })}>
                             <option value="">Select Product</option>
@@ -869,8 +876,8 @@ const Inventory = () => {
 
             {/* Warehouse Stock Modal */}
             {showWarehouseStockModal && selectedWarehouse && (
-                <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
-                    <div className="bg-white p-6 rounded-lg w-full max-w-3xl h-[80vh] flex flex-col">
+                <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center p-4 z-50">
+                    <div className="bg-white p-6 rounded-xl shadow-xl w-full max-w-3xl h-[80vh] flex flex-col">
                         <div className="flex justify-between items-center mb-4">
                             <div>
                                 <h3 className="text-xl font-bold">Stock in {selectedWarehouse.name}</h3>
@@ -926,8 +933,8 @@ const Inventory = () => {
                 const succeeded = uploadReport.results.filter(r => r.status === 'success').length;
                 const failed = uploadReport.results.filter(r => r.status === 'failed').length;
                 return (
-                    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
-                        <div className="bg-white p-6 rounded-lg w-full max-w-2xl max-h-[85vh] flex flex-col">
+                    <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center p-4 z-50">
+                        <div className="bg-white p-6 rounded-xl shadow-xl w-full max-w-2xl max-h-[85vh] flex flex-col">
                             <h3 className="text-xl font-bold mb-1">📊 Upload Report</h3>
                             <p className="text-sm text-gray-500 mb-4">
                                 {uploadReport.results.length} rows processed
@@ -985,8 +992,8 @@ const Inventory = () => {
             })()}
             {/* Edit Product Modal */}
             {showEditModal && editProduct && (
-                <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50 overflow-y-auto">
-                    <div className="bg-white p-6 rounded-lg w-full max-w-2xl my-8">
+                <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center p-4 z-50 overflow-y-auto">
+                    <div className="bg-white p-6 rounded-xl shadow-xl w-full max-w-2xl my-8">
                         <h3 className="text-xl font-bold mb-4">✏️ Edit Product</h3>
 
                         {/* Basic Details */}

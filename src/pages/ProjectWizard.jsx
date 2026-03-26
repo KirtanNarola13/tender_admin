@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import api from '../services/api';
+import { useAuth } from '../context/AuthContext';
 import { ChevronRight, ChevronLeft, Trash2, Box, ArrowLeft, CheckCircle, Loader } from 'lucide-react';
 
 const CATEGORIES = ['Primary', 'Upper Primary', 'Secondary', 'Higher Secondary', 'Residential'];
@@ -8,6 +9,7 @@ const CATEGORIES = ['Primary', 'Upper Primary', 'Secondary', 'Higher Secondary',
 const today = new Date().toISOString().split('T')[0];
 
 const ProjectWizard = () => {
+    const { user: currentUser } = useAuth();
     const navigate = useNavigate();
     const [step, setStep] = useState(1);
     const [loading, setLoading] = useState(false);
@@ -29,6 +31,10 @@ const ProjectWizard = () => {
     const [dataLoading, setDataLoading] = useState(true);
 
     useEffect(() => {
+        if (currentUser?.role === 'admin_viewer') {
+            navigate('/projects');
+            return;
+        }
         fetchInitialData();
     }, []);
 

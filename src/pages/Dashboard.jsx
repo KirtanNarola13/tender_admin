@@ -48,7 +48,7 @@ const Dashboard = () => {
 
     return (
         <div className="space-y-8">
-            <h1 className="text-3xl font-bold text-gray-800">Corporate Dashboard</h1>
+            <h1 className="text-2xl font-bold text-gray-900 tracking-tight mb-1">Corporate Dashboard</h1>
 
             {/* Key Metrics Grid */}
             <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
@@ -87,8 +87,8 @@ const Dashboard = () => {
             {/* Charts Section */}
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
                 {/* Project Progress Overview */}
-                <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100 lg:col-span-1 flex flex-col">
-                    <h3 className="text-lg font-semibold text-gray-700 mb-4">Project Progress</h3>
+                <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-200 lg:col-span-1 flex flex-col">
+                    <h3 className="text-lg font-semibold text-gray-900 mb-4">Project Progress</h3>
                     <div className="flex-grow overflow-y-auto pr-2 custom-scrollbar" style={{ maxHeight: '400px' }}>
                         <div style={{ height: `${Math.max(300, (stats.projectStats?.length || 0) * 45)}px`, width: '100%' }}>
                             <ResponsiveContainer width="100%" height="100%">
@@ -129,8 +129,8 @@ const Dashboard = () => {
                 </div>
 
                 {/* Inventory Stock Chart */}
-                <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100 lg:col-span-2">
-                    <h3 className="text-lg font-semibold text-gray-700 mb-4">Inventory Stock Levels</h3>
+                <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-200 lg:col-span-2">
+                    <h3 className="text-lg font-semibold text-gray-900 mb-4">Inventory Stock Levels</h3>
                     <div className="h-80 overflow-y-auto pr-2 custom-scrollbar">
                         <div style={{ height: `${Math.max(300, (stats.inventoryStats?.length || 0) * 45)}px`, width: '100%' }}>
                             <ResponsiveContainer width="100%" height="100%">
@@ -201,7 +201,7 @@ const Dashboard = () => {
 
 // Helper Component for Stats
 const StatCard = ({ title, count, icon: Icon, color }) => (
-    <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100 flex items-center justify-between hover:shadow-md transition-shadow">
+    <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-200 flex items-center justify-between hover:shadow-md transition-shadow">
         <div>
             <p className="text-gray-500 text-sm font-medium uppercase tracking-wide">{title}</p>
             <h3 className="text-3xl font-bold text-gray-900 mt-1">{count}</h3>

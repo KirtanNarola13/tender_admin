@@ -3,8 +3,9 @@ import { useParams, useNavigate } from 'react-router-dom';
 import api, { getImageUrl } from '../services/api';
 import {
     Package, CheckCircle, Clock, AlertCircle,
-    FileText, Upload, ArrowLeft, Pencil, Trash2
+    FileText, Upload, ArrowLeft, Pencil, Trash2, ChevronDown
 } from 'lucide-react';
+import { useAuth } from '../context/AuthContext';
 import ImageModal from '../components/ImageModal';
 import DeleteConfirmModal from '../components/DeleteConfirmModal';
 
@@ -12,6 +13,7 @@ const CATEGORIES = ['Primary', 'Upper Primary', 'Secondary', 'Higher Secondary',
 const STATUSES = ['active', 'completed', 'on-hold'];
 
 const ProjectDetails = () => {
+    const { user: currentUser } = useAuth();
     const { id } = useParams();
     const navigate = useNavigate();
     const [project, setProject] = useState(null);
@@ -20,6 +22,14 @@ const ProjectDetails = () => {
     const [uploading, setUploading] = useState(false);
     const [previewImage, setPreviewImage] = useState(null);
     const [showDeleteModal, setShowDeleteModal] = useState(false);
+    const [expandedProducts, setExpandedProducts] = useState({});
+
+    const toggleProduct = (productId) => {
+        setExpandedProducts(prev => ({
+            ...prev,
+            [productId]: !prev[productId]
+        }));
+    };
 
     const handleDelete = async () => {
         setShowDeleteModal(true);
@@ -112,19 +122,24 @@ const ProjectDetails = () => {
         });
     }
 
+    const totalTasksCount = tasks.length;
+    const completedTasksCount = tasks.filter(t => ['completed', 'verified', 'submitted'].includes(t.status)).length;
+    const pendingTasksCount = totalTasksCount - completedTasksCount;
+    const projectProgressPercent = totalTasksCount > 0 ? Math.round((completedTasksCount / totalTasksCount) * 100) : 0;
+
     return (
-        <div className="p-4 md:p-6 max-w-7xl mx-auto">
+        <div className="w-full max-w-7xl mx-auto space-y-4 sm:space-y-6 pb-8">
 
             {/* ── Page Header ─────────────────────────────────────── */}
-            <div className="flex items-center justify-between mb-6 gap-4">
-                <div className="flex items-center gap-3">
+            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+                <div className="flex items-center gap-3 w-full sm:w-auto">
                     {/* Back Button */}
                     <button
                         onClick={() => navigate('/projects')}
-                        className="flex items-center gap-1.5 px-3 py-2 rounded-lg border border-gray-200 bg-white text-gray-600 hover:bg-gray-50 hover:border-gray-300 transition text-sm font-medium shadow-sm"
+                        className="flex shrink-0 w-9 h-9 sm:w-auto sm:h-auto items-center justify-center sm:px-3 sm:py-2 rounded-lg border border-gray-200 bg-white text-gray-600 hover:bg-gray-50 hover:border-gray-300 transition text-sm font-medium shadow-sm"
                     >
                         <ArrowLeft size={16} />
-                        <span className="hidden sm:inline">Back</span>
+                        <span className="hidden sm:inline ml-1.5">Back</span>
                     </button>
                     <div>
                         <h1 className="text-xl md:text-2xl font-bold text-gray-900 leading-tight">{project.name}</h1>
@@ -137,32 +152,34 @@ const ProjectDetails = () => {
                 </div>
 
                 {/* Action Buttons */}
-                <div className="flex items-center gap-2">
-                    <button
-                        onClick={handleDelete}
-                        className="flex items-center gap-2 px-4 py-2 rounded-lg border border-red-200 bg-red-50 text-red-600 hover:bg-red-100 transition text-sm font-semibold shadow-sm"
-                        title="Delete Project"
-                    >
-                        <Trash2 size={15} />
-                        <span className="hidden sm:inline">Delete Project</span>
-                    </button>
-                    <button
-                        onClick={() => navigate(`/projects/${id}/edit`)}
-                        className="flex items-center gap-2 px-4 py-2 rounded-lg bg-primary text-white hover:bg-opacity-90 transition text-sm font-semibold shadow"
-                    >
-                        <Pencil size={15} />
-                        <span>Edit Project</span>
-                    </button>
-                </div>
+                {currentUser?.role !== 'admin_viewer' && (
+                    <div className="flex items-center justify-end gap-2 w-full sm:w-auto mt-2 sm:mt-0">
+                        <button
+                            onClick={handleDelete}
+                            className="flex flex-1 sm:flex-none justify-center items-center gap-2 px-3 sm:px-4 py-2.5 sm:py-2 rounded-lg border border-red-200 bg-red-50 text-red-600 hover:bg-red-100 transition text-sm font-semibold shadow-sm"
+                            title="Delete Project"
+                        >
+                            <Trash2 size={15} />
+                            <span className="inline">Delete</span>
+                        </button>
+                        <button
+                            onClick={() => navigate(`/projects/${id}/edit`)}
+                            className="flex flex-1 sm:flex-none justify-center items-center gap-2 px-3 sm:px-4 py-2.5 sm:py-2 rounded-lg bg-primary text-white hover:bg-opacity-90 transition text-sm font-semibold shadow"
+                        >
+                            <Pencil size={15} />
+                            <span>Edit</span>
+                        </button>
+                    </div>
+                )}
             </div>
 
             {/* Description */}
             {project.description && (
-                <p className="text-gray-500 mb-6 text-sm">{project.description}</p>
+                <p className="text-gray-500 text-sm leading-relaxed">{project.description}</p>
             )}
 
             {/* ── Info Cards ──────────────────────────────────────── */}
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-3 sm:gap-4">
                 <div className="bg-white p-4 rounded-lg shadow-sm border border-gray-100">
                     <span className="text-gray-400 block text-xs font-medium uppercase tracking-wide mb-1">Client</span>
                     <span className="font-bold text-gray-800">{project.client || '—'}</span>
@@ -187,9 +204,37 @@ const ProjectDetails = () => {
                 </div>
             </div>
 
+            {/* ── Overall Progress ──────────────────────────────────── */}
+            <div className="bg-white p-4 sm:p-5 rounded-lg shadow-sm border border-gray-100 flex flex-col md:flex-row justify-between items-start md:items-center gap-4 sm:gap-5">
+                <div className="flex items-center gap-3 sm:gap-4 w-full md:w-auto">
+                    <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-full bg-blue-50 flex items-center justify-center shrink-0">
+                        <CheckCircle className="text-blue-600" size={24} />
+                    </div>
+                    <div>
+                        <h2 className="text-base font-bold text-gray-900 mb-1">Overall Tasks Overview</h2>
+                        <div className="flex flex-wrap items-center gap-2 text-xs font-semibold">
+                            <span className="px-2 py-1 rounded bg-gray-100 text-gray-600">Total: {totalTasksCount}</span>
+                            <span className="px-2 py-1 rounded bg-blue-50 text-blue-600">Completed: {completedTasksCount}</span>
+                            <span className="px-2 py-1 rounded bg-orange-50 text-orange-600">Pending: {pendingTasksCount}</span>
+                        </div>
+                    </div>
+                </div>
+                <div className="w-full sm:w-1/2 flex items-center gap-4 mt-2 sm:mt-0">
+                    <div className="w-full bg-gray-100 rounded-full h-2.5 overflow-hidden">
+                        <div 
+                            className={`h-full rounded-full transition-all duration-500 ${projectProgressPercent === 100 ? 'bg-green-500' : 'bg-primary'}`} 
+                            style={{ width: `${projectProgressPercent}%` }}
+                        ></div>
+                    </div>
+                    <span className="text-sm font-bold text-gray-700 w-10 text-right">
+                        {projectProgressPercent}%
+                    </span>
+                </div>
+            </div>
+
             {/* ── Handover Letter Section ──────────────────────────── */}
-            <div className="bg-white p-5 rounded-lg shadow-sm mb-8 border border-gray-100">
-                <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+            <div className="bg-white p-4 sm:p-5 rounded-lg shadow-sm border border-gray-100">
+                <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 w-full">
                     <div>
                         <h2 className="text-base font-bold flex items-center gap-2">
                             <FileText className="text-blue-600" size={18} />
@@ -214,25 +259,31 @@ const ProjectDetails = () => {
                                 >
                                     View Document
                                 </a>
-                                <label className="cursor-pointer px-4 py-2 bg-gray-100 text-gray-600 rounded-lg hover:bg-gray-200 text-sm font-semibold transition">
-                                    {uploading ? 'Updating...' : 'Replace'}
-                                    <input type="file" className="hidden" accept=".pdf,.jpg,.jpeg,.png" onChange={handleFileUpload} disabled={uploading} />
-                                </label>
+                                {currentUser?.role !== 'admin_viewer' && (
+                                    <label className="cursor-pointer px-4 py-2 bg-gray-100 text-gray-600 rounded-lg hover:bg-gray-200 text-sm font-semibold transition">
+                                        {uploading ? 'Updating...' : 'Replace'}
+                                        <input type="file" className="hidden" accept=".pdf,.jpg,.jpeg,.png" onChange={handleFileUpload} disabled={uploading} />
+                                    </label>
+                                )}
                             </div>
                         ) : (
-                            <label className="cursor-pointer flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition shadow text-sm font-semibold">
-                                <Upload size={15} />
-                                {uploading ? 'Uploading...' : 'Upload Letter'}
-                                <input type="file" className="hidden" accept=".pdf,.jpg,.jpeg,.png" onChange={handleFileUpload} disabled={uploading} />
-                            </label>
+                            currentUser?.role !== 'admin_viewer' ? (
+                                <label className="cursor-pointer flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition shadow text-sm font-semibold">
+                                    <Upload size={15} />
+                                    {uploading ? 'Uploading...' : 'Upload Letter'}
+                                    <input type="file" className="hidden" accept=".pdf,.jpg,.jpeg,.png" onChange={handleFileUpload} disabled={uploading} />
+                                </label>
+                            ) : (
+                                <span className="text-sm font-medium text-gray-400">Not Uploaded</span>
+                            )
                         )}
                     </div>
                 </div>
             </div>
 
             {/* ── Product Progress ─────────────────────────────────── */}
-            <h2 className="text-lg font-bold mb-4">Product Progress</h2>
-            <div className="space-y-6">
+            <h2 className="text-lg font-bold mb-2">Product Progress</h2>
+            <div className="space-y-4">
                 {project.products?.filter(item => item.product).map((item) => {
                     const prodTasks = tasksByProduct[item.product._id] || [];
                     prodTasks.sort((a, b) => a.sequence - b.sequence);
@@ -240,34 +291,49 @@ const ProjectDetails = () => {
                     const total = prodTasks.length;
                     const percent = total > 0 ? Math.round((completed / total) * 100) : 0;
 
-                    return (
-                        <div key={item._id} className="bg-white rounded-lg shadow-sm border overflow-hidden">
-                            <div className="bg-gray-50 p-4 border-b flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
-                                <div className="flex items-center gap-3">
-                                    <Package className="text-primary" />
-                                    <div>
-                                        <h3 className="font-bold">{item.product.name}</h3>
-                                        <span className="text-xs text-gray-500">Planned Qty: {item.plannedQuantity}</span>
-                                    </div>
-                                </div>
-                                <div className="flex items-center gap-4">
-                                    <div className="text-right">
-                                        <span className="block font-bold text-lg">{percent}%</span>
-                                        <span className="text-xs text-gray-500">{completed}/{total} Steps</span>
-                                    </div>
-                                    <div className="w-28 h-2 bg-gray-200 rounded-full overflow-hidden">
-                                        <div
-                                            className="h-full rounded-full transition-all duration-500"
-                                            style={{
-                                                width: `${percent}%`,
-                                                background: percent === 100 ? '#16a34a' : '#3b82f6'
-                                            }}
-                                        />
-                                    </div>
-                                </div>
-                            </div>
+                    const isExpanded = !!expandedProducts[item._id];
 
-                            <div className="p-4 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                    return (
+                        <div key={item._id} className="bg-white rounded-lg shadow-sm border overflow-hidden transition-all duration-300">
+                            <button 
+                                onClick={() => toggleProduct(item._id)}
+                                className="w-full text-left bg-gray-50 hover:bg-gray-100 p-4 flex flex-col lg:flex-row justify-between items-start lg:items-center gap-4 transition-colors focus:outline-none"
+                            >
+                                <div className="flex items-center gap-3">
+                                    <div className="w-10 h-10 rounded-lg bg-blue-50 flex items-center justify-center border border-blue-100 shrink-0">
+                                        <Package className="text-blue-600" size={20} />
+                                    </div>
+                                    <div>
+                                        <h3 className="font-bold text-gray-900">{item.product.name}</h3>
+                                        <span className="text-xs text-gray-500 font-medium tracking-wide uppercase">Planned Qty: {item.plannedQuantity}</span>
+                                    </div>
+                                </div>
+                                <div className="flex items-center justify-between w-full lg:w-auto gap-5">
+                                    <div className="flex items-center gap-3 shrink-0">
+                                        <div className="text-right hidden sm:block">
+                                            <span className="block font-bold text-lg leading-none">{percent}%</span>
+                                        </div>
+                                        <div className="w-32 lg:w-40 h-2.5 bg-gray-200 rounded-full overflow-hidden shrink-0">
+                                            <div
+                                                className="h-full rounded-full transition-all duration-500"
+                                                style={{
+                                                    width: `${percent}%`,
+                                                    background: percent === 100 ? '#16a34a' : '#3b82f6'
+                                                }}
+                                            />
+                                        </div>
+                                        <div className="text-right">
+                                            <span className="text-xs font-bold text-gray-600 bg-gray-100 px-2 py-1 rounded border border-gray-200">{completed}/{total} Steps</span>
+                                        </div>
+                                    </div>
+                                    <ChevronDown 
+                                        size={20} 
+                                        className={`text-gray-400 transition-transform duration-300 shrink-0 ${isExpanded ? 'rotate-180' : ''}`}
+                                    />
+                                </div>
+                            </button>
+
+                            <div className={`${isExpanded ? 'grid' : 'hidden'} p-5 grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 border-t border-gray-100 bg-white`}>
                                 {prodTasks.map(task => (
                                     <div
                                         key={task._id}

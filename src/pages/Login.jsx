@@ -18,7 +18,7 @@ const Login = () => {
 
         try {
             const userData = await login(email, password);
-            if (userData.role !== 'admin') {
+            if (userData.role !== 'admin' && userData.role !== 'admin_viewer') {
                 logout();
                 setError('Access denied. Admin privileges required to access this dashboard.');
                 return;

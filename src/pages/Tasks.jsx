@@ -1,14 +1,19 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import api from '../services/api';
 import {
     Eye,
     CheckCircle,
-    XCircle,
     Search,
     Filter,
     Calendar,
     User,
-    Briefcase
+    Briefcase,
+    ChevronDown,
+    FolderKanban,
+    Package,
+    Clock,
+    AlertCircle,
+    Layout
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 
@@ -18,6 +23,10 @@ const Tasks = () => {
     const [loading, setLoading] = useState(true);
     const [searchQuery, setSearchQuery] = useState('');
     const [statusFilter, setStatusFilter] = useState('all');
+
+    // Expand/Collapse state
+    const [expandedTeams, setExpandedTeams] = useState({});
+    const [expandedProjects, setExpandedProjects] = useState({});
 
     const navigate = useNavigate();
 
@@ -49,7 +58,8 @@ const Tasks = () => {
             result = result.filter(task =>
                 (task.title && task.title.toLowerCase().includes(lowerQuery)) ||
                 (task.project?.name && task.project.name.toLowerCase().includes(lowerQuery)) ||
-                (task.assignedTo?.name && task.assignedTo.name.toLowerCase().includes(lowerQuery))
+                (task.assignedTo?.name && task.assignedTo.name.toLowerCase().includes(lowerQuery)) ||
+                (task.stepName && task.stepName.toLowerCase().includes(lowerQuery))
             );
         }
 
@@ -61,35 +71,59 @@ const Tasks = () => {
         setFilteredTasks(result);
     };
 
-    const verifyTask = async (taskId, status, reason = '') => {
-        if (!window.confirm(`Are you sure you want to ${status === 'verified' ? 'approve' : 'reject'} this task?`)) return;
-
-        try {
-            await api.put(`/tasks/${taskId}`, { status, rejectionReason: reason });
-            // Optimistic Update
-            setTasks(prev => prev.map(t => t._id === taskId ? { ...t, status: status } : t));
-        } catch (error) {
-            alert('Verification failed');
-            fetchTasks(); // Revert on failure
-        }
+    const toggleTeam = (teamId) => {
+        setExpandedTeams(prev => ({ ...prev, [teamId]: !prev[teamId] }));
     };
 
-    const formatDate = (dateString) => {
-        if (!dateString) return '-';
-        return new Date(dateString).toLocaleDateString('en-GB', {
-            day: '2-digit', month: 'short', year: 'numeric'
-        });
+    const toggleProject = (projectId) => {
+        setExpandedProjects(prev => ({ ...prev, [projectId]: !prev[projectId] }));
     };
 
-    const getStatusColor = (status) => {
-        switch (status) {
-            case 'completed': return 'bg-green-100 text-green-800 border-green-200';
-            case 'verified': return 'bg-blue-100 text-blue-800 border-blue-200';
-            case 'submitted': return 'bg-orange-100 text-orange-800 border-orange-200';
-            case 'in-progress': return 'bg-yellow-100 text-yellow-800 border-yellow-200';
-            default: return 'bg-gray-100 text-gray-800 border-gray-200';
-        }
-    };
+    const groupedData = useMemo(() => {
+        return filteredTasks.reduce((acc, task) => {
+            const teamName = task.assignedTo?.name || 'Unassigned Leader';
+            const teamId = task.assignedTo?._id || 'unassigned';
+            const role = task.assignedTo?.role ? task.assignedTo.role.replace('_', ' ') : '';
+            const projectName = task.project?.name || 'Unknown Project';
+            const projectId = task.project?._id || 'unknown_project';
+            const productName = task.product?.name || 'Overall Setup';
+            const productId = task.product?._id || 'overall_setup';
+
+            // Initialize Team
+            if (!acc[teamId]) {
+                acc[teamId] = {
+                    name: teamName,
+                    role: role,
+                    taskCount: 0,
+                    projects: {}
+                };
+            }
+
+            // Initialize Project under Team
+            if (!acc[teamId].projects[projectId]) {
+                acc[teamId].projects[projectId] = {
+                    name: projectName,
+                    taskCount: 0,
+                    products: {}
+                };
+            }
+
+            // Initialize Product under Project
+            if (!acc[teamId].projects[projectId].products[productId]) {
+                acc[teamId].projects[projectId].products[productId] = {
+                    name: productName,
+                    tasks: []
+                };
+            }
+
+            // Push Task and increment counts
+            acc[teamId].projects[projectId].products[productId].tasks.push(task);
+            acc[teamId].taskCount++;
+            acc[teamId].projects[projectId].taskCount++;
+
+            return acc;
+        }, {});
+    }, [filteredTasks]);
 
     if (loading) return (
         <div className="flex justify-center items-center h-64">
@@ -102,31 +136,29 @@ const Tasks = () => {
             {/* Header Section */}
             <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
                 <div>
-                    <h1 className="text-2xl font-bold text-gray-800">Task Management</h1>
-                    <p className="text-gray-500 text-sm mt-1">Monitor and manage all project tasks</p>
+                    <h1 className="text-2xl font-bold text-gray-900 tracking-tight">Task Management</h1>
+                    <p className="text-gray-500 text-sm mt-1">Monitor and manage all globally assigned tasks.</p>
                 </div>
             </div>
 
             {/* Filters & Search Toolbar */}
-            <div className="bg-white p-4 rounded-xl shadow-sm border border-gray-100 flex flex-col md:flex-row gap-4 items-center justify-between">
-
-                {/* Search Bar */}
+            <div className="bg-white p-4 rounded-xl shadow-sm border border-gray-200 flex flex-col md:flex-row gap-4 items-center justify-between">
                 <div className="relative w-full md:w-96">
-                    <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" size={20} />
+                    <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" size={18} />
                     <input
                         type="text"
                         placeholder="Search project, assignee, or task..."
-                        className="w-full pl-10 pr-4 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all"
+                        className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all text-sm"
                         value={searchQuery}
                         onChange={(e) => setSearchQuery(e.target.value)}
                     />
                 </div>
-
-                {/* Filter Dropdown */}
-                <div className="flex items-center gap-2 w-full md:w-auto">
-                    <Filter className="text-gray-400" size={20} />
+                <div className="flex items-center gap-3 w-full md:w-auto">
+                    <div className="flex items-center gap-2 text-sm text-gray-500 font-medium whitespace-nowrap">
+                        <Filter size={16} /> Filter:
+                    </div>
                     <select
-                        className="w-full md:w-48 px-4 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary bg-white"
+                        className="w-full sm:w-48 px-3 py-2 border border-gray-300 rounded-lg text-sm bg-white focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary"
                         value={statusFilter}
                         onChange={(e) => setStatusFilter(e.target.value)}
                     >
@@ -140,96 +172,124 @@ const Tasks = () => {
                 </div>
             </div>
 
-            {/* Tasks Table */}
-            <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
-                <div className="overflow-x-auto">
-                    <table className="w-full text-left">
-                        <thead className="bg-gray-50 border-b border-gray-200">
-                            <tr>
-                                <th className="px-6 py-4 font-semibold text-gray-600 text-sm uppercase tracking-wider">Project Info</th>
-                                <th className="px-6 py-4 font-semibold text-gray-600 text-sm uppercase tracking-wider">Assignee</th>
-                                <th className="px-6 py-4 font-semibold text-gray-600 text-sm uppercase tracking-wider">Status</th>
-                                <th className="px-6 py-4 font-semibold text-gray-600 text-sm uppercase tracking-wider text-right">Actions</th>
-                            </tr>
-                        </thead>
-                        <tbody className="divide-y divide-gray-100">
-                            {filteredTasks.map((task) => (
-                                <tr 
-                                    key={task._id} 
-                                    className="hover:bg-blue-50/50 transition-colors group cursor-pointer border-b border-gray-100 last:border-b-0"
-                                    onClick={() => navigate(`/tasks/${task._id}`)}
-                                >
-                                    <td className="px-6 py-4">
-                                        <div className="flex flex-col">
-                                            <div className="flex items-center gap-2 font-bold text-gray-900 text-base group-hover:text-primary transition-colors">
-                                                {task.stepName || 'Unnamed Step'}
-                                            </div>
-                                            <div className="flex items-center gap-2 text-sm font-medium text-gray-600 mt-0.5">
-                                                <Briefcase size={14} className="text-blue-500" />
-                                                {task.project?.name || 'Unknown Project'}
-                                            </div>
-                                            <span className="text-xs text-gray-400 flex items-center gap-1 mt-1">
-                                                <Calendar size={12} />
-                                                {task.project?.location || 'No Location'}
-                                            </span>
-                                        </div>
-                                    </td>
-                                    <td className="px-6 py-4">
-                                        <div className="flex items-center gap-3">
-                                            <div className="w-8 h-8 rounded-full bg-indigo-100 text-indigo-600 flex items-center justify-center font-bold text-xs">
-                                                {task.assignedTo?.name ? task.assignedTo.name.charAt(0).toUpperCase() : '?'}
-                                            </div>
-                                            <div>
-                                                <p className="text-sm font-medium text-gray-900">
-                                                    {task.assignedTo?.name || 'Unassigned'}
-                                                </p>
-                                                <p className="text-xs text-gray-500 capitalize">
-                                                    {task.assignedTo?.role ? task.assignedTo.role.replace('_', ' ') : 'Employee'}
-                                                </p>
-                                            </div>
-                                        </div>
-                                    </td>
-                                    <td className="px-6 py-4">
-                                        <span className={`px-3 py-1 rounded-full text-xs font-bold border ${getStatusColor(task.status)} uppercase tracking-wide`}>
-                                            {task.status}
-                                        </span>
-                                    </td>
-                                    <td className="px-6 py-4 text-right">
-                                        <div 
-                                            className="flex items-center justify-end gap-2 opacity-100 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity"
-                                            onClick={(e) => e.stopPropagation()}
-                                        >
-                                            <button
-                                                onClick={() => navigate(`/tasks/${task._id}`)}
-                                                className="p-2 rounded-lg hover:bg-blue-50 text-blue-600 transition-colors"
-                                                title="View Details"
-                                            >
-                                                <Eye size={18} />
-                                            </button>
-                                        </div>
-                                    </td>
-                                </tr>
-                            ))}
-                            {filteredTasks.length === 0 && (
-                                <tr>
-                                    <td colSpan="4" className="px-6 py-12 text-center text-gray-400">
-                                        <div className="flex flex-col items-center">
-                                            <Search size={48} className="mb-4 text-gray-200" />
-                                            <p className="text-lg font-medium">No tasks found</p>
-                                            <p className="text-sm">Try adjusting your search or filters</p>
-                                        </div>
-                                    </td>
-                                </tr>
-                            )}
-                        </tbody>
-                    </table>
-                </div>
+            {/* Nested Accordion View */}
+            <div className="space-y-6">
+                {Object.keys(groupedData).length === 0 ? (
+                    <div className="text-center py-16 bg-white rounded-xl shadow-sm border border-gray-200">
+                        <Search size={40} className="mx-auto text-gray-300 mb-4" />
+                        <h3 className="text-lg font-medium text-gray-900">No tasks found</h3>
+                        <p className="text-sm text-gray-500 mt-1">Try adjusting your search or filters.</p>
+                    </div>
+                ) : (
+                    Object.entries(groupedData).map(([teamId, teamData]) => (
+                        <div key={teamId} className="bg-white border border-gray-200 shadow-sm rounded-xl overflow-hidden transition-all">
+                            {/* Team Leader Header */}
+                            <button
+                                onClick={() => toggleTeam(teamId)}
+                                className="w-full p-5 flex items-center justify-between hover:bg-gray-50 transition-colors border-b border-gray-100 group"
+                            >
+                                <div className="flex items-center gap-4">
+                                    <div className="w-12 h-12 rounded-lg bg-indigo-50 text-indigo-600 flex items-center justify-center font-bold text-lg border border-indigo-100 shadow-sm group-hover:bg-indigo-100 transition-colors">
+                                        {teamData.name !== 'Unassigned Leader' ? teamData.name.charAt(0).toUpperCase() : '?'}
+                                    </div>
+                                    <div className="text-left">
+                                        <h2 className="text-lg font-bold text-gray-900 leading-tight">
+                                            {teamData.name}
+                                        </h2>
+                                        <p className="text-sm font-medium text-gray-500 capitalize mt-0.5">
+                                            {teamData.role || 'Team Leader'} • {teamData.taskCount} Tasks
+                                        </p>
+                                    </div>
+                                </div>
+                                <div className={`w-8 h-8 rounded-full flex items-center justify-center text-gray-400 transition-transform duration-300 ${expandedTeams[teamId] ? 'rotate-180 bg-gray-100 text-gray-600 shadow-sm' : 'bg-transparent group-hover:bg-gray-100'}`}>
+                                    <ChevronDown size={20} />
+                                </div>
+                            </button>
 
-                {/* Footer / Pagination Placeholder */}
-                <div className="px-6 py-4 border-t border-gray-200 bg-gray-50 text-xs text-gray-500 flex justify-between items-center">
-                    <span>Showing {filteredTasks.length} tasks</span>
-                    {/* Add pagination here if needed later */}
-                </div>
+                            {/* Projects Content under Team */}
+                            <div className={`${expandedTeams[teamId] ? 'block' : 'hidden'} p-4 bg-gray-50/50`}>
+                                <div className="space-y-5">
+                                    {Object.entries(teamData.projects).map(([projectId, projectData]) => (
+                                        <div key={projectId} className="bg-white border border-gray-200 rounded-lg shadow-sm overflow-hidden">
+                                            {/* Project Header */}
+                                            <button
+                                                onClick={() => toggleProject(projectId)}
+                                                className="w-full flex items-center justify-between p-4 hover:bg-gray-50 transition-all border-b border-gray-100"
+                                            >
+                                                <div className="flex items-center gap-3">
+                                                    <div className="w-8 h-8 rounded-md bg-blue-50 text-blue-600 flex items-center justify-center border border-blue-100">
+                                                        <FolderKanban size={16} strokeWidth={2.5} />
+                                                    </div>
+                                                    <div className="text-left">
+                                                        <h3 className="font-bold text-gray-900 text-base">{projectData.name}</h3>
+                                                        <span className="text-xs text-gray-500 font-medium">{projectData.taskCount} Active Tasks</span>
+                                                    </div>
+                                                </div>
+                                                <ChevronDown size={18} className={`text-gray-400 transition-transform ${expandedProjects[projectId] ? 'rotate-180' : ''}`} />
+                                            </button>
+
+                                            {/* Products & Tasks Content */}
+                                            <div className={`${expandedProjects[projectId] ? 'block' : 'hidden'} bg-gray-50 p-5 border-t border-gray-100`}>
+                                                <div className="space-y-8">
+                                                    {Object.entries(projectData.products).map(([productId, productData]) => (
+                                                        <div key={productId}>
+                                                            <div className="flex items-center gap-2 mb-4 px-1">
+                                                                <Package size={16} className="text-gray-500" />
+                                                                <h4 className="font-bold text-[13px] text-gray-800 uppercase tracking-widest">{productData.name}</h4>
+                                                                <div className="h-px bg-gray-200 flex-grow ml-2"></div>
+                                                            </div>
+                                                            <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
+                                                                {productData.tasks.map(task => (
+                                                                    <div
+                                                                        key={task._id}
+                                                                        onClick={() => navigate(`/tasks/${task._id}`)}
+                                                                        className={`p-4 rounded-xl border shadow-sm text-sm cursor-pointer transition-all hover:-translate-y-1 hover:shadow-md ${
+                                                                            task.status === 'completed' || task.status === 'verified'
+                                                                                ? 'bg-green-50/50 border-green-200/60'
+                                                                                : task.status === 'pending' || task.status === 'in-progress'
+                                                                                    ? 'bg-blue-50/50 border-blue-200/60'
+                                                                                    : 'bg-white border-gray-200'
+                                                                        }`}
+                                                                    >
+                                                                        <div className="flex justify-between items-start mb-4">
+                                                                            <span className="font-bold text-gray-900 text-[15px] leading-tight pr-2">
+                                                                                {task.sequence ? `Step ${task.sequence}: ` : ''}{task.stepName || 'Unnamed Step'}
+                                                                            </span>
+                                                                            {task.status === 'verified' && <CheckCircle size={18} className="text-green-600 flex-shrink-0" />}
+                                                                            {(task.status === 'completed' || task.status === 'submitted') && <Clock size={18} className="text-blue-600 flex-shrink-0" />}
+                                                                            {task.status === 'in-progress' && <Clock size={18} className="text-yellow-600 flex-shrink-0" />}
+                                                                            {task.status === 'locked' && <AlertCircle size={18} className="text-gray-400 flex-shrink-0" />}
+                                                                            {task.status === 'pending' && <AlertCircle size={18} className="text-gray-400 flex-shrink-0" />}
+                                                                        </div>
+                                                                        <div className="mt-auto pt-4 border-t border-gray-100 flex items-center justify-between">
+                                                                            <span className={`px-2.5 py-1 rounded-md text-[10px] font-black uppercase tracking-widest ${
+                                                                                task.status === 'completed' ? 'bg-green-100 text-green-700' :
+                                                                                task.status === 'verified' ? 'bg-blue-100 text-blue-700' :
+                                                                                task.status === 'submitted' ? 'bg-orange-100 text-orange-700' :
+                                                                                task.status === 'in-progress' ? 'bg-yellow-100 text-yellow-700' :
+                                                                                task.status === 'locked' ? 'bg-gray-100 text-gray-500' :
+                                                                                'bg-gray-100 text-gray-600'
+                                                                            }`}>
+                                                                                {task.status}
+                                                                            </span>
+                                                                            <div className="w-7 h-7 rounded flex items-center justify-center bg-gray-50 border border-gray-200 text-gray-400 hover:text-primary hover:border-primary/20 transition-colors">
+                                                                                <Eye size={14} />
+                                                                            </div>
+                                                                        </div>
+                                                                    </div>
+                                                                ))}
+                                                            </div>
+                                                        </div>
+                                                    ))}
+                                                </div>
+                                            </div>
+                                        </div>
+                                    ))}
+                                </div>
+                            </div>
+                        </div>
+                    ))
+                )}
             </div>
         </div>
     );

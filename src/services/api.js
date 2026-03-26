@@ -1,6 +1,6 @@
 import axios from 'axios';
 
-// export const FILE_BASE_URL = 'http://localhost:8888';
+// export const FILE_BASE_URL = 'http://localhost:3000';
 export const FILE_BASE_URL = 'https://tender-api.reliablesolution.in';
 
 const api = axios.create({
