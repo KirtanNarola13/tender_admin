@@ -1,12 +1,13 @@
 import { useState, useEffect } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import api from '../services/api';
 import { useAuth } from '../context/AuthContext';
-import { Plus, Folder, Trash2, Search, Filter, AlertCircle, Calendar, Users, ChevronRight, ChevronDown, Home, Briefcase, Layout, Info } from 'lucide-react';
+import { Plus, Briefcase, Layout, Search, Filter, ChevronRight } from 'lucide-react';
 import DeleteConfirmModal from '../components/DeleteConfirmModal';
 
 const Projects = () => {
     const { user: currentUser } = useAuth();
+    const navigate = useNavigate();
     const [projects, setProjects] = useState([]);
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [newProject, setNewProject] = useState({ name: '', description: '' });
@@ -111,11 +112,8 @@ const Projects = () => {
             alert('Failed to delete project: ' + (error.response?.data?.message || error.message));
         }
     };
-    const toggleCategory = (category) => {
-        setExpandedCategories(prev => ({
-            ...prev,
-            [category]: !prev[category]
-        }));
+    const goToCategory = (category) => {
+        navigate(`/projects/category/${encodeURIComponent(category)}`);
     };
 
     const filteredAndSortedProjects = [...projects]
@@ -210,85 +208,25 @@ const Projects = () => {
                         <div key={category} className="mb-8">
                             {/* Category Header */}
                             <button
-                                onClick={() => toggleCategory(category)}
-                                className={`w-full flex items-center justify-between bg-white border shadow-sm p-3 sm:p-4 rounded-xl mb-3 sm:mb-4 transition-all group focus:outline-none focus:ring-0 ${expandedCategories[category] ? 'border-primary ring-1 ring-primary' : 'border-gray-200 hover:border-gray-300 hover:shadow-md'}`}
+                                onClick={() => goToCategory(category)}
+                                className="w-full flex items-center justify-between bg-white border border-gray-200 shadow-sm p-3 sm:p-4 rounded-xl mb-3 sm:mb-4 transition-all group focus:outline-none focus:ring-0 hover:border-primary hover:shadow-md"
                             >
                                 <div className="flex items-center gap-3 sm:gap-4">
-                                    <div className={`w-10 h-10 sm:w-12 sm:h-12 rounded-lg flex shrink-0 items-center justify-center transition-colors ${expandedCategories[category] ? 'bg-primary text-white shadow-sm' : 'bg-blue-50/50 text-blue-600 border border-blue-100 group-hover:bg-blue-50 group-hover:border-blue-200'}`}>
+                                    <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-lg flex shrink-0 items-center justify-center transition-colors bg-blue-50/50 text-blue-600 border border-blue-100 group-hover:bg-blue-50 group-hover:border-blue-200">
                                         <Layout size={20} strokeWidth={2} />
                                     </div>
                                     <div className="text-left">
-                                        <h2 className={`font-bold transition-colors ${expandedCategories[category] ? 'text-primary text-[17px] sm:text-lg' : 'text-gray-900 text-base sm:text-lg'} leading-tight mb-0.5`}>{category}</h2>
+                                        <h2 className="font-bold text-gray-900 text-base sm:text-lg group-hover:text-primary transition-colors leading-tight mb-0.5">{category}</h2>
                                         <p className="text-xs sm:text-sm font-medium text-gray-500">
                                             {groupedProjects[category].length} {groupedProjects[category].length === 1 ? 'Project' : 'Active Projects'}
                                         </p>
                                     </div>
                                 </div>
-                                <div className={`w-8 h-8 rounded-full flex shrink-0 items-center justify-center transition-all duration-300 ${expandedCategories[category] ? 'bg-primary/10 text-primary rotate-180' : 'bg-transparent text-gray-400 group-hover:bg-gray-100 group-hover:text-gray-600'}`}>
-                                    <ChevronDown size={20} />
+                                <div className="w-8 h-8 rounded-full flex shrink-0 items-center justify-center transition-all duration-300 bg-transparent text-gray-400 group-hover:bg-primary/10 group-hover:text-primary">
+                                    <ChevronRight size={20} />
                                 </div>
                             </button>
 
-                            {/* Category Content */}
-                            <div className={`${expandedCategories[category] ? 'block' : 'hidden'}`}>
-                                <div className="py-2">
-                                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                                        {groupedProjects[category].map((project) => (
-                                            <Link 
-                                                key={project._id} 
-                                                to={`/projects/${project._id}`}
-                                                className="bg-white border border-gray-200 shadow-sm rounded-xl p-5 flex flex-col relative overflow-hidden h-full hover:shadow-md transition-shadow group/card"
-                                            >
-                                                {/* Status & Delete */}
-                                                <div className="flex justify-between items-start mb-4 w-full">
-                                                    <span className={`inline-flex items-center px-2.5 py-1 rounded-full text-xs font-semibold ${
-                                                        project.status === 'active' 
-                                                        ? 'bg-green-50 text-green-700 border border-green-200' 
-                                                        : 'bg-orange-50 text-orange-700 border border-orange-200'
-                                                    }`}>
-                                                        {project.status || 'Pending'}
-                                                    </span>
-                                                    {currentUser?.role !== 'admin_viewer' && (
-                                                        <button
-                                                            onClick={(e) => {
-                                                                e.preventDefault();
-                                                                e.stopPropagation();
-                                                                handleDelete(project._id, project.name);
-                                                            }}
-                                                            className="text-gray-400 hover:text-red-500 transition-colors bg-white rounded-lg p-1.5 hover:bg-red-50"
-                                                            title="Delete Project"
-                                                        >
-                                                            <Trash2 size={16} />
-                                                        </button>
-                                                    )}
-                                                </div>
-
-                                                <h3 className="text-lg font-bold text-gray-900 mb-2 truncate group-hover/card:text-primary transition-colors">
-                                                    {project.name}
-                                                </h3>
-                                                
-                                                <p className="text-sm text-gray-500 mb-6 line-clamp-2 flex-grow">
-                                                    {project.description || 'No detailed description available.'}
-                                                </p>
-
-                                                <div className="flex items-center justify-between pt-4 border-t border-gray-100">
-                                                    <div className="flex items-center gap-3">
-                                                        <div className="w-8 h-8 rounded-full bg-gray-50 flex items-center justify-center text-gray-400 border border-gray-200">
-                                                            <Users size={14} />
-                                                        </div>
-                                                        <div>
-                                                            <p className="text-[10px] text-gray-400 font-semibold uppercase">Lead</p>
-                                                            <p className="text-sm font-medium text-gray-700">{project.assignedLeader?.name || 'Unassigned'}</p>
-                                                        </div>
-                                                    </div>
-                                                    
-                                                    <ChevronRight size={18} className="text-gray-300 group-hover/card:text-primary transition-colors" />
-                                                </div>
-                                            </Link>
-                                        ))}
-                                    </div>
-                                </div>
-                            </div>
                         </div>
                     ))
                 )}

@@ -143,7 +143,11 @@ const ProjectDetails = () => {
                 <div className="flex items-center gap-3 w-full sm:w-auto">
                     {/* Back Button */}
                     <button
-                        onClick={() => navigate('/projects')}
+                        onClick={() => navigate(
+                            project.category
+                                ? `/projects/category/${encodeURIComponent(project.category)}`
+                                : '/projects'
+                        )}
                         className="flex shrink-0 w-9 h-9 sm:w-auto sm:h-auto items-center justify-center sm:px-3 sm:py-2 rounded-lg border border-gray-200 bg-white text-gray-600 hover:bg-gray-50 hover:border-gray-300 transition text-sm font-medium shadow-sm"
                     >
                         <ArrowLeft size={16} />
@@ -406,9 +410,9 @@ const ProjectDetails = () => {
                                         className={`p-3 rounded-lg border text-sm ${
                                             task.status === 'completed' || task.status === 'verified'
                                                 ? 'bg-green-50 border-green-200'
-                                                : task.status === 'pending' || task.status === 'in-progress'
-                                                    ? 'bg-blue-50 border-blue-200'
-                                                    : 'bg-gray-50 border-gray-200'
+                                                : task.status === 'in-progress' || task.status === 'submitted'
+                                                    ? 'bg-yellow-50 border-yellow-200'
+                                                    : 'bg-red-50 border-red-200'
                                         }`}
                                     >
                                         <div className="flex justify-between items-start mb-2">

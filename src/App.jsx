@@ -10,8 +10,12 @@ import TaskDetails from './pages/TaskDetails';
 import ProjectWizard from './pages/ProjectWizard';
 import ProjectDetails from './pages/ProjectDetails';
 import EditProjectWizard from './pages/EditProjectWizard';
+import CategoryProjects from './pages/CategoryProjects';
 import Sidebar from './components/Sidebar';
 import Reports from './pages/Reports';
+import TaskLedger from './pages/TaskLedger';
+import TaskProducts from './pages/TaskProducts';
+import TaskSteps from './pages/TaskSteps';
 
 import VerifyDashboard from './pages/VerifyDashboard';
 
@@ -66,9 +70,13 @@ function App() {
           <Route path="/" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
           <Route path="/projects" element={<ProtectedRoute><Projects /></ProtectedRoute>} />
           <Route path="/projects/new" element={<ProtectedRoute><ProjectWizard /></ProtectedRoute>} />
+          <Route path="/projects/category/:categoryName" element={<ProtectedRoute><CategoryProjects /></ProtectedRoute>} />
           <Route path="/projects/:id/edit" element={<ProtectedRoute><EditProjectWizard /></ProtectedRoute>} />
           <Route path="/projects/:id" element={<ProtectedRoute><ProjectDetails /></ProtectedRoute>} />
           <Route path="/tasks" element={<ProtectedRoute><Tasks /></ProtectedRoute>} />
+          <Route path="/tasks/leader/:leaderId" element={<ProtectedRoute><TaskLedger /></ProtectedRoute>} />
+          <Route path="/tasks/leader/:leaderId/project/:projectId" element={<ProtectedRoute><TaskProducts /></ProtectedRoute>} />
+          <Route path="/tasks/leader/:leaderId/project/:projectId/product/:productId" element={<ProtectedRoute><TaskSteps /></ProtectedRoute>} />
           <Route path="/tasks/:id" element={<ProtectedRoute><TaskDetails /></ProtectedRoute>} />
           <Route path="/verify" element={<ProtectedRoute><VerifyDashboard /></ProtectedRoute>} />
           <Route path="/users" element={<ProtectedRoute><Users /></ProtectedRoute>} />
