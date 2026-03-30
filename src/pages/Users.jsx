@@ -4,10 +4,10 @@ import { useAuth } from '../context/AuthContext';
 import { Plus, Search, Users as UsersIcon, Shield, UserCheck, User, Eye } from 'lucide-react';
 
 const ROLE_COLORS = {
-    admin: 'bg-purple-100 text-purple-700 border-purple-200',
-    team_leader: 'bg-indigo-100 text-indigo-700 border-indigo-200',
+    admin: 'bg-primary/10 text-primary border-primary/20',
+    team_leader: 'bg-accent/10 text-accent border-accent/20',
     employee: 'bg-green-100 text-green-700 border-green-200',
-    admin_viewer: 'bg-teal-100 text-teal-700 border-teal-200',
+    admin_viewer: 'bg-gray-100 text-gray-700 border-gray-200',
 };
 
 const ROLE_LABELS = {
@@ -128,7 +128,7 @@ const Users = () => {
                 {currentUser?.role !== 'admin_viewer' && (
                     <button
                         onClick={() => handleOpenModal()}
-                        className="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-lg flex items-center gap-2 transition-colors shadow-sm"
+                        className="bg-primary hover:bg-opacity-90 text-white px-5 py-2.5 rounded-lg flex items-center gap-2 transition-all shadow-lg shadow-primary/20 font-bold text-sm"
                     >
                         <Plus size={18} /> Create User
                     </button>
@@ -142,7 +142,7 @@ const Users = () => {
                     <input
                         type="text"
                         placeholder="Search by name or email..."
-                        className="w-full pl-8 pr-4 py-2 border rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none text-sm"
+                        className="w-full pl-8 pr-4 py-2.5 border rounded-lg focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none text-sm bg-gray-50/50"
                         value={searchTerm}
                         onChange={e => setSearchTerm(e.target.value)}
                     />
@@ -152,14 +152,14 @@ const Users = () => {
                         <button
                             key={tab.key}
                             onClick={() => setRoleTab(tab.key)}
-                            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-semibold transition-all ${roleTab === tab.key
-                                    ? 'bg-white text-indigo-700 shadow-sm'
+                            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-black uppercase tracking-wider transition-all ${roleTab === tab.key
+                                    ? 'bg-white text-primary shadow-sm'
                                     : 'text-gray-500 hover:text-gray-700'
                                 }`}
                         >
                             {tab.icon}
                             {tab.label}
-                            <span className={`ml-0.5 px-1.5 py-0.5 rounded-full text-[10px] font-bold ${roleTab === tab.key ? 'bg-indigo-100 text-indigo-700' : 'bg-gray-200 text-gray-500'
+                            <span className={`ml-0.5 px-1.5 py-0.5 rounded-full text-[10px] font-black ${roleTab === tab.key ? 'bg-primary/10 text-primary' : 'bg-gray-200 text-gray-500'
                                 }`}>{counts[tab.key]}</span>
                         </button>
                     ))}
@@ -187,10 +187,10 @@ const Users = () => {
                                         <td className="p-4 text-xs text-gray-400 font-mono">{idx + 1}</td>
                                         <td className="p-4">
                                             <div className="flex items-center gap-3">
-                                                <div className="w-8 h-8 rounded-full bg-indigo-100 flex items-center justify-center text-indigo-700 font-bold text-sm flex-shrink-0">
+                                                <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center text-primary font-black text-sm flex-shrink-0 border border-primary/20">
                                                     {user.name.charAt(0).toUpperCase()}
                                                 </div>
-                                                <span className="font-semibold text-gray-800 text-sm">{user.name}</span>
+                                                <span className="font-bold text-gray-800 text-sm italic">{user.name}</span>
                                             </div>
                                         </td>
                                         <td className="p-4 text-gray-500 text-sm">{user.email}</td>
@@ -202,7 +202,7 @@ const Users = () => {
                                         <td className="p-4 text-sm text-gray-500">
                                             {user.assignedManager?.name
                                                 ? <span className="flex items-center gap-1">
-                                                    <UserCheck size={13} className="text-indigo-400" />
+                                                    <UserCheck size={13} className="text-primary" />
                                                     {user.assignedManager.name}
                                                 </span>
                                                 : <span className="text-gray-300">—</span>}
@@ -212,7 +212,7 @@ const Users = () => {
                                                 <div className="flex justify-end gap-2">
                                                     <button
                                                         onClick={() => handleOpenModal(user)}
-                                                        className="px-3 py-1.5 text-xs font-bold text-indigo-600 bg-indigo-50 hover:bg-indigo-100 border border-indigo-200 rounded-lg transition-colors"
+                                                        className="px-3 py-1.5 text-[10px] font-black uppercase tracking-wider text-primary bg-primary/10 hover:bg-primary/20 border border-primary/30 rounded-lg transition-all"
                                                     >
                                                         ✏️ Edit
                                                     </button>
@@ -258,7 +258,7 @@ const Users = () => {
                             <div>
                                 <label className="block text-sm font-semibold text-gray-700 mb-1">Full Name *</label>
                                 <input
-                                    className="w-full border border-gray-300 p-2.5 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none text-sm"
+                                    className="w-full border border-gray-300 p-2.5 rounded-lg focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none text-sm"
                                     placeholder="e.g. Rahul Sharma"
                                     value={formData.name}
                                     onChange={e => setFormData({ ...formData, name: e.target.value })}
@@ -267,7 +267,7 @@ const Users = () => {
                             <div>
                                 <label className="block text-sm font-semibold text-gray-700 mb-1">Email Address *</label>
                                 <input
-                                    className="w-full border border-gray-300 p-2.5 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none text-sm"
+                                    className="w-full border border-gray-300 p-2.5 rounded-lg focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none text-sm"
                                     placeholder="e.g. rahul@example.com"
                                     type="email"
                                     value={formData.email}
@@ -279,7 +279,7 @@ const Users = () => {
                                     Password {editingUser && <span className="text-gray-400 font-normal text-xs">(leave blank to keep current)</span>}
                                 </label>
                                 <input
-                                    className="w-full border border-gray-300 p-2.5 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none text-sm"
+                                    className="w-full border border-gray-300 p-2.5 rounded-lg focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none text-sm"
                                     placeholder={editingUser ? 'Leave blank to keep current' : 'Set a secure password'}
                                     type="password"
                                     value={formData.password}
@@ -289,7 +289,7 @@ const Users = () => {
                             <div>
                                 <label className="block text-sm font-semibold text-gray-700 mb-1">Role *</label>
                                 <select
-                                    className="w-full border border-gray-300 p-2.5 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none bg-white text-sm"
+                                    className="w-full border border-gray-300 p-2.5 rounded-lg focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none bg-white text-sm"
                                     value={formData.role}
                                     onChange={e => setFormData({ ...formData, role: e.target.value, assignedManager: '' })}
                                 >
@@ -305,7 +305,7 @@ const Users = () => {
                                 <div>
                                     <label className="block text-sm font-semibold text-gray-700 mb-1">Assigned Manager (Team Leader)</label>
                                     <select
-                                        className="w-full border border-gray-300 p-2.5 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none bg-white text-sm"
+                                        className="w-full border border-gray-300 p-2.5 rounded-lg focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none bg-white text-sm"
                                         value={formData.assignedManager}
                                         onChange={e => setFormData({ ...formData, assignedManager: e.target.value })}
                                     >
@@ -328,7 +328,7 @@ const Users = () => {
                             <button
                                 onClick={handleSubmit}
                                 disabled={isSubmitting || !formData.name || !formData.email}
-                                className="px-5 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 shadow-sm transition-colors text-sm font-semibold disabled:opacity-60"
+                                className="px-6 py-2.5 bg-primary text-white rounded-lg hover:bg-opacity-90 shadow-lg shadow-primary/20 transition-all text-sm font-bold disabled:opacity-60"
                             >
                                 {isSubmitting ? 'Saving...' : editingUser ? 'Save Changes' : 'Create User'}
                             </button>

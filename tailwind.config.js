@@ -24,8 +24,8 @@ export default {
                     fg: "#059669",
                 },
                 "task-submitted": {
-                    bg: "#F5F3FF",
-                    fg: "#7C3AED",
+                    bg: "#FEF3C7",
+                    fg: "#B45309",
                 },
                 "task-locked": {
                     bg: "#F9FAFB",

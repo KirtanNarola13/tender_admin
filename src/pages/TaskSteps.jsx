@@ -114,7 +114,7 @@ const TaskSteps = () => {
                     <ArrowLeft size={20} />
                 </button>
                 <div className="flex items-center gap-3 flex-1">
-                    <div className="w-11 h-11 rounded-xl bg-purple-50 border border-purple-100 flex items-center justify-center text-purple-600 shadow-sm">
+                    <div className="w-11 h-11 rounded-xl bg-primary/10 border border-primary/20 flex items-center justify-center text-primary shadow-sm">
                         <Package size={20} />
                     </div>
                     <div>
@@ -130,7 +130,7 @@ const TaskSteps = () => {
                         <div className="w-24 h-2 bg-gray-100 rounded-full overflow-hidden">
                             <div
                                 className="h-full rounded-full transition-all"
-                                style={{ width: `${donePercent}%`, background: donePercent === 100 ? '#16a34a' : '#3b82f6' }}
+                                style={{ width: `${donePercent}%`, background: donePercent === 100 ? '#16a34a' : '#B8860B' }}
                             />
                         </div>
                         <span className="text-xs font-bold text-gray-700">{donePercent}%</span>
@@ -290,7 +290,7 @@ const TaskSteps = () => {
                                                 <div
                                                     key={type}
                                                     onClick={e => { e.stopPropagation(); setPreviewImage(getImageUrl(url)); }}
-                                                    className="aspect-square bg-gray-100 rounded-lg overflow-hidden border border-gray-200 hover:border-blue-400 cursor-pointer transition-colors"
+                                                    className="aspect-square bg-gray-100 rounded-lg overflow-hidden border border-gray-200 hover:border-primary cursor-pointer transition-colors"
                                                     title={type}
                                                 >
                                                     <img

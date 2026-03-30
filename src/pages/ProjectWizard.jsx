@@ -244,7 +244,7 @@ const ProjectWizard = () => {
                                 className={`flex items-center justify-between border p-4 rounded-xl bg-white shadow-sm transition ${isStockLow ? 'border-red-300 bg-red-50' : 'border-gray-200'}`}
                             >
                                 <div className="flex items-center gap-4">
-                                    <div className="bg-blue-50 p-2 rounded-lg text-primary flex-shrink-0">
+                                    <div className="bg-primary/10 p-2 rounded-lg text-primary flex-shrink-0">
                                         <Box size={22} />
                                     </div>
                                     <div>
@@ -339,7 +339,7 @@ const ProjectWizard = () => {
                     </div>
                 </div>
 
-                <div className="bg-blue-50 border border-blue-200 p-3 rounded-lg text-sm text-blue-700 flex items-start gap-2">
+                <div className="bg-primary/10 border border-primary/20 p-3 rounded-lg text-sm text-primary flex items-start gap-2">
                     <span className="text-base mt-0.5">ℹ️</span>
                     <span><b>Note:</b> Launching this project will automatically generate task lists for the Team Leader based on the standard installation steps for each product.</span>
                 </div>

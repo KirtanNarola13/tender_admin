@@ -156,7 +156,7 @@ const ProjectDetails = () => {
                     <div>
                         <h1 className="text-xl md:text-2xl font-bold text-gray-900 leading-tight">{project.name}</h1>
                         {project.category && (
-                            <span className="text-xs font-semibold bg-blue-50 text-blue-600 px-2 py-0.5 rounded mt-0.5 inline-block">
+                            <span className="text-[10px] font-black bg-primary/10 text-primary px-2.5 py-1 rounded-md uppercase tracking-wider border border-primary/20">
                                 {project.category}
                             </span>
                         )}
@@ -204,7 +204,7 @@ const ProjectDetails = () => {
                     <span className="text-gray-400 block text-xs font-medium uppercase tracking-wide mb-1">Status</span>
                     <span className={`font-bold capitalize ${
                         project.status === 'active' ? 'text-green-600' :
-                        project.status === 'completed' ? 'text-blue-600' :
+                        project.status === 'completed' ? 'text-primary' :
                         'text-orange-500'
                     }`}>
                         {project.status}
@@ -220,8 +220,8 @@ const ProjectDetails = () => {
             <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100 grid grid-cols-1 md:grid-cols-12 gap-6 items-center">
                 <div className="md:col-span-7 space-y-6">
                     <div className="flex items-center gap-4">
-                        <div className="w-12 h-12 rounded-2xl bg-blue-50 flex items-center justify-center shrink-0 border border-blue-100 shadow-sm">
-                            <CheckCircle className="text-blue-600" size={24} />
+                        <div className="w-12 h-12 rounded-2xl bg-primary/10 flex items-center justify-center shrink-0 border border-primary/20 shadow-sm">
+                            <CheckCircle className="text-primary" size={24} />
                         </div>
                         <div>
                             <h2 className="text-lg font-bold text-gray-900">Project Vitality</h2>
@@ -306,8 +306,8 @@ const ProjectDetails = () => {
             <div className="bg-white p-4 sm:p-5 rounded-lg shadow-sm border border-gray-100">
                 <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 w-full">
                     <div>
-                        <h2 className="text-base font-bold flex items-center gap-2">
-                            <FileText className="text-blue-600" size={18} />
+                        <h2 className="text-base font-bold flex items-center gap-2 text-gray-900">
+                            <FileText className="text-primary" size={18} />
                             Handover Letter / Completion Report
                         </h2>
                         <p className="text-sm text-gray-400 mt-0.5">Upload the final signed handover document.</p>
@@ -325,7 +325,7 @@ const ProjectDetails = () => {
                                     href={project.completionLetter.url}
                                     target="_blank"
                                     rel="noopener noreferrer"
-                                    className="px-4 py-2 bg-blue-50 text-blue-600 rounded-lg hover:bg-blue-100 border border-blue-200 text-sm font-semibold transition"
+                                    className="px-4 py-2 bg-primary/10 text-primary rounded-lg hover:bg-primary/20 border border-primary/30 text-sm font-semibold transition shadow-sm"
                                 >
                                     View Document
                                 </a>
@@ -338,8 +338,8 @@ const ProjectDetails = () => {
                             </div>
                         ) : (
                             currentUser?.role !== 'admin_viewer' ? (
-                                <label className="cursor-pointer flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition shadow text-sm font-semibold">
-                                    <Upload size={15} />
+                                <label className="cursor-pointer flex items-center gap-2 px-6 py-2.5 bg-primary text-white rounded-lg hover:bg-opacity-90 active:scale-[0.98] transition-all shadow-lg shadow-primary/20 text-sm font-bold">
+                                    <Upload size={16} />
                                     {uploading ? 'Uploading...' : 'Upload Letter'}
                                     <input type="file" className="hidden" accept=".pdf,.jpg,.jpeg,.png" onChange={handleFileUpload} disabled={uploading} />
                                 </label>
@@ -370,8 +370,8 @@ const ProjectDetails = () => {
                                 className="w-full text-left bg-gray-50 hover:bg-gray-100 p-4 flex flex-col lg:flex-row justify-between items-start lg:items-center gap-4 transition-colors focus:outline-none"
                             >
                                 <div className="flex items-center gap-3">
-                                    <div className="w-10 h-10 rounded-lg bg-blue-50 flex items-center justify-center border border-blue-100 shrink-0">
-                                        <Package className="text-blue-600" size={20} />
+                                    <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center border border-primary/20 shrink-0">
+                                        <Package className="text-primary" size={20} />
                                     </div>
                                     <div>
                                         <h3 className="font-bold text-gray-900">{item.product.name}</h3>
@@ -388,7 +388,7 @@ const ProjectDetails = () => {
                                                 className="h-full rounded-full transition-all duration-500"
                                                 style={{
                                                     width: `${percent}%`,
-                                                    background: percent === 100 ? '#16a34a' : '#3b82f6'
+                                                    background: percent === 100 ? '#16a34a' : '#B8860B'
                                                 }}
                                             />
                                         </div>
@@ -418,7 +418,7 @@ const ProjectDetails = () => {
                                         <div className="flex justify-between items-start mb-2">
                                             <span className="font-bold text-[13px] text-gray-800">Step {task.sequence}: {task.stepName}</span>
                                             {task.status === 'verified' && <CheckCircle size={16} className="text-green-600 flex-shrink-0" />}
-                                            {(task.status === 'completed' || task.status === 'submitted') && <Clock size={16} className="text-blue-600 flex-shrink-0" />}
+                                            {(task.status === 'completed' || task.status === 'submitted') && <Clock size={16} className="text-primary flex-shrink-0" />}
                                             {task.status === 'in-progress' && <Clock size={16} className="text-yellow-600 flex-shrink-0" />}
                                             {task.status === 'locked' && <AlertCircle size={16} className="text-gray-400 flex-shrink-0" />}
                                         </div>
@@ -435,7 +435,7 @@ const ProjectDetails = () => {
                                                                 e.stopPropagation();
                                                                 setPreviewImage(getImageUrl(url));
                                                             }}
-                                                            className="relative group cursor-pointer aspect-square bg-gray-100 rounded-md border border-gray-200 overflow-hidden hover:border-blue-400 transition-colors"
+                                                            className="relative group cursor-pointer aspect-square bg-gray-100 rounded-md border border-gray-200 overflow-hidden hover:border-primary transition-all"
                                                             title={type}
                                                         >
                                                             <img

@@ -97,7 +97,7 @@ const CategoryProjects = () => {
                 </button>
 
                 <div className="flex items-center gap-3 flex-1">
-                    <div className="w-11 h-11 rounded-xl bg-blue-50 border border-blue-100 flex items-center justify-center text-2xl shadow-sm">
+                    <div className="w-11 h-11 rounded-xl bg-primary/10 border border-primary/20 flex items-center justify-center text-2xl shadow-sm">
                         {emoji}
                     </div>
                     <div>
@@ -111,7 +111,7 @@ const CategoryProjects = () => {
                 {currentUser?.role !== 'admin_viewer' && (
                     <Link
                         to="/projects/new"
-                        className="hidden sm:flex bg-primary hover:bg-blue-600 text-white px-4 py-2.5 rounded-lg items-center gap-2 transition-colors font-semibold text-sm shadow-sm"
+                        className="hidden sm:flex bg-primary hover:bg-opacity-90 text-white px-5 py-2.5 rounded-lg items-center gap-2 transition-all font-bold text-sm shadow-lg shadow-primary/20"
                     >
                         + New Project
                     </Link>
@@ -255,14 +255,14 @@ const CategoryProjects = () => {
                         <Link
                             key={project._id}
                             to={`/projects/${project._id}`}
-                            className="bg-white border border-gray-200 shadow-sm rounded-xl p-5 flex flex-col relative overflow-hidden h-full hover:shadow-md hover:border-blue-200 transition-all group/card"
+                            className="bg-white border border-gray-200 shadow-sm rounded-xl p-5 flex flex-col relative overflow-hidden h-full hover:shadow-md hover:border-primary/30 transition-all group/card"
                         >
                             {/* Status & Delete */}
                             <div className="flex justify-between items-start mb-4 w-full">
-                                <span className={`inline-flex items-center px-2.5 py-1 rounded-full text-xs font-semibold ${project.status === 'active'
+                                <span className={`inline-flex items-center px-2.5 py-1 rounded-full text-[10px] font-black uppercase tracking-wider ${project.status === 'active'
                                     ? 'bg-green-50 text-green-700 border border-green-200'
                                     : project.status === 'completed'
-                                        ? 'bg-blue-50 text-blue-700 border border-blue-200'
+                                        ? 'bg-primary/10 text-primary border border-primary/20'
                                         : 'bg-orange-50 text-orange-700 border border-orange-200'
                                     }`}>
                                     <span className="w-1.5 h-1.5 rounded-full mr-1.5 inline-block bg-current opacity-70" />

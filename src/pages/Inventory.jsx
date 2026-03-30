@@ -330,7 +330,7 @@ const Inventory = () => {
                         <button onClick={() => setShowAddStockModal(true)} className="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg text-sm font-medium flex items-center gap-2 transition-colors">
                             <Plus size={18} /> Add Stock
                         </button>
-                        <button onClick={() => setShowTransferStockModal(true)} className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg text-sm font-medium flex items-center gap-2 transition-colors">
+                        <button onClick={() => setShowTransferStockModal(true)} className="bg-primary hover:bg-opacity-90 text-white px-5 py-2.5 rounded-lg text-sm font-bold flex items-center gap-2 transition-all shadow-lg shadow-primary/20">
                             <Package size={18} /> Transfer
                         </button>
                         {/* CSV Buttons */}
@@ -360,13 +360,13 @@ const Inventory = () => {
                         />
                         <button
                             onClick={() => { setActiveTab('products'); setShowProductModal(true); }}
-                            className="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-lg text-sm font-medium flex items-center gap-2 transition-colors"
+                            className="bg-primary hover:bg-opacity-90 text-white px-4 py-2 rounded-lg text-sm font-bold flex items-center gap-2 transition-all shadow-lg shadow-primary/10"
                         >
                             <Plus size={18} /> New Product
                         </button>
                         <button
                             onClick={() => { setActiveTab('warehouses'); setShowWarehouseModal(true); }}
-                            className="bg-purple-600 hover:bg-purple-700 text-white px-4 py-2 rounded-lg text-sm font-medium flex items-center gap-2 transition-colors"
+                            className="bg-accent hover:bg-opacity-90 text-white px-4 py-2 rounded-lg text-sm font-bold flex items-center gap-2 transition-all shadow-lg shadow-accent/10"
                         >
                             <Plus size={18} /> New Warehouse
                         </button>
@@ -378,19 +378,19 @@ const Inventory = () => {
             <div className="flex border-b mb-6 overflow-x-auto">
                 <button
                     onClick={() => setActiveTab('products')}
-                    className={`px-6 py-3 font-medium transition-colors whitespace-nowrap ${activeTab === 'products' ? 'border-b-2 border-indigo-600 text-indigo-600' : 'text-gray-500 hover:text-gray-700'}`}
+                    className={`px-6 py-3 font-bold transition-all whitespace-nowrap ${activeTab === 'products' ? 'border-b-2 border-primary text-primary' : 'text-gray-400 hover:text-gray-600'}`}
                 >
                     Products ({products.length})
                 </button>
                 <button
                     onClick={() => setActiveTab('warehouses')}
-                    className={`px-6 py-3 font-medium transition-colors whitespace-nowrap ${activeTab === 'warehouses' ? 'border-b-2 border-indigo-600 text-indigo-600' : 'text-gray-500 hover:text-gray-700'}`}
+                    className={`px-6 py-3 font-bold transition-all whitespace-nowrap ${activeTab === 'warehouses' ? 'border-b-2 border-primary text-primary' : 'text-gray-400 hover:text-gray-600'}`}
                 >
                     Warehouses ({warehouses.length})
                 </button>
                 <button
                     onClick={() => setActiveTab('logs')}
-                    className={`px-6 py-3 font-medium transition-colors whitespace-nowrap ${activeTab === 'logs' ? 'border-b-2 border-indigo-600 text-indigo-600' : 'text-gray-500 hover:text-gray-700'}`}
+                    className={`px-6 py-3 font-bold transition-all whitespace-nowrap ${activeTab === 'logs' ? 'border-b-2 border-primary text-primary' : 'text-gray-400 hover:text-gray-600'}`}
                 >
                     Stock History
                 </button>
@@ -405,14 +405,14 @@ const Inventory = () => {
                         <input
                             type="text"
                             placeholder="Search by Name or SKU..."
-                            className="w-full pl-8 pr-4 py-2 border rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none text-sm"
+                            className="w-full pl-8 pr-4 py-2 border rounded-lg focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none text-sm"
                             value={searchTerm}
                             onChange={(e) => { setSearchTerm(e.target.value); resetPage(); }}
                         />
                     </div>
                     {/* Category filter */}
                     <select
-                        className="border rounded-lg px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-indigo-500"
+                        className="border rounded-lg px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary"
                         value={categoryFilter}
                         onChange={e => { setCategoryFilter(e.target.value); resetPage(); }}
                     >
@@ -421,7 +421,7 @@ const Inventory = () => {
                     </select>
                     {/* Stock filter */}
                     <select
-                        className="border rounded-lg px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-indigo-500"
+                        className="border rounded-lg px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary"
                         value={stockFilter}
                         onChange={e => { setStockFilter(e.target.value); resetPage(); }}
                     >
@@ -431,7 +431,7 @@ const Inventory = () => {
                     </select>
                     {/* Sort */}
                     <select
-                        className="border rounded-lg px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-indigo-500"
+                        className="border rounded-lg px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary"
                         value={sortBy}
                         onChange={e => { setSortBy(e.target.value); resetPage(); }}
                     >
@@ -484,7 +484,7 @@ const Inventory = () => {
                                                 {/* Category */}
                                                 <td className="p-4">
                                                     {p.category ? (
-                                                        <span className="px-2 py-1 rounded-full bg-indigo-50 text-indigo-700 text-xs font-semibold border border-indigo-100">
+                                                        <span className="px-2 py-1 rounded-full bg-primary/10 text-primary text-[10px] font-black uppercase tracking-wider border border-primary/20">
                                                             {p.category}
                                                         </span>
                                                     ) : <span className="text-gray-300 text-xs">—</span>}
@@ -492,8 +492,8 @@ const Inventory = () => {
                                                 {/* Steps count */}
                                                 <td className="p-4">
                                                     {p.steps && p.steps.length > 0 ? (
-                                                        <span className="flex items-center gap-1 text-xs text-blue-600 font-semibold">
-                                                            <span className="w-5 h-5 rounded-full bg-blue-100 flex items-center justify-center text-[10px] font-bold">{p.steps.length}</span>
+                                                        <span className="flex items-center gap-1 text-[10px] text-primary font-black uppercase tracking-wider">
+                                                            <span className="w-5 h-5 rounded-full bg-primary/10 flex items-center justify-center text-[10px] font-black">{p.steps.length}</span>
                                                             steps
                                                         </span>
                                                     ) : <span className="text-gray-300 text-xs">—</span>}
@@ -520,7 +520,7 @@ const Inventory = () => {
                                                         <div className="flex items-center justify-end gap-2">
                                                             <button
                                                                 onClick={() => openEditModal(p)}
-                                                                className="px-3 py-1.5 text-xs font-bold text-indigo-600 bg-indigo-50 hover:bg-indigo-100 border border-indigo-200 rounded-lg transition-colors"
+                                                                className="px-3 py-1.5 text-[10px] font-black uppercase tracking-wider text-primary bg-primary/10 hover:bg-primary/20 border border-primary/30 rounded-lg transition-all"
                                                             >
                                                                 ✏️ Edit
                                                             </button>
@@ -581,9 +581,9 @@ const Inventory = () => {
                                         : <button
                                             key={item}
                                             onClick={() => setCurrentPage(item)}
-                                            className={`px-3 py-1 text-xs border rounded transition-colors ${currentPage === item
-                                                ? 'bg-indigo-600 text-white border-indigo-600'
-                                                : 'hover:bg-gray-100'
+                                            className={`px-3 py-1 text-xs border rounded transition-all font-bold ${currentPage === item
+                                                ? 'bg-primary text-white border-primary shadow-sm shadow-primary/20'
+                                                : 'hover:bg-primary/5 text-gray-600 border-gray-200'
                                                 }`}
                                         >{item}</button>
                                 ))}
@@ -615,15 +615,15 @@ const Inventory = () => {
                                     <p className="text-gray-500">{w.location}</p>
                                 </div>
                             </div>
-                            <button
-                                onClick={() => {
-                                    setSelectedWarehouse(w);
-                                    setShowWarehouseStockModal(true);
-                                }}
-                                className="mt-2 w-full py-2 bg-blue-50 text-blue-600 font-bold rounded hover:bg-blue-100"
-                            >
-                                View Stock
-                            </button>
+                                <button
+                                    onClick={() => {
+                                        setSelectedWarehouse(w);
+                                        setShowWarehouseStockModal(true);
+                                    }}
+                                    className="mt-2 w-full py-2.5 bg-primary/10 text-primary font-black uppercase tracking-wider rounded-lg hover:bg-primary/20 border border-primary/30 transition-all text-[10px]"
+                                >
+                                    View Stock
+                                </button>
                         </div>
                     ))}
                 </div>
@@ -868,7 +868,7 @@ const Inventory = () => {
                         <input type="number" className="w-full border p-2 mb-2 rounded" placeholder="Quantity" onChange={e => setTransferData({ ...transferData, quantity: e.target.value })} />
                         <div className="flex justify-end gap-2 mt-4">
                             <button onClick={() => setShowTransferStockModal(false)} className="px-4 py-2 border rounded">Cancel</button>
-                            <button onClick={handleTransferStock} className="px-4 py-2 bg-blue-600 text-white rounded">Transfer</button>
+                            <button onClick={handleTransferStock} className="px-6 py-2.5 bg-primary hover:bg-opacity-90 text-white font-bold rounded-lg shadow-lg shadow-primary/20 transition-all">Transfer</button>
                         </div>
                     </div>
                 </div>
@@ -906,7 +906,7 @@ const Inventory = () => {
                                                     <tr key={p._id} className="border-b hover:bg-gray-50">
                                                         <td className="p-3 font-medium">{p.name}</td>
                                                         <td className="p-3 text-gray-500 text-sm">{p.category}</td>
-                                                        <td className="p-3 text-right font-bold text-blue-600">{stockEntry?.quantity || 0}</td>
+                                                        <td className="p-3 text-right font-black text-primary">{stockEntry?.quantity || 0}</td>
                                                     </tr>
                                                 );
                                             })}
@@ -981,7 +981,7 @@ const Inventory = () => {
                             <div className="flex justify-end mt-4 pt-4 border-t">
                                 <button
                                     onClick={() => setUploadReport(null)}
-                                    className="px-6 py-2 bg-indigo-600 hover:bg-indigo-700 text-white font-bold rounded"
+                                    className="px-6 py-2 bg-primary hover:bg-opacity-90 text-white font-bold rounded shadow-lg shadow-primary/20 transition-all"
                                 >
                                     Close
                                 </button>
@@ -1070,7 +1070,7 @@ const Inventory = () => {
                                 </div>
                                 <button
                                     onClick={addEditStep}
-                                    className="flex items-center gap-1 text-sm text-indigo-600 font-bold hover:text-indigo-800"
+                                    className="flex items-center gap-1 text-sm text-primary font-black uppercase tracking-wider hover:text-primary/70 transition-colors"
                                 >
                                     <Plus size={15} /> Add Step
                                 </button>
@@ -1121,13 +1121,13 @@ const Inventory = () => {
                         <div className="flex justify-end gap-2 mt-6 pt-4 border-t">
                             <button
                                 onClick={() => { setShowEditModal(false); setEditProduct(null); }}
-                                className="px-4 py-2 border rounded text-gray-600 hover:bg-gray-50"
+                                className="px-4 py-2 border rounded text-gray-600 hover:bg-gray-50 transition-colors"
                             >
                                 Cancel
                             </button>
                             <button
                                 onClick={saveEditProduct}
-                                className="px-6 py-2 bg-indigo-600 hover:bg-indigo-700 text-white font-bold rounded"
+                                className="px-6 py-2 bg-primary hover:bg-opacity-90 text-white font-bold rounded shadow-lg shadow-primary/20 transition-all"
                             >
                                 Save Changes
                             </button>

@@ -159,7 +159,7 @@ const Projects = () => {
                 {currentUser?.role !== 'admin_viewer' && (
                     <Link 
                         to="/projects/new" 
-                        className="w-full sm:w-auto bg-primary hover:bg-blue-600 justify-center text-white px-4 py-2.5 sm:py-2 rounded-lg flex items-center gap-2 transition-colors font-semibold text-sm shadow-sm"
+                        className="w-full sm:w-auto bg-primary hover:bg-opacity-90 justify-center text-white px-5 py-2.5 sm:py-2.5 rounded-lg flex items-center gap-2 transition-all font-bold text-sm shadow-lg shadow-primary/20"
                     >
                         <Plus size={18} /> Create New Project
                     </Link>
@@ -212,7 +212,7 @@ const Projects = () => {
                                 className="w-full flex items-center justify-between bg-white border border-gray-200 shadow-sm p-3 sm:p-4 rounded-xl mb-3 sm:mb-4 transition-all group focus:outline-none focus:ring-0 hover:border-primary hover:shadow-md"
                             >
                                 <div className="flex items-center gap-3 sm:gap-4">
-                                    <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-lg flex shrink-0 items-center justify-center transition-colors bg-blue-50/50 text-blue-600 border border-blue-100 group-hover:bg-blue-50 group-hover:border-blue-200">
+                                    <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-lg flex shrink-0 items-center justify-center transition-all bg-primary/10 text-primary border border-primary/20 group-hover:bg-primary/20">
                                         <Layout size={20} strokeWidth={2} />
                                     </div>
                                     <div className="text-left">
@@ -250,7 +250,7 @@ const Projects = () => {
                         />
                         <div className="flex justify-end gap-3 mt-2">
                             <button onClick={() => setIsModalOpen(false)} className="px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-100 rounded-lg transition-colors">Cancel</button>
-                            <button onClick={handleCreate} className="px-4 py-2 text-sm font-medium bg-primary text-white hover:bg-blue-600 rounded-lg transition-colors shadow-sm">Create</button>
+                            <button onClick={handleCreate} className="px-6 py-2.5 text-sm font-bold bg-primary text-white hover:bg-opacity-90 rounded-lg transition-all shadow-lg shadow-primary/20">Create</button>
                         </div>
                     </div>
                 </div>
@@ -290,7 +290,7 @@ const Projects = () => {
 
                         <div className="flex justify-end gap-3">
                             <button onClick={() => setShowSchoolModal(false)} className="px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-100 rounded-lg transition-colors">Cancel</button>
-                            <button onClick={handleAssignLeader} className="px-4 py-2 text-sm font-medium bg-primary text-white hover:bg-blue-600 rounded-lg transition-colors shadow-sm">Assign Task</button>
+                            <button onClick={handleAssignLeader} className="px-6 py-2.5 text-sm font-bold bg-primary text-white hover:bg-opacity-90 rounded-lg transition-all shadow-lg shadow-primary/20">Assign Task</button>
                         </div>
                     </div>
                 </div>

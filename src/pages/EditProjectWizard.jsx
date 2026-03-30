@@ -298,7 +298,7 @@ const EditProjectWizard = () => {
                                 className={`flex items-center justify-between border p-4 rounded-xl bg-white shadow-sm transition ${isStockLow ? 'border-red-300 bg-red-50' : 'border-gray-200'}`}
                             >
                                 <div className="flex items-center gap-4">
-                                    <div className="bg-blue-50 p-2 rounded-lg text-primary">
+                                    <div className="bg-primary/10 p-2 rounded-lg text-primary">
                                         <Box size={22} />
                                     </div>
                                     <div>
@@ -397,7 +397,7 @@ const EditProjectWizard = () => {
                     )}
                 </div>
 
-                <div className="bg-amber-50 border border-amber-200 p-3 rounded-lg text-sm text-amber-700 flex items-start gap-2">
+                <div className="bg-primary/10 border border-primary/20 p-3 rounded-lg text-sm text-primary flex items-start gap-2">
                     <span className="text-base mt-0.5">⚠️</span>
                     <span><b>Note:</b> Updating products may affect existing task assignments. Existing task progress will not be deleted.</span>
                 </div>

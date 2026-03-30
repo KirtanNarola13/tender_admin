@@ -68,7 +68,7 @@ const TaskProducts = () => {
                     <ArrowLeft size={20} />
                 </button>
                 <div className="flex items-center gap-3 flex-1">
-                    <div className="w-11 h-11 rounded-xl bg-blue-50 border border-blue-100 flex items-center justify-center text-blue-600 shadow-sm">
+                    <div className="w-11 h-11 rounded-xl bg-primary/10 border border-primary/20 flex items-center justify-center text-primary shadow-sm">
                         <Package size={20} />
                     </div>
                     <div>
@@ -142,7 +142,7 @@ const TaskProducts = () => {
                                 className="w-full bg-white border border-gray-200 shadow-sm rounded-xl p-5 flex items-center justify-between hover:border-primary hover:shadow-md transition-all group text-left"
                             >
                                 <div className="flex items-center gap-4 flex-1 min-w-0">
-                                    <div className="w-11 h-11 rounded-xl bg-purple-50 border border-purple-100 flex items-center justify-center text-purple-600 shadow-sm group-hover:bg-purple-100 transition-colors shrink-0">
+                                    <div className="w-11 h-11 rounded-xl bg-primary/10 border border-primary/20 flex items-center justify-center text-primary shadow-sm group-hover:bg-primary/20 transition-all shrink-0">
                                         <Package size={20} />
                                     </div>
                                     <div className="flex-1 min-w-0">
@@ -155,7 +155,7 @@ const TaskProducts = () => {
                                             <div className="flex-1 h-1.5 bg-gray-100 rounded-full overflow-hidden max-w-[140px]">
                                                 <div
                                                     className="h-full rounded-full transition-all duration-500"
-                                                    style={{ width: `${donePercent}%`, background: donePercent === 100 ? '#16a34a' : '#3b82f6' }}
+                                                    style={{ width: `${donePercent}%`, background: donePercent === 100 ? '#16a34a' : '#B8860B' }}
                                                 />
                                             </div>
                                             <span className="text-xs text-gray-400 font-semibold">{donePercent}%</span>

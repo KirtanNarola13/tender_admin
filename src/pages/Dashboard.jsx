@@ -65,14 +65,14 @@ const Dashboard = () => {
                     title="Team Leaders"
                     count={stats.totalTeamLeaders}
                     icon={Users}
-                    color="bg-indigo-500"
+                    color="bg-primary"
                     onClick={() => navigate('/users')}
                 />
                 <StatCard
                     title="Employees"
                     count={stats.totalEmployees}
                     icon={Users}
-                    color="bg-purple-500"
+                    color="bg-accent"
                     onClick={() => navigate('/users')}
                 />
                 <StatCard
@@ -181,7 +181,7 @@ const Dashboard = () => {
                                     />
                                     <Bar
                                         dataKey="totalStock"
-                                        fill="#6366f1"
+                                        fill="#B8860B"
                                         radius={[0, 6, 6, 0]}
                                         name="Stock Units"
                                         barSize={24}

@@ -62,10 +62,10 @@ const Sidebar = ({ isOpen, setIsOpen }) => {
                                 key={link.path}
                                 to={link.path}
                                 className={clsx(
-                                    'flex items-center space-x-3 px-4 py-3 rounded-lg transition-colors',
+                                    'flex items-center space-x-3 px-4 py-3 rounded-xl transition-all duration-200 group',
                                     isActive
-                                        ? 'bg-primary-light text-primary border border-primary/20'
-                                        : 'text-gray-600 hover:bg-gray-50'
+                                        ? 'bg-primary-light text-primary border border-primary/20 shadow-sm'
+                                        : 'text-gray-500 hover:bg-gray-50 hover:text-gray-900'
                                 )}
                             >
                                 <Icon size={20} />

@@ -185,7 +185,7 @@ const Tasks = () => {
                         >
                             {/* Left: Avatar + Info */}
                             <div className="flex items-center gap-4">
-                                <div className="w-12 h-12 rounded-xl bg-indigo-50 text-indigo-600 flex items-center justify-center font-black text-xl border border-indigo-100 shadow-sm group-hover:bg-indigo-100 transition-colors shrink-0">
+                                <div className="w-12 h-12 rounded-xl bg-primary/10 text-primary flex items-center justify-center font-black text-xl border border-primary/20 shadow-sm group-hover:bg-primary/20 transition-all shrink-0">
                                     {teamData.name !== 'Unassigned Leader' ? teamData.name.charAt(0).toUpperCase() : '?'}
                                 </div>
                                 <div>
@@ -198,7 +198,7 @@ const Tasks = () => {
                                     {/* Projects preview */}
                                     {teamData.projectNames.size > 0 && (
                                         <p className="text-xs text-gray-400 mt-1 flex items-center gap-1">
-                                            <FolderKanban size={11} className="text-blue-400" />
+                                            <FolderKanban size={11} className="text-primary/60" />
                                             {[...teamData.projectNames].slice(0, 2).join(', ')}
                                             {teamData.projectNames.size > 2 && ` +${teamData.projectNames.size - 2} more`}
                                         </p>

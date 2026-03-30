@@ -87,9 +87,9 @@ const VerifyDashboard = () => {
                                         Leader: <span className="font-semibold">{task.assignedTo?.name}</span>
                                     </p>
                                     {task.submissionText && (
-                                        <div className="mt-3 bg-blue-50 p-3 rounded-lg border border-blue-100 flex items-start gap-2">
-                                            <div className="bg-blue-200 text-blue-800 text-[10px] font-bold px-1.5 py-0.5 rounded uppercase flex-shrink-0 mt-0.5">Note</div>
-                                            <p className="text-blue-900 text-sm leading-relaxed italic">"{task.submissionText}"</p>
+                                        <div className="mt-3 bg-primary/10 p-3 rounded-lg border border-primary/20 flex items-start gap-2">
+                                            <div className="bg-primary/20 text-primary text-[10px] font-black px-1.5 py-0.5 rounded uppercase flex-shrink-0 mt-0.5">Note</div>
+                                            <p className="text-primary/90 text-sm leading-relaxed italic font-medium">"{task.submissionText}"</p>
                                         </div>
                                     )}
                                 </div>
