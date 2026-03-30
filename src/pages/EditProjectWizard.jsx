@@ -35,6 +35,9 @@ const EditProjectWizard = () => {
     // Selected products: [{ product: {_id, name, ...}, plannedQuantity: N }]
     const [selectedProducts, setSelectedProducts] = useState([]);
 
+    // To track stock already allocated to this project before editing
+    const [initialQuantities, setInitialQuantities] = useState({}); // { productId: qty }
+
     // ── Load existing project + master data ─────────────────────────
     useEffect(() => {
         if (currentUser?.role === 'admin_viewer') {
@@ -71,18 +74,23 @@ const EditProjectWizard = () => {
 
                 // Pre-fill selected products (populate from availableProducts)
                 if (proj.products && proj.products.length > 0) {
+                    const initialQs = {};
                     const preSelected = proj.products
                         .filter(item => item.product) // guard dangling refs
                         .map(item => {
-                            // item.product may be populated object or just an id
-                            const populated = typeof item.product === 'object'
-                                ? item.product
-                                : products.find(p => p._id === item.product);
+                            const pId = typeof item.product === 'object' ? item.product._id : item.product;
+                            const qty = item.plannedQuantity || 1;
+                            initialQs[pId] = qty;
+
+                            // ALWAYS find in fresh products list to avoid stale totalStock
+                            const populated = products.find(p => p._id === pId);
                             return populated
-                                ? { product: populated, plannedQuantity: item.plannedQuantity || 1 }
+                                ? { product: populated, plannedQuantity: qty }
                                 : null;
                         })
                         .filter(Boolean);
+
+                    setInitialQuantities(initialQs);
                     setSelectedProducts(preSelected);
                 }
             } catch (e) {
@@ -112,6 +120,13 @@ const EditProjectWizard = () => {
 
     const removeProduct = (index) => {
         setSelectedProducts(selectedProducts.filter((_, i) => i !== index));
+    };
+
+    // Helper to calculate total stock available for *this project* 
+    // (includes what's already saved in the project)
+    const getEffectiveStock = (product) => {
+        const initialQty = initialQuantities[product._id] || 0;
+        return (product.totalStock || 0) + initialQty;
     };
 
     // ── Submit ──────────────────────────────────────────────────────
@@ -274,11 +289,14 @@ const EditProjectWizard = () => {
                     <option value="">+ Add Product</option>
                     {availableProducts
                         .filter(p => !selectedProducts.find(sp => sp.product._id === p._id))
-                        .map(p => (
-                            <option key={p._id} value={p._id} disabled={p.totalStock <= 0}>
-                                {p.name} (Stock: {p.totalStock || 0})
-                            </option>
-                        ))
+                        .map(p => {
+                            const effectiveStock = getEffectiveStock(p);
+                            return (
+                                <option key={p._id} value={p._id} disabled={effectiveStock <= 0}>
+                                    {p.name} (Stock: {effectiveStock})
+                                </option>
+                            );
+                        })
                     }
                 </select>
             </div>
@@ -291,11 +309,12 @@ const EditProjectWizard = () => {
             ) : (
                 <div className="space-y-3">
                     {selectedProducts.map((item, idx) => {
-                        const isStockLow = item.plannedQuantity > (item.product.totalStock || 0);
+                        const effectiveStock = getEffectiveStock(item.product);
+                        const isStockLowValue = item.plannedQuantity > effectiveStock;
                         return (
                             <div
                                 key={item.product._id}
-                                className={`flex items-center justify-between border p-4 rounded-xl bg-white shadow-sm transition ${isStockLow ? 'border-red-300 bg-red-50' : 'border-gray-200'}`}
+                                className={`flex items-center justify-between border p-4 rounded-xl bg-white shadow-sm transition ${isStockLowValue ? 'border-red-300 bg-red-50' : 'border-gray-200'}`}
                             >
                                 <div className="flex items-center gap-4">
                                     <div className="bg-primary/10 p-2 rounded-lg text-primary">
@@ -303,12 +322,27 @@ const EditProjectWizard = () => {
                                     </div>
                                     <div>
                                         <h4 className="font-bold text-sm">{item.product.name}</h4>
-                                        <p className="text-xs text-gray-500">
-                                            {item.product.category} &nbsp;|&nbsp;
-                                            <span className="font-semibold text-gray-700">Available: {item.product.totalStock || 0}</span>
-                                        </p>
-                                        {isStockLow && (
-                                            <span className="text-xs text-red-600 font-bold">⚠ Exceeds current stock!</span>
+                                        <div className="flex flex-col gap-1 mt-1">
+                                            <div className="flex items-center gap-2">
+                                                <span className="px-1.5 py-0.5 rounded bg-gray-100 text-[10px] font-bold text-gray-500 border border-gray-200 uppercase tracking-tight">
+                                                    Max Available: {getEffectiveStock(item.product)}
+                                                </span>
+                                                <span className={`px-1.5 py-0.5 rounded text-[10px] font-bold border uppercase tracking-tight transition-colors
+                                                    ${(getEffectiveStock(item.product) - (item.plannedQuantity || 0)) < 0 
+                                                        ? 'bg-red-100 text-red-600 border-red-200' 
+                                                        : 'bg-green-50 text-green-600 border-green-200'}`}
+                                                >
+                                                    Remaining: {getEffectiveStock(item.product) - (item.plannedQuantity || 0)}
+                                                </span>
+                                            </div>
+                                            <p className="text-[10px] text-gray-400 font-medium">
+                                                {item.product.category} &nbsp;|&nbsp; SKU: {item.product.sku || '—'}
+                                            </p>
+                                        </div>
+                                        {item.plannedQuantity > getEffectiveStock(item.product) && (
+                                            <div className="mt-1 flex items-center gap-1 text-[10px] text-red-600 font-black uppercase italic tracking-wider animate-pulse">
+                                                <span>⚠️ Exceeds current stock!</span>
+                                            </div>
                                         )}
                                     </div>
                                 </div>

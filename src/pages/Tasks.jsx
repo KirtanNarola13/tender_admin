@@ -1,5 +1,5 @@
 import { useState, useEffect, useMemo } from 'react';
-import { useSearchParams, useNavigate } from 'react-router-dom';
+import { useSearchParams, useNavigate, useLocation } from 'react-router-dom';
 import {
     Search,
     Filter,
@@ -8,6 +8,7 @@ import {
     CheckCircle,
     Clock,
     AlertCircle,
+    ArrowLeft,
 } from 'lucide-react';
 import api from '../services/api';
 
@@ -57,8 +58,9 @@ const Tasks = () => {
     const [loading, setLoading] = useState(true);
     const [searchQuery, setSearchQuery] = useState('');
     const [statusFilter, setStatusFilter] = useState(initialStatus);
-
     const navigate = useNavigate();
+    const location = useLocation();
+    const fromDashboard = location.state?.fromDashboard;
 
     useEffect(() => {
         fetchTasks();
@@ -122,7 +124,15 @@ const Tasks = () => {
     return (
         <div className="space-y-6">
             {/* Header */}
-            <div>
+            <div className="flex flex-col gap-2">
+                {fromDashboard && (
+                    <button 
+                        onClick={() => navigate('/')}
+                        className="flex items-center gap-1.5 text-primary text-xs font-bold uppercase tracking-wider hover:gap-2 transition-all w-fit mb-1"
+                    >
+                        <ArrowLeft size={14} /> Back to Dashboard
+                    </button>
+                )}
                 <h1 className="text-2xl font-bold text-gray-900 tracking-tight">Task Management</h1>
                 <p className="text-gray-500 text-sm mt-1">Click a team leader to view their ledger.</p>
             </div>
@@ -180,7 +190,7 @@ const Tasks = () => {
                     Object.entries(groupedData).map(([teamId, teamData]) => (
                         <button
                             key={teamId}
-                            onClick={() => navigate(`/tasks/leader/${teamId}`)}
+                            onClick={() => navigate(`/tasks/leader/${teamId}${statusFilter !== 'all' ? `?status=${statusFilter}` : ''}`)}
                             className="w-full bg-white border border-gray-200 shadow-sm rounded-xl p-5 flex items-center justify-between hover:border-primary hover:shadow-md transition-all group text-left"
                         >
                             {/* Left: Avatar + Info */}

@@ -59,35 +59,35 @@ const Dashboard = () => {
                     count={stats.totalProjects}
                     icon={Briefcase}
                     color="bg-primary"
-                    onClick={() => navigate('/projects')}
+                    onClick={() => navigate('/projects', { state: { fromDashboard: true } })}
                 />
                 <StatCard
                     title="Team Leaders"
                     count={stats.totalTeamLeaders}
                     icon={Users}
                     color="bg-primary"
-                    onClick={() => navigate('/users')}
+                    onClick={() => navigate('/users', { state: { fromDashboard: true } })}
                 />
                 <StatCard
                     title="Employees"
                     count={stats.totalEmployees}
                     icon={Users}
                     color="bg-accent"
-                    onClick={() => navigate('/users')}
+                    onClick={() => navigate('/users', { state: { fromDashboard: true } })}
                 />
                 <StatCard
                     title="Pending Tasks"
                     count={stats.pendingTasks}
                     icon={Clock}
                     color="bg-orange-500"
-                    onClick={() => navigate('/tasks?status=pending')}
+                    onClick={() => navigate('/tasks?status=pending', { state: { fromDashboard: true } })}
                 />
                 <StatCard
                     title="Completed Tasks"
                     count={stats.completedTasks}
                     icon={CheckCircle}
                     color="bg-green-500"
-                    onClick={() => navigate('/tasks?status=completed')}
+                    onClick={() => navigate('/tasks?status=completed', { state: { fromDashboard: true } })}
                 />
             </div>
 

@@ -1,7 +1,8 @@
 import { useState, useEffect } from 'react';
+import { useLocation, useNavigate } from 'react-router-dom';
 import api from '../services/api';
 import { useAuth } from '../context/AuthContext';
-import { Plus, Search, Users as UsersIcon, Shield, UserCheck, User, Eye } from 'lucide-react';
+import { Plus, Search, Users as UsersIcon, Shield, UserCheck, User, Eye, ArrowLeft } from 'lucide-react';
 
 const ROLE_COLORS = {
     admin: 'bg-primary/10 text-primary border-primary/20',
@@ -19,6 +20,9 @@ const ROLE_LABELS = {
 
 const Users = () => {
     const { user: currentUser } = useAuth();
+    const navigate = useNavigate();
+    const location = useLocation();
+    const fromDashboard = location.state?.fromDashboard;
     const [users, setUsers] = useState([]);
     const [teamLeaders, setTeamLeaders] = useState([]);
     const [searchTerm, setSearchTerm] = useState('');
@@ -122,6 +126,14 @@ const Users = () => {
             {/* Header */}
             <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-6 gap-4">
                 <div>
+                    {fromDashboard && (
+                        <button 
+                            onClick={() => navigate('/')}
+                            className="flex items-center gap-1.5 text-primary text-xs font-bold uppercase tracking-wider hover:gap-2 transition-all w-fit mb-2"
+                        >
+                            <ArrowLeft size={14} /> Back to Dashboard
+                        </button>
+                    )}
                     <h1 className="text-2xl font-bold text-gray-800">User Management</h1>
                     <p className="text-gray-500 text-sm">Manage admins, team leaders, and employees.</p>
                 </div>

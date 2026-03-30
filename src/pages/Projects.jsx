@@ -1,24 +1,25 @@
 import { useState, useEffect } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { useLocation, Link, useNavigate } from 'react-router-dom';
 import api from '../services/api';
 import { useAuth } from '../context/AuthContext';
-import { Plus, Briefcase, Layout, Search, Filter, ChevronRight } from 'lucide-react';
+import { Plus, Briefcase, Layout, Search, Filter, ChevronRight, ArrowLeft } from 'lucide-react';
 import DeleteConfirmModal from '../components/DeleteConfirmModal';
 
 const Projects = () => {
     const { user: currentUser } = useAuth();
     const navigate = useNavigate();
+    const location = useLocation();
+    const fromDashboard = location.state?.fromDashboard;
     const [projects, setProjects] = useState([]);
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [newProject, setNewProject] = useState({ name: '', description: '' });
-    const [expandedCategories, setExpandedCategories] = useState({});
     const [searchQuery, setSearchQuery] = useState('');
     const [sortBy, setSortBy] = useState('updatedAt_desc');
 
     // School & Assignment
     const [showSchoolModal, setShowSchoolModal] = useState(false);
     const [selectedProject, setSelectedProject] = useState(null);
-    const [newSchool, setNewSchool] = useState({ name: '', address: '', project: '' });
+    const [newSchool, setNewSchool] = useState({ id: '' });
     const [users, setUsers] = useState([]); // Team Leaders
     const [selectedLeader, setSelectedLeader] = useState('');
     
@@ -34,7 +35,6 @@ const Projects = () => {
     const fetchProjects = async () => {
         try {
             const res = await api.get('/projects');
-            console.log('Projects API Response:', res.data);
             setProjects(res.data);
         } catch (error) {
             console.error('Failed to fetch projects');
@@ -73,16 +73,8 @@ const Projects = () => {
     };
 
     const handleAssignLeader = async () => {
-        // newSchool now effectively selects a project if we are assigning to a project, 
-        // but wait, the modal logic was: "Select an existing school in selectedProject".
-        // Now "Project" = "Site". So we are just assigning to failure selectedProject?
-        // But the modal has "Select School" dropdown.
-        // If we removed Schools logic, we should assign to THIS selectedProject.
-        // Let's simplify: Assign Leader to THIS project directly.
-
         if (!selectedLeader) return alert('Select Team Leader');
         try {
-            // Update Project with new Leader
             await api.put(`/projects/${selectedProject._id}`, {
                 assignedLeader: selectedLeader
             });
@@ -90,13 +82,11 @@ const Projects = () => {
             setShowSchoolModal(false);
             setSelectedLeader('');
             alert('Team Leader Assigned Successfully!');
-            fetchProjects(); // Refresh to show new status/leader if we showed it
+            fetchProjects();
         } catch (e) {
             alert('Failed to assign: ' + (e.response?.data?.message || e.message));
         }
     };
-
-
 
     const handleDelete = async (id, name) => {
         setProjectToDelete({ id, name });
@@ -149,6 +139,14 @@ const Projects = () => {
         <div className="w-full space-y-4 sm:space-y-6 max-w-7xl mx-auto pb-8">
             <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
                 <div>
+                    {fromDashboard && (
+                        <button 
+                            onClick={() => navigate('/')}
+                            className="flex items-center gap-1.5 text-primary text-xs font-bold uppercase tracking-wider hover:gap-2 transition-all w-fit mb-2"
+                        >
+                            <ArrowLeft size={14} /> Back to Dashboard
+                        </button>
+                    )}
                     <h1 className="text-xl sm:text-2xl font-bold text-gray-900 tracking-tight mb-1">Project Portfolio</h1>
                     <div className="flex items-center gap-2 text-gray-500">
                         <div className="w-2 h-2 rounded-full bg-primary/80"></div>

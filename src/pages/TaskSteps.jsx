@@ -1,5 +1,5 @@
 import { useState, useEffect, useMemo } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useParams, useNavigate, useSearchParams } from 'react-router-dom';
 import api, { getImageUrl } from '../services/api';
 import {
     ArrowLeft, Search, X, ChevronRight, Eye,
@@ -53,6 +53,8 @@ const STATUS_OPTS = [
 const TaskSteps = () => {
     const { leaderId, projectId, productId } = useParams();
     const navigate = useNavigate();
+    const [searchParams, setSearchParams] = useSearchParams();
+    const initialStatus = searchParams.get('status') || 'all';
 
     const [allTasks, setAllTasks] = useState([]);
     const [leaderName, setLeaderName] = useState('');
@@ -60,8 +62,8 @@ const TaskSteps = () => {
     const [productName, setProductName] = useState('');
     const [loading, setLoading] = useState(true);
     const [searchQuery, setSearchQuery] = useState('');
-    const [statusFilter, setStatusFilter] = useState('all');
-    const [showFilters, setShowFilters] = useState(false);
+    const [statusFilter, setStatusFilter] = useState(initialStatus);
+    const [showFilters, setShowFilters] = useState(initialStatus !== 'all');
     const [previewImage, setPreviewImage] = useState(null);
 
     useEffect(() => { fetchTasks(); }, []);
@@ -108,7 +110,7 @@ const TaskSteps = () => {
             {/* Header */}
             <div className="flex items-center gap-4 mb-2">
                 <button
-                    onClick={() => navigate(`/tasks/leader/${leaderId}/project/${projectId}`)}
+                    onClick={() => navigate(-1)}
                     className="w-10 h-10 rounded-xl bg-white border border-gray-200 shadow-sm hover:bg-gray-50 hover:shadow-md flex items-center justify-center text-gray-600 transition-all"
                 >
                     <ArrowLeft size={20} />
@@ -140,11 +142,11 @@ const TaskSteps = () => {
 
             {/* Breadcrumb */}
             <div className="flex items-center gap-1.5 text-xs text-gray-400 mb-6 ml-14 flex-wrap">
-                <span className="hover:text-primary cursor-pointer" onClick={() => navigate('/tasks')}>Tasks</span>
+                <span className="hover:text-primary cursor-pointer" onClick={() => navigate(`/tasks${statusFilter !== 'all' ? `?status=${statusFilter}` : ''}`)}>Tasks</span>
                 <ChevronRight size={13} />
-                <span className="hover:text-primary cursor-pointer" onClick={() => navigate(`/tasks/leader/${leaderId}`)}>{leaderName}</span>
+                <span className="hover:text-primary cursor-pointer" onClick={() => navigate(`/tasks/leader/${leaderId}${statusFilter !== 'all' ? `?status=${statusFilter}` : ''}`)}>{leaderName}</span>
                 <ChevronRight size={13} />
-                <span className="hover:text-primary cursor-pointer" onClick={() => navigate(`/tasks/leader/${leaderId}/project/${projectId}`)}>{projectName}</span>
+                <span className="hover:text-primary cursor-pointer" onClick={() => navigate(`/tasks/leader/${leaderId}/project/${projectId}${statusFilter !== 'all' ? `?status=${statusFilter}` : ''}`)}>{projectName}</span>
                 <ChevronRight size={13} />
                 <span className="text-gray-600 font-medium">{productName}</span>
             </div>
@@ -203,7 +205,15 @@ const TaskSteps = () => {
                                 {STATUS_OPTS.map(s => (
                                     <button
                                         key={s.value}
-                                        onClick={() => setStatusFilter(s.value)}
+                                        onClick={() => {
+                                            setStatusFilter(s.value);
+                                            if (s.value === 'all') {
+                                                searchParams.delete('status');
+                                            } else {
+                                                searchParams.set('status', s.value);
+                                            }
+                                            setSearchParams(searchParams);
+                                        }}
                                         className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-all ${statusFilter === s.value ? 'bg-primary text-white shadow-sm' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'}`}
                                     >
                                         {s.label}
@@ -213,7 +223,11 @@ const TaskSteps = () => {
                         </div>
                         {activeFiltersCount > 0 && (
                             <button
-                                onClick={() => setStatusFilter('all')}
+                                onClick={() => {
+                                    setStatusFilter('all');
+                                    searchParams.delete('status');
+                                    setSearchParams(searchParams);
+                                }}
                                 className="flex items-center gap-1.5 text-sm text-red-500 hover:text-red-600 font-medium px-3 py-2 rounded-lg hover:bg-red-50 transition-colors"
                             >
                                 <X size={14} /> Reset
@@ -257,8 +271,7 @@ const TaskSteps = () => {
                         return (
                             <div
                                 key={task._id}
-                                className={`rounded-xl border p-5 flex flex-col transition-all hover:shadow-md group/card cursor-pointer ${sc.card}`}
-                                onClick={() => navigate(`/tasks/${task._id}`)}
+                                className={`rounded-xl border p-5 flex flex-col transition-all ${sc.card}`}
                             >
                                 {/* Top: Step number + Status badge */}
                                 <div className="flex justify-between items-start mb-3">
@@ -272,7 +285,7 @@ const TaskSteps = () => {
                                 </div>
 
                                 {/* Step name */}
-                                <h3 className="font-bold text-gray-900 text-[15px] leading-snug mb-1 group-hover/card:text-primary transition-colors">
+                                <h3 className="font-bold text-gray-900 text-[15px] leading-snug mb-1 transition-colors">
                                     {task.stepName || 'Unnamed Step'}
                                 </h3>
 
@@ -309,9 +322,6 @@ const TaskSteps = () => {
                                     <div className="flex items-center gap-1 text-xs text-gray-400">
                                         {sc.icon}
                                         <span className="capitalize">{task.status}</span>
-                                    </div>
-                                    <div className="w-7 h-7 rounded-lg flex items-center justify-center bg-white/80 border border-gray-200 text-gray-400 group-hover/card:text-primary group-hover/card:border-primary/20 transition-colors">
-                                        <Eye size={13} />
                                     </div>
                                 </div>
                             </div>

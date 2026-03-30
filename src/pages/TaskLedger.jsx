@@ -1,5 +1,5 @@
 import { useState, useEffect, useMemo } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useParams, useNavigate, useSearchParams } from 'react-router-dom';
 import api from '../services/api';
 import {
     ArrowLeft, Search, X, ChevronRight, FolderKanban, SlidersHorizontal
@@ -46,11 +46,14 @@ export const getStatusColors = (status) => {
 const TaskLedger = () => {
     const { leaderId } = useParams();
     const navigate = useNavigate();
+    const [searchParams, setSearchParams] = useSearchParams();
+    const initialStatus = searchParams.get('status') || 'all';
 
     const [allTasks, setAllTasks] = useState([]);
     const [leaderName, setLeaderName] = useState('');
     const [loading, setLoading] = useState(true);
     const [searchQuery, setSearchQuery] = useState('');
+    const [statusFilter, setStatusFilter] = useState(initialStatus);
 
     useEffect(() => { fetchTasks(); }, []);
 
@@ -73,7 +76,13 @@ const TaskLedger = () => {
     // Group tasks by project
     const projectMap = useMemo(() => {
         const map = {};
-        allTasks.forEach(t => {
+        
+        // --- Apply Status Filter BEFORE grouping ---
+        const filtered = allTasks.filter(t => 
+            statusFilter === 'all' || t.status === statusFilter
+        );
+
+        filtered.forEach(t => {
             const pid = t.project?._id || 'unknown';
             if (!map[pid]) {
                 map[pid] = {
@@ -94,7 +103,7 @@ const TaskLedger = () => {
             if (t.product?.name) map[pid].productNames.add(t.product.name);
         });
         return map;
-    }, [allTasks]);
+    }, [allTasks, statusFilter]);
 
     const filteredProjects = Object.values(projectMap).filter(p =>
         !searchQuery || p.name.toLowerCase().includes(searchQuery.toLowerCase())
@@ -104,7 +113,10 @@ const TaskLedger = () => {
         <div className="w-full max-w-7xl mx-auto pb-10">
             {/* Header */}
             <div className="flex items-center gap-4 mb-6">
-                <button onClick={() => navigate('/tasks')} className="w-10 h-10 rounded-xl bg-white border border-gray-200 shadow-sm hover:bg-gray-50 hover:shadow-md flex items-center justify-center text-gray-600 transition-all">
+                <button 
+                    onClick={() => navigate(-1)} 
+                    className="w-10 h-10 rounded-xl bg-white border border-gray-200 shadow-sm hover:bg-gray-50 hover:shadow-md flex items-center justify-center text-gray-600 transition-all shrink-0"
+                >
                     <ArrowLeft size={20} />
                 </button>
                 <div className="flex items-center gap-3 flex-1">
@@ -120,9 +132,9 @@ const TaskLedger = () => {
                 </div>
             </div>
 
-            {/* Search */}
-            <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-3 sm:p-4 mb-6">
-                <div className="relative">
+            {/* Search + Filter */}
+            <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-3 sm:p-4 mb-6 flex flex-col md:flex-row gap-4">
+                <div className="relative flex-1">
                     <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
                         <Search size={17} className="text-gray-400" />
                     </div>
@@ -138,6 +150,31 @@ const TaskLedger = () => {
                             <X size={15} />
                         </button>
                     )}
+                </div>
+
+                <div className="flex items-center gap-2">
+                    <select
+                        className="w-full sm:w-48 px-3 py-2.5 border border-gray-300 rounded-lg text-sm bg-gray-50/50 focus:outline-none focus:ring-2 focus:ring-primary/20"
+                        value={statusFilter}
+                        onChange={(e) => {
+                            const val = e.target.value;
+                            setStatusFilter(val);
+                            if (val === 'all') {
+                                searchParams.delete('status');
+                            } else {
+                                searchParams.set('status', val);
+                            }
+                            setSearchParams(searchParams);
+                        }}
+                    >
+                        <option value="all">All Statuses</option>
+                        <option value="pending">🔴 Pending</option>
+                        <option value="locked">🔴 Locked</option>
+                        <option value="in-progress">🟡 In Progress</option>
+                        <option value="submitted">🟡 Submitted</option>
+                        <option value="completed">🟢 Completed</option>
+                        <option value="verified">🟢 Verified</option>
+                    </select>
                 </div>
             </div>
 
@@ -165,7 +202,7 @@ const TaskLedger = () => {
                     {filteredProjects.map(project => (
                         <button
                             key={project.id}
-                            onClick={() => navigate(`/tasks/leader/${leaderId}/project/${project.id}`)}
+                            onClick={() => navigate(`/tasks/leader/${leaderId}/project/${project.id}${statusFilter !== 'all' ? `?status=${statusFilter}` : ''}`)}
                             className="w-full bg-white border border-gray-200 shadow-sm rounded-xl p-5 flex items-center justify-between hover:border-primary hover:shadow-md transition-all group text-left"
                         >
                             <div className="flex items-center gap-4">
