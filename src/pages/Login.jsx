@@ -18,13 +18,25 @@ const Login = () => {
 
         try {
             const userData = await login(email, password);
+            console.log('[Login Debug] User Data Received:', userData);
+
+            // Validation: Ensure the response is a valid user object, not HTML from a redirect
+            if (!userData || typeof userData !== 'object' || !userData.role) {
+                console.error('[Login Error] Invalid response format from server:', userData);
+                setError('Unexpected response from server. Please contact support.');
+                return;
+            }
+
             if (userData.role !== 'admin' && userData.role !== 'admin_viewer') {
+                console.warn('[Login Warn] Access denied for user with role:', userData.role);
                 logout();
                 setError('Access denied. Admin privileges required to access this dashboard.');
                 return;
             }
+
             navigate('/');
-        } catch (error) {
+        } catch (err) {
+            console.error('[Login Error] Catch block reached:', err);
             setError('Invalid email or password. Please try again.');
         } finally {
             setIsLoading(false);
