@@ -11,28 +11,40 @@ import {
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 
-// ── Status colour helper (Red=Pending, Yellow=Working, Green=Done) ─────────
+// ── Status colour helper (Synced from Mobile) ─────────
 const getStatusColors = (status) => {
     switch (status) {
         case 'verified':
         case 'completed':
             return {
-                badge: 'bg-green-100 text-green-700 border border-green-200',
-                dot: 'bg-green-500',
+                badge: 'bg-task-done-bg text-task-done-fg border border-task-done-fg/20',
+                dot: 'bg-task-done-fg',
                 label: status === 'verified' ? 'Verified' : 'Completed',
             };
         case 'submitted':
+            return {
+                badge: 'bg-task-submitted-bg text-task-submitted-fg border border-task-submitted-fg/20',
+                dot: 'bg-task-submitted-fg',
+                label: 'Submitted',
+            };
         case 'in-progress':
             return {
-                badge: 'bg-yellow-100 text-yellow-700 border border-yellow-200',
-                dot: 'bg-yellow-400',
-                label: status === 'submitted' ? 'Submitted' : 'In Progress',
+                badge: 'bg-task-working-bg text-task-working-fg border border-task-working-fg/20',
+                dot: 'bg-task-working-fg',
+                label: 'In Progress',
             };
-        default: // pending, locked
+        case 'locked':
             return {
-                badge: 'bg-red-100 text-red-600 border border-red-200',
-                dot: 'bg-red-400',
-                label: status === 'locked' ? 'Locked' : 'Pending',
+                badge: 'bg-task-locked-bg text-task-locked-fg border border-task-locked-fg/20',
+                dot: 'bg-task-locked-fg',
+                label: 'Locked',
+            };
+        case 'pending':
+        default:
+            return {
+                badge: 'bg-task-pending-bg text-task-pending-fg border border-task-pending-fg/20',
+                dot: 'bg-task-pending-fg',
+                label: 'Pending',
             };
     }
 };

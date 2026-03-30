@@ -32,34 +32,38 @@ const Login = () => {
     };
 
     return (
-        <div className="min-h-screen flex items-center justify-center bg-gray-50 px-4">
-            <div className="bg-white p-8 rounded-2xl shadow-xl w-full max-w-md border border-gray-100">
-                <div className="flex flex-col items-center mb-8">
-                    <div className="bg-indigo-100 p-3 rounded-full mb-4">
-                        <ShieldCheck className="text-indigo-600" size={32} />
+        <div className="min-h-screen flex items-center justify-center bg-white px-4">
+            <div className="bg-white p-8 rounded-3xl shadow-2xl w-full max-w-md border border-gray-100 relative overflow-hidden">
+                {/* Decorative background element */}
+                <div className="absolute -top-24 -right-24 w-48 h-48 bg-primary/5 rounded-full blur-3xl"></div>
+                <div className="absolute -bottom-24 -left-24 w-48 h-48 bg-primary/5 rounded-full blur-3xl"></div>
+
+                <div className="flex flex-col items-center mb-10 relative z-10">
+                    <div className="bg-primary/10 p-4 rounded-2xl mb-5 shadow-inner border border-primary/10">
+                        <ShieldCheck className="text-primary" size={36} />
                     </div>
-                    <h2 className="text-2xl font-bold text-gray-800">Welcome Back</h2>
-                    <p className="text-gray-500 text-sm mt-1">Sign in to your admin dashboard</p>
+                    <h2 className="text-3xl font-black text-gray-900 tracking-tight">KG INFRA</h2>
+                    <p className="text-gray-500 text-sm mt-1.5 font-medium uppercase tracking-widest opacity-60">Admin Portal</p>
                 </div>
 
                 {error && (
-                    <div className="bg-red-50 border border-red-200 text-red-600 px-4 py-3 rounded-lg mb-6 flex items-center gap-2 text-sm">
-                        <AlertCircle size={16} />
+                    <div className="bg-red-50 border border-red-100 text-red-600 px-4 py-3.5 rounded-xl mb-6 flex items-center gap-3 text-sm font-medium animate-shake">
+                        <AlertCircle size={18} className="shrink-0" />
                         {error}
                     </div>
                 )}
 
-                <form onSubmit={handleSubmit} className="space-y-5">
+                <form onSubmit={handleSubmit} className="space-y-6 relative z-10">
                     <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1.5">Email Address</label>
-                        <div className="relative">
-                            <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                                <Mail className="text-gray-400" size={18} />
+                        <label className="block text-sm font-semibold text-gray-700 mb-2 ml-1">Email Address</label>
+                        <div className="relative group">
+                            <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none transition-colors group-focus-within:text-primary">
+                                <Mail className="text-gray-400 group-focus-within:text-primary transition-colors" size={18} />
                             </div>
                             <input
                                 type="email"
-                                className="w-full pl-10 pr-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none transition-all text-gray-700"
-                                placeholder="name@company.com"
+                                className="w-full pl-11 pr-4 py-3.5 border border-gray-200 rounded-xl focus:ring-4 focus:ring-primary/10 focus:border-primary outline-none transition-all text-gray-700 bg-gray-50/50 hover:bg-gray-50 focus:bg-white"
+                                placeholder="admin@kginfra.com"
                                 value={email}
                                 onChange={(e) => setEmail(e.target.value)}
                                 required
@@ -68,14 +72,14 @@ const Login = () => {
                     </div>
 
                     <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1.5">Password</label>
-                        <div className="relative">
-                            <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                                <Lock className="text-gray-400" size={18} />
+                        <label className="block text-sm font-semibold text-gray-700 mb-2 ml-1">Password</label>
+                        <div className="relative group">
+                            <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none transition-colors group-focus-within:text-primary">
+                                <Lock className="text-gray-400 group-focus-within:text-primary transition-colors" size={18} />
                             </div>
                             <input
                                 type="password"
-                                className="w-full pl-10 pr-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none transition-all text-gray-700"
+                                className="w-full pl-11 pr-4 py-3.5 border border-gray-200 rounded-xl focus:ring-4 focus:ring-primary/10 focus:border-primary outline-none transition-all text-gray-700 bg-gray-50/50 hover:bg-gray-50 focus:bg-white"
                                 placeholder="••••••••"
                                 value={password}
                                 onChange={(e) => setPassword(e.target.value)}
@@ -87,18 +91,22 @@ const Login = () => {
                     <button
                         type="submit"
                         disabled={isLoading}
-                        className="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-medium py-2.5 rounded-lg transition-colors flex items-center justify-center gap-2 disabled:opacity-70 disabled:cursor-not-allowed shadow-sm"
+                        className="w-full bg-primary hover:bg-primary/90 text-white font-bold py-4 rounded-xl transition-all flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed shadow-lg shadow-primary/20 hover:shadow-xl hover:shadow-primary/30 active:scale-[0.98]"
                     >
                         {isLoading ? (
                             <>
-                                <Loader2 size={20} className="animate-spin" />
-                                Signing in...
+                                <Loader2 size={24} className="animate-spin" />
+                                <span className="tracking-wide">Authenticating...</span>
                             </>
                         ) : (
-                            'Sign In'
+                            <span className="tracking-wide text-lg">Sign In</span>
                         )}
                     </button>
                 </form>
+
+                <div className="mt-10 text-center">
+                    <p className="text-xs text-gray-400 font-medium">© {new Date().getFullYear()} KG INFRASTRUCTURES. All rights reserved.</p>
+                </div>
             </div>
         </div>
     );

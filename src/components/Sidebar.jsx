@@ -39,7 +39,7 @@ const Sidebar = ({ isOpen, setIsOpen }) => {
             )}>
                 <div className="p-6 border-b flex justify-between items-start">
                     <div>
-                        <h1 className="text-2xl font-bold text-primary">TMS Admin</h1>
+                        <h1 className="text-2xl font-bold text-primary">KG INFRA Admin</h1>
                         <p className="text-sm text-gray-500 mt-1 truncate max-w-[180px]">{user?.name}</p>
                         <p className="text-xs text-gray-400 capitalize">{user?.role}</p>
                     </div>
@@ -64,7 +64,7 @@ const Sidebar = ({ isOpen, setIsOpen }) => {
                                 className={clsx(
                                     'flex items-center space-x-3 px-4 py-3 rounded-lg transition-colors',
                                     isActive
-                                        ? 'bg-blue-50 text-primary'
+                                        ? 'bg-primary-light text-primary border border-primary/20'
                                         : 'text-gray-600 hover:bg-gray-50'
                                 )}
                             >

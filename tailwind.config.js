@@ -7,9 +7,30 @@ export default {
     theme: {
         extend: {
             colors: {
-                primary: "#3A6CF4",
+                primary: "#B8860B",
+                "primary-light": "#FEF9C3",
                 secondary: "#111827",
-                accent: "#22C55E",
+                accent: "#DAA520",
+                "task-pending": {
+                    bg: "#FFF1F2",
+                    fg: "#E11D48",
+                },
+                "task-working": {
+                    bg: "#FFFBEB",
+                    fg: "#D97706",
+                },
+                "task-done": {
+                    bg: "#ECFDF5",
+                    fg: "#059669",
+                },
+                "task-submitted": {
+                    bg: "#F5F3FF",
+                    fg: "#7C3AED",
+                },
+                "task-locked": {
+                    bg: "#F9FAFB",
+                    fg: "#94A3B8",
+                },
             }
         },
     },

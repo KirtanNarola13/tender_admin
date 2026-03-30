@@ -1,10 +1,11 @@
 import axios from 'axios';
 
-// export const FILE_BASE_URL = 'http://localhost:3000';
-export const FILE_BASE_URL = 'https://tender-api.reliablesolution.in';
+// Use relative paths to let Vite proxy handle CORS in development
+// Depending on your environment, you can toggle these.
+export const FILE_BASE_URL = window.location.origin;
 
 const api = axios.create({
-    baseURL: `${FILE_BASE_URL}/api`,
+    baseURL: '/api',
     headers: {
         'Content-Type': 'application/json',
     },

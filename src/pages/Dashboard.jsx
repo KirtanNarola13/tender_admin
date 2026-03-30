@@ -56,7 +56,7 @@ const Dashboard = () => {
                     title="Total Projects"
                     count={stats.totalProjects}
                     icon={Briefcase}
-                    color="bg-blue-500"
+                    color="bg-primary"
                 />
                 <StatCard
                     title="Team Leaders"
@@ -119,7 +119,7 @@ const Dashboard = () => {
                                         }}
                                         contentStyle={{ borderRadius: '8px', border: 'none', boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)' }}
                                     />
-                                    <Bar dataKey="progress" fill="#10b981" radius={[0, 4, 4, 0]} barSize={24}>
+                                    <Bar dataKey="progress" fill="#B8860B" radius={[0, 4, 4, 0]} barSize={24}>
                                         <LabelList dataKey="progress" position="right" formatter={(v) => `${v}%`} fill="#4b5563" fontSize={11} fontWeight={600} />
                                     </Bar>
                                 </BarChart>
