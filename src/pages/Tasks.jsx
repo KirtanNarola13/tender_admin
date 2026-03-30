@@ -1,5 +1,5 @@
 import { useState, useEffect, useMemo } from 'react';
-import api from '../services/api';
+import { useSearchParams, useNavigate } from 'react-router-dom';
 import {
     Search,
     Filter,
@@ -9,7 +9,7 @@ import {
     Clock,
     AlertCircle,
 } from 'lucide-react';
-import { useNavigate } from 'react-router-dom';
+import api from '../services/api';
 
 // ── Status colour helper (Synced from Mobile) ─────────
 const getStatusColors = (status) => {
@@ -50,10 +50,13 @@ const getStatusColors = (status) => {
 };
 
 const Tasks = () => {
+    const [searchParams, setSearchParams] = useSearchParams();
+    const initialStatus = searchParams.get('status') || 'all';
+
     const [tasks, setTasks] = useState([]);
     const [loading, setLoading] = useState(true);
     const [searchQuery, setSearchQuery] = useState('');
-    const [statusFilter, setStatusFilter] = useState('all');
+    const [statusFilter, setStatusFilter] = useState(initialStatus);
 
     const navigate = useNavigate();
 
@@ -143,7 +146,16 @@ const Tasks = () => {
                     <select
                         className="w-full sm:w-48 px-3 py-2 border border-gray-300 rounded-lg text-sm bg-white focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary"
                         value={statusFilter}
-                        onChange={(e) => setStatusFilter(e.target.value)}
+                        onChange={(e) => {
+                            const val = e.target.value;
+                            setStatusFilter(val);
+                            if (val === 'all') {
+                                searchParams.delete('status');
+                            } else {
+                                searchParams.set('status', val);
+                            }
+                            setSearchParams(searchParams);
+                        }}
                     >
                         <option value="all">All Statuses</option>
                         <option value="pending">🔴 Pending</option>

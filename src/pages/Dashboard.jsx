@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import api from '../services/api';
 import {
     PieChart, Pie, Cell, ResponsiveContainer, Tooltip, Legend,
@@ -15,6 +16,7 @@ import {
 const COLORS = ['#FFBB28', '#00C49F']; // Pending (Orange), Completed (Green)
 
 const Dashboard = () => {
+    const navigate = useNavigate();
     const [stats, setStats] = useState(null);
     const [loading, setLoading] = useState(true);
     const [windowWidth, setWindowWidth] = useState(window.innerWidth);
@@ -57,30 +59,35 @@ const Dashboard = () => {
                     count={stats.totalProjects}
                     icon={Briefcase}
                     color="bg-primary"
+                    onClick={() => navigate('/projects')}
                 />
                 <StatCard
                     title="Team Leaders"
                     count={stats.totalTeamLeaders}
                     icon={Users}
                     color="bg-indigo-500"
+                    onClick={() => navigate('/users')}
                 />
                 <StatCard
                     title="Employees"
                     count={stats.totalEmployees}
                     icon={Users}
                     color="bg-purple-500"
+                    onClick={() => navigate('/users')}
                 />
                 <StatCard
                     title="Pending Tasks"
                     count={stats.pendingTasks}
                     icon={Clock}
                     color="bg-orange-500"
+                    onClick={() => navigate('/tasks?status=pending')}
                 />
                 <StatCard
                     title="Completed Tasks"
                     count={stats.completedTasks}
                     icon={CheckCircle}
                     color="bg-green-500"
+                    onClick={() => navigate('/tasks?status=completed')}
                 />
             </div>
 
@@ -200,8 +207,11 @@ const Dashboard = () => {
 };
 
 // Helper Component for Stats
-const StatCard = ({ title, count, icon: Icon, color }) => (
-    <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-200 flex items-center justify-between hover:shadow-md transition-shadow">
+const StatCard = ({ title, count, icon: Icon, color, onClick }) => (
+    <button 
+        onClick={onClick}
+        className="bg-white p-6 rounded-xl shadow-sm border border-gray-200 flex items-center justify-between hover:shadow-md transition-all hover:scale-[1.02] active:scale-[0.98] text-left w-full cursor-pointer"
+    >
         <div>
             <p className="text-gray-500 text-sm font-medium uppercase tracking-wide">{title}</p>
             <h3 className="text-3xl font-bold text-gray-900 mt-1">{count}</h3>
@@ -209,7 +219,7 @@ const StatCard = ({ title, count, icon: Icon, color }) => (
         <div className={`p-3 rounded-full ${color} bg-opacity-10`}>
             <Icon className={`w-6 h-6 ${color.replace('bg-', 'text-')}`} />
         </div>
-    </div>
+    </button>
 );
 
 export default Dashboard;
