@@ -13,3 +13,12 @@
     @apply bg-gradient-to-br from-[#3A6CF4] via-[#4F46E5] to-[#7C3AED];
   }
 }
+
+@layer utilities {
+  /* Use dvh (dynamic viewport height) so mobile browser toolbars don't cause layout shift.
+     Falls back to 100vh for browsers that don't support dvh yet. */
+  .sidebar-height {
+    height: 100vh;
+    height: 100dvh;
+  }
+}

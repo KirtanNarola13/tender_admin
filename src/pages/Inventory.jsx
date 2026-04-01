@@ -3,7 +3,8 @@ import { Link } from 'react-router-dom';
 import api, { getImageUrl } from '../services/api';
 import { useAuth } from '../context/AuthContext';
 import { useBranch } from '../context/BranchContext';
-import { Plus, Package, Trash2, Upload, Download, CheckCircle, XCircle, Loader2, Search, Filter, Warehouse, List, ArrowDownUp, AlertCircle, RefreshCw, Layers, ShoppingCart } from 'lucide-react';
+import { Plus, Package, Trash2, Upload, Download, CheckCircle, Loader2, Search, Warehouse, ShoppingCart, Pencil, AlertTriangle, Eye } from 'lucide-react';
+import PageLoader from '../components/PageLoader';
 
 const Inventory = () => {
     const { user: currentUser } = useAuth();
@@ -12,6 +13,7 @@ const Inventory = () => {
     const [warehouses, setWarehouses] = useState([]);
     const [activeTab, setActiveTab] = useState('products');
     const [logs, setLogs] = useState([]);
+    const [pageLoading, setPageLoading] = useState(true);
 
     // Forms
     const [showProductModal, setShowProductModal] = useState(false);
@@ -41,13 +43,13 @@ const Inventory = () => {
                 api.get(`/inventory/warehouses?branch=all`),
                 api.get('/inventory/logs')
             ]);
-            console.log('Products:', prodRes.data);
-            console.log('Warehouses:', wareRes.data);
             setProducts(prodRes.data);
             setWarehouses(wareRes.data);
             setLogs(logsRes.data || []);
         } catch (error) {
             console.error("Error fetching inventory");
+        } finally {
+            setPageLoading(false);
         }
     };
 
@@ -341,151 +343,144 @@ const Inventory = () => {
     };
     // ---
 
+    if (pageLoading) return <PageLoader text="Loading inventory..." />;
+
     return (
-        <div>
-            <div className="flex flex-col md:flex-row justify-between items-center mb-6 gap-4">
-                <div>
-                    <h1 className="text-2xl font-bold">Inventory Management</h1>
-                    <p className="text-gray-500 text-sm">Manage products, warehouses, and stock levels.</p>
+        <div className="space-y-3">
+            {/* Sticky header */}
+            <div className="sticky top-0 z-10 bg-gray-50 pb-2 space-y-2">
+                {/* Title row */}
+                <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
+                    <div>
+                        <h1 className="text-lg font-bold text-gray-900 leading-tight">Inventory Management</h1>
+                        <p className="text-gray-400 text-xs mt-0.5">Manage products, warehouses, and stock levels.</p>
+                    </div>
+
+                    {currentUser?.role !== 'admin_viewer' && (
+                        <div className="flex flex-wrap gap-1.5">
+                            <button
+                                onClick={() => { setActiveTab('products'); setShowProductModal(true); }}
+                                className="flex items-center gap-1.5 bg-primary text-white px-3 py-2 rounded-xl font-bold text-xs shadow-md shadow-primary/20 hover:scale-[1.02] active:scale-[0.98] transition-all"
+                            >
+                                <Plus size={13} /> New Product
+                            </button>
+                            <Link
+                                to="/purchase-orders"
+                                className="flex items-center gap-1.5 bg-emerald-600 hover:bg-emerald-700 text-white px-3 py-2 rounded-xl font-bold text-xs shadow-md shadow-emerald-200 transition-all"
+                            >
+                                <ShoppingCart size={13} /> Create PO
+                            </Link>
+                            <button
+                                onClick={() => setShowTransferStockModal(true)}
+                                className="flex items-center gap-1.5 bg-white border border-gray-200 text-gray-700 hover:bg-gray-50 px-3 py-2 rounded-xl font-bold text-xs shadow-sm transition-all"
+                            >
+                                <Package size={13} /> Transfer
+                            </button>
+                            <button
+                                onClick={() => { setActiveTab('warehouses'); setShowWarehouseModal(true); }}
+                                className="flex items-center gap-1.5 bg-white border border-gray-200 text-gray-700 hover:bg-gray-50 px-3 py-2 rounded-xl font-bold text-xs shadow-sm transition-all"
+                            >
+                                <Plus size={13} /> Warehouse
+                            </button>
+                            <button
+                                onClick={downloadTemplate}
+                                className="flex items-center gap-1.5 bg-white border border-gray-200 text-gray-500 hover:bg-gray-50 px-3 py-2 rounded-xl text-xs shadow-sm transition-all"
+                                title="Download CSV Template"
+                            >
+                                <Download size={13} /> CSV Template
+                            </button>
+                            <button
+                                onClick={() => csvInputRef.current?.click()}
+                                disabled={csvUploading}
+                                className="flex items-center gap-1.5 bg-white border border-gray-200 text-gray-500 hover:bg-gray-50 px-3 py-2 rounded-xl text-xs shadow-sm transition-all disabled:opacity-50"
+                                title="Bulk Upload via CSV"
+                            >
+                                {csvUploading
+                                    ? <><Loader2 size={13} className="animate-spin" /> {csvProgress.current}/{csvProgress.total}</>
+                                    : <><Upload size={13} /> Bulk Upload</>}
+                            </button>
+                            <input ref={csvInputRef} type="file" accept=".csv" className="hidden" onChange={handleCSVUpload} />
+                        </div>
+                    )}
                 </div>
 
-                {currentUser?.role !== 'admin_viewer' && (
-                    <div className="flex flex-wrap gap-2">
-                        <Link to="/purchase-orders" className="bg-emerald-600 hover:bg-emerald-700 text-white px-4 py-2.5 rounded-lg text-sm font-bold flex items-center gap-2 transition-all shadow-lg shadow-emerald-200">
-                            <ShoppingCart size={18} /> Create PO (Add Stock)
-                        </Link>
-                        <button onClick={() => setShowTransferStockModal(true)} className="bg-primary hover:bg-opacity-90 text-white px-5 py-2.5 rounded-lg text-sm font-bold flex items-center gap-2 transition-all shadow-lg shadow-primary/20">
-                            <Package size={18} /> Transfer
-                        </button>
-                        {/* CSV Buttons */}
+                {/* Tabs */}
+                <div className="flex border-b overflow-x-auto scrollbar-none">
+                    {[
+                        { key: 'products', label: `Products (${products.length})` },
+                        { key: 'warehouses', label: `Warehouses (${warehouses.length})` },
+                        { key: 'logs', label: 'Stock History' },
+                    ].map(tab => (
                         <button
-                            onClick={downloadTemplate}
-                            className="bg-gray-600 hover:bg-gray-700 text-white px-4 py-2 rounded-lg text-sm font-medium flex items-center gap-2 transition-colors"
-                            title="Download CSV Template"
+                            key={tab.key}
+                            onClick={() => setActiveTab(tab.key)}
+                            className={`px-4 py-2.5 text-xs font-bold transition-all whitespace-nowrap ${activeTab === tab.key ? 'border-b-2 border-primary text-primary' : 'text-gray-400 hover:text-gray-600'}`}
                         >
-                            <Download size={18} /> CSV Template
+                            {tab.label}
                         </button>
-                        <button
-                            onClick={() => csvInputRef.current?.click()}
-                            disabled={csvUploading}
-                            className="bg-orange-500 hover:bg-orange-600 disabled:opacity-60 text-white px-4 py-2 rounded-lg text-sm font-medium flex items-center gap-2 transition-colors"
-                            title="Bulk Upload Products via CSV"
+                    ))}
+                </div>
+
+                {/* Filters — products tab only */}
+                {activeTab === 'products' && (
+                    <div className="flex gap-2 flex-wrap">
+                        <div className="relative flex-1 min-w-[140px]">
+                            <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={14} />
+                            <input
+                                type="text"
+                                placeholder="Search name or SKU..."
+                                className="w-full pl-8 pr-3 py-2 border border-gray-200 rounded-xl bg-white focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none text-xs shadow-sm"
+                                value={searchTerm}
+                                onChange={(e) => { setSearchTerm(e.target.value); resetPage(); }}
+                            />
+                        </div>
+                        <select
+                            className="border border-gray-200 rounded-xl bg-white px-2 py-2 text-xs font-medium text-gray-600 outline-none shadow-sm focus:ring-2 focus:ring-primary/20"
+                            value={categoryFilter}
+                            onChange={e => { setCategoryFilter(e.target.value); resetPage(); }}
                         >
-                            {csvUploading
-                                ? <><Loader2 size={18} className="animate-spin" /> Uploading {csvProgress.current}/{csvProgress.total}...</>
-                                : <><Upload size={18} /> Bulk Upload</>}
-                        </button>
-                        <input
-                            ref={csvInputRef}
-                            type="file"
-                            accept=".csv"
-                            className="hidden"
-                            onChange={handleCSVUpload}
-                        />
-                        <button
-                            onClick={() => { setActiveTab('products'); setShowProductModal(true); }}
-                            className="bg-primary hover:bg-opacity-90 text-white px-4 py-2 rounded-lg text-sm font-bold flex items-center gap-2 transition-all shadow-lg shadow-primary/10"
+                            <option value="all">All Categories</option>
+                            {uniqueCategories.map(c => <option key={c} value={c}>{c}</option>)}
+                        </select>
+                        <select
+                            className="border border-gray-200 rounded-xl bg-white px-2 py-2 text-xs font-medium text-gray-600 outline-none shadow-sm focus:ring-2 focus:ring-primary/20"
+                            value={stockFilter}
+                            onChange={e => { setStockFilter(e.target.value); resetPage(); }}
                         >
-                            <Plus size={18} /> New Product
-                        </button>
-                        <button
-                            onClick={() => { setActiveTab('warehouses'); setShowWarehouseModal(true); }}
-                            className="bg-accent hover:bg-opacity-90 text-white px-4 py-2 rounded-lg text-sm font-bold flex items-center gap-2 transition-all shadow-lg shadow-accent/10"
+                            <option value="all">All Stock</option>
+                            <option value="in">In Stock</option>
+                            <option value="low">Low Stock</option>
+                        </select>
+                        <select
+                            className="border border-gray-200 rounded-xl bg-white px-2 py-2 text-xs font-medium text-gray-600 outline-none shadow-sm focus:ring-2 focus:ring-primary/20"
+                            value={sortBy}
+                            onChange={e => { setSortBy(e.target.value); resetPage(); }}
                         >
-                            <Plus size={18} /> New Warehouse
-                        </button>
+                            <option value="name_asc">Name A→Z</option>
+                            <option value="name_desc">Name Z→A</option>
+                            <option value="stock_desc">Stock ↓</option>
+                            <option value="stock_asc">Stock ↑</option>
+                        </select>
+                        <span className="text-xs text-gray-400 self-center whitespace-nowrap">{filteredProducts.length} results</span>
                     </div>
                 )}
             </div>
 
-            {/* Tabs */}
-            <div className="flex border-b mb-6 overflow-x-auto">
-                <button
-                    onClick={() => setActiveTab('products')}
-                    className={`px-6 py-3 font-bold transition-all whitespace-nowrap ${activeTab === 'products' ? 'border-b-2 border-primary text-primary' : 'text-gray-400 hover:text-gray-600'}`}
-                >
-                    Products ({products.length})
-                </button>
-                <button
-                    onClick={() => setActiveTab('warehouses')}
-                    className={`px-6 py-3 font-bold transition-all whitespace-nowrap ${activeTab === 'warehouses' ? 'border-b-2 border-primary text-primary' : 'text-gray-400 hover:text-gray-600'}`}
-                >
-                    Warehouses ({warehouses.length})
-                </button>
-                <button
-                    onClick={() => setActiveTab('logs')}
-                    className={`px-6 py-3 font-bold transition-all whitespace-nowrap ${activeTab === 'logs' ? 'border-b-2 border-primary text-primary' : 'text-gray-400 hover:text-gray-600'}`}
-                >
-                    Stock History
-                </button>
-            </div>
-
-            {/* Filters row for Products */}
-            {activeTab === 'products' && (
-                <div className="mb-5 flex flex-wrap gap-3 items-center">
-                    {/* Search */}
-                    <div className="relative flex-1 min-w-[200px]">
-                        <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 text-sm">🔍</span>
-                        <input
-                            type="text"
-                            placeholder="Search by Name or SKU..."
-                            className="w-full pl-8 pr-4 py-2 border rounded-lg focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none text-sm"
-                            value={searchTerm}
-                            onChange={(e) => { setSearchTerm(e.target.value); resetPage(); }}
-                        />
-                    </div>
-                    {/* Category filter */}
-                    <select
-                        className="border rounded-lg px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary"
-                        value={categoryFilter}
-                        onChange={e => { setCategoryFilter(e.target.value); resetPage(); }}
-                    >
-                        <option value="all">All Categories</option>
-                        {uniqueCategories.map(c => <option key={c} value={c}>{c}</option>)}
-                    </select>
-                    {/* Stock filter */}
-                    <select
-                        className="border rounded-lg px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary"
-                        value={stockFilter}
-                        onChange={e => { setStockFilter(e.target.value); resetPage(); }}
-                    >
-                        <option value="all">All Stock</option>
-                        <option value="in">In Stock</option>
-                        <option value="low">Low Stock</option>
-                    </select>
-                    {/* Sort */}
-                    <select
-                        className="border rounded-lg px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary"
-                        value={sortBy}
-                        onChange={e => { setSortBy(e.target.value); resetPage(); }}
-                    >
-                        <option value="name_asc">Name A → Z</option>
-                        <option value="name_desc">Name Z → A</option>
-                        <option value="stock_desc">Stock: High → Low</option>
-                        <option value="stock_asc">Stock: Low → High</option>
-                    </select>
-                    {/* Results count */}
-                    <span className="text-sm text-gray-400 whitespace-nowrap">
-                        {filteredProducts.length} result{filteredProducts.length !== 1 ? 's' : ''}
-                    </span>
-                </div>
-            )}
-
             {activeTab === 'products' && (
                 <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
-                    <div className="overflow-x-auto">
+                    <div className="overflow-auto max-h-[60vh]">
                         <table className="w-full">
                             <thead>
                                 <tr className="text-left bg-gray-50 border-b">
-                                    <th className="p-4 text-xs font-bold text-gray-400 uppercase tracking-wider w-12">#</th>
-                                    <th className="p-4 text-xs font-bold text-gray-500 uppercase tracking-wider text-center">Image</th>
-                                    <th className="p-4 text-xs font-bold text-gray-500 uppercase tracking-wider">Name</th>
-                                    <th className="p-4 text-xs font-bold text-gray-500 uppercase tracking-wider">SKU</th>
-                                    <th className="p-4 text-xs font-bold text-gray-500 uppercase tracking-wider">Category</th>
-                                    <th className="p-4 text-xs font-bold text-gray-500 uppercase tracking-wider">Steps</th>
-                                    <th className="p-4 text-xs font-bold text-gray-500 uppercase tracking-wider text-right">Stock</th>
-                                    <th className="p-4 text-xs font-bold text-gray-500 uppercase tracking-wider text-center">Status</th>
-                                    <th className="p-4 text-xs font-bold text-gray-500 uppercase tracking-wider text-right">Actions</th>
+                                    <th className="sticky top-0 bg-gray-50 p-3 text-xs font-bold text-gray-400 uppercase tracking-wider w-8">#</th>
+                                    <th className="sticky top-0 bg-gray-50 p-3 text-xs font-bold text-gray-500 uppercase tracking-wider text-center w-10">Img</th>
+                                    <th className="sticky top-0 bg-gray-50 p-3 text-xs font-bold text-gray-500 uppercase tracking-wider">Name</th>
+                                    <th className="sticky top-0 bg-gray-50 p-3 text-xs font-bold text-gray-500 uppercase tracking-wider hidden sm:table-cell">SKU</th>
+                                    <th className="sticky top-0 bg-gray-50 p-3 text-xs font-bold text-gray-500 uppercase tracking-wider hidden md:table-cell">Category</th>
+                                    <th className="sticky top-0 bg-gray-50 p-3 text-xs font-bold text-gray-500 uppercase tracking-wider hidden md:table-cell">Steps</th>
+                                    <th className="sticky top-0 bg-gray-50 p-3 text-xs font-bold text-gray-500 uppercase tracking-wider text-right">Stock</th>
+                                    <th className="sticky top-0 bg-gray-50 p-3 text-xs font-bold text-gray-500 uppercase tracking-wider text-center hidden sm:table-cell">Status</th>
+                                    <th className="sticky top-0 bg-gray-50 p-3 text-xs font-bold text-gray-500 uppercase tracking-wider text-right">Actions</th>
                                 </tr>
                             </thead>
                             <tbody className="divide-y divide-gray-100">
@@ -494,95 +489,86 @@ const Inventory = () => {
                                         const isLowStock = p.totalStock < 10;
                                         const globalIdx = (currentPage - 1) * PAGE_SIZE + idx + 1;
                                         return (
-                                            <tr key={p._id} className={`hover:bg-gray-50 transition-colors ${isLowStock ? 'bg-red-50 hover:bg-red-100' : ''}`}>
-                                                {/* SR */}
-                                                <td className="p-4 text-xs text-gray-400 font-mono">{globalIdx}</td>
-                                                {/* Image */}
-                                                <td className="p-4 text-center">
-                                                    <div className="w-10 h-10 mx-auto rounded-lg bg-gray-50 border border-gray-100 flex items-center justify-center overflow-hidden shadow-sm shadow-black/5 group cursor-zoom-in transition-all hover:scale-105 active:scale-95">
+                                            <tr key={p._id} className={`hover:bg-gray-50 transition-colors ${isLowStock ? 'bg-red-50/50 hover:bg-red-50' : ''}`}>
+                                                <td className="p-3 text-xs text-gray-400 font-mono">{globalIdx}</td>
+                                                <td className="p-3 text-center">
+                                                    <div className="w-8 h-8 mx-auto rounded-lg bg-gray-50 border border-gray-100 flex items-center justify-center overflow-hidden">
                                                         {p.images?.[0] ? (
-                                                            <img 
-                                                                src={getImageUrl(p.images[0])} 
-                                                                alt={p.name} 
-                                                                className="w-full h-full object-cover" 
-                                                                onError={(e) => {
-                                                                    e.target.onerror = null;
-                                                                    e.target.src = 'https://placehold.co/40x40?text=Error';
-                                                                }}
+                                                            <img
+                                                                src={getImageUrl(p.images[0])}
+                                                                alt={p.name}
+                                                                className="w-full h-full object-cover"
+                                                                onError={(e) => { e.target.onerror = null; e.target.src = 'https://placehold.co/32x32?text=?'; }}
                                                             />
                                                         ) : (
-                                                            <Package size={20} className="text-gray-300 group-hover:text-primary transition-colors" />
+                                                            <Package size={14} className="text-gray-300" />
                                                         )}
                                                     </div>
                                                 </td>
-                                                {/* Name */}
-                                                <td className="p-4">
-                                                    <div className="font-semibold text-gray-800 text-sm">{p.name}</div>
+                                                <td className="p-3">
+                                                    <div className="font-semibold text-gray-800 text-sm truncate max-w-[120px] sm:max-w-none">{p.name}</div>
                                                     {p.description && (
-                                                        <div className="text-xs text-gray-400 mt-0.5 max-w-xs truncate">{p.description}</div>
+                                                        <div className="text-xs text-gray-400 mt-0.5 max-w-[120px] sm:max-w-xs truncate">{p.description}</div>
                                                     )}
                                                 </td>
-                                                {/* SKU */}
-                                                <td className="p-4 text-gray-500 font-mono text-xs">{p.sku || '—'}</td>
-                                                {/* Category */}
-                                                <td className="p-4">
+                                                <td className="p-3 text-gray-500 font-mono text-xs hidden sm:table-cell">{p.sku || '—'}</td>
+                                                <td className="p-3 hidden md:table-cell">
                                                     {p.category ? (
-                                                        <span className="px-2 py-1 rounded-full bg-primary/10 text-primary text-[10px] font-black uppercase tracking-wider border border-primary/20">
+                                                        <span className="px-2 py-0.5 rounded-full bg-primary/10 text-primary text-[10px] font-black uppercase tracking-wider border border-primary/20">
                                                             {p.category}
                                                         </span>
                                                     ) : <span className="text-gray-300 text-xs">—</span>}
                                                 </td>
-                                                {/* Steps count */}
-                                                <td className="p-4">
-                                                    {p.steps && p.steps.length > 0 ? (
-                                                        <span className="flex items-center gap-1 text-[10px] text-primary font-black uppercase tracking-wider">
-                                                            <span className="w-5 h-5 rounded-full bg-primary/10 flex items-center justify-center text-[10px] font-black">{p.steps.length}</span>
+                                                <td className="p-3 hidden md:table-cell">
+                                                    {p.steps?.length > 0 ? (
+                                                        <span className="inline-flex items-center gap-1 text-[10px] text-primary font-black">
+                                                            <span className="w-5 h-5 rounded-full bg-primary/10 flex items-center justify-center">{p.steps.length}</span>
                                                             steps
                                                         </span>
                                                     ) : <span className="text-gray-300 text-xs">—</span>}
                                                 </td>
-                                                {/* Stock */}
-                                                <td className={`p-4 text-right font-bold text-sm ${isLowStock ? 'text-red-600' : 'text-gray-700'}`}>
+                                                <td className={`p-3 text-right font-bold text-sm ${isLowStock ? 'text-red-600' : 'text-gray-700'}`}>
                                                     {p.totalStock}
                                                 </td>
-                                                {/* Status badge */}
-                                                <td className="p-4 text-center">
+                                                <td className="p-3 text-center hidden sm:table-cell">
                                                     {isLowStock ? (
-                                                        <span className="inline-flex items-center gap-1 text-xs font-bold text-red-600 bg-red-100 px-2 py-1 rounded-full border border-red-200">
-                                                            ⚠ Low
+                                                        <span className="inline-flex items-center gap-1 text-[10px] font-bold text-red-600 bg-red-100 px-2 py-0.5 rounded-full border border-red-200 whitespace-nowrap">
+                                                            <AlertTriangle size={10} /> Low
                                                         </span>
                                                     ) : (
-                                                        <span className="inline-flex items-center gap-1 text-xs font-bold text-green-600 bg-green-50 px-2 py-1 rounded-full border border-green-200">
-                                                            ✓ In Stock
+                                                        <span className="inline-flex items-center gap-1 text-[10px] font-bold text-green-600 bg-green-50 px-2 py-0.5 rounded-full border border-green-200 whitespace-nowrap">
+                                                            <CheckCircle size={10} /> OK
                                                         </span>
                                                     )}
                                                 </td>
-                                                {/* Actions */}
-                                                <td className="p-4">
+                                                <td className="p-3">
                                                     {currentUser?.role !== 'admin_viewer' ? (
-                                                        <div className="flex items-center justify-end gap-2">
+                                                        <div className="flex items-center justify-end gap-1">
                                                             <Link
                                                                 to={`/inventory/product/${p._id}`}
-                                                                className="px-3 py-1.5 text-[10px] font-black uppercase tracking-wider text-emerald-600 bg-emerald-50 hover:bg-emerald-100 border border-emerald-200 rounded-lg transition-all"
+                                                                className="p-1.5 text-emerald-600 bg-emerald-50 hover:bg-emerald-100 border border-emerald-200 rounded-lg transition-all"
+                                                                title="Details"
                                                             >
-                                                                🔍 Details
+                                                                <Eye size={14} />
                                                             </Link>
                                                             <button
                                                                 onClick={() => openEditModal(p)}
-                                                                className="px-3 py-1.5 text-[10px] font-black uppercase tracking-wider text-primary bg-primary/10 hover:bg-primary/20 border border-primary/30 rounded-lg transition-all"
+                                                                className="p-1.5 text-primary bg-primary/10 hover:bg-primary/20 border border-primary/30 rounded-lg transition-all"
+                                                                title="Edit"
                                                             >
-                                                                ✏️ Edit
+                                                                <Pencil size={14} />
                                                             </button>
                                                             <button
                                                                 onClick={() => handleDeleteProduct(p)}
                                                                 disabled={deletingId === p._id}
-                                                                className="px-3 py-1.5 text-xs font-bold text-red-600 bg-red-50 hover:bg-red-100 border border-red-200 rounded-lg transition-colors disabled:opacity-50"
+                                                                className="p-1.5 text-red-600 bg-red-50 hover:bg-red-100 border border-red-200 rounded-lg transition-colors disabled:opacity-50"
+                                                                title="Delete"
                                                             >
-                                                                {deletingId === p._id ? '...' : '🗑 Delete'}
+                                                                {deletingId === p._id ? <Loader2 size={14} className="animate-spin" /> : <Trash2 size={14} />}
                                                             </button>
                                                         </div>
                                                     ) : (
-                                                        <div className="text-right text-gray-400 text-xs italic">View Only</div>
+                                                        <div className="text-right text-gray-400 text-xs italic">View</div>
                                                     )}
                                                 </td>
                                             </tr>
@@ -590,10 +576,10 @@ const Inventory = () => {
                                     })
                                 ) : (
                                     <tr>
-                                        <td colSpan="8" className="p-12 text-center">
-                                            <div className="text-gray-300 text-4xl mb-3">📦</div>
-                                            <div className="text-gray-400 font-medium">No products found</div>
-                                            <div className="text-gray-300 text-sm mt-1">Try adjusting your search or filters</div>
+                                        <td colSpan="9" className="p-10 text-center">
+                                            <Package size={36} className="text-gray-200 mx-auto mb-2" />
+                                            <div className="text-gray-400 font-medium text-sm">No products found</div>
+                                            <div className="text-gray-300 text-xs mt-1">Try adjusting your search or filters</div>
                                         </td>
                                     </tr>
                                 )}
@@ -680,17 +666,17 @@ const Inventory = () => {
 
             {activeTab === 'logs' && (
                 <div className="bg-white rounded shadow p-4">
-                    <div className="overflow-x-auto">
+                    <div className="overflow-auto max-h-[60vh]">
                         <table className="w-full text-sm">
                             <thead>
                                 <tr className="text-left bg-gray-50">
-                                    <th className="p-3">Date</th>
-                                    <th className="p-3">Product</th>
-                                    <th className="p-3">Action</th>
-                                    <th className="p-3">Warehouse</th>
-                                    <th className="p-3">Qty</th>
-                                    <th className="p-3">Reason</th>
-                                    <th className="p-3">User</th>
+                                    <th className="sticky top-0 bg-gray-50 p-3">Date</th>
+                                    <th className="sticky top-0 bg-gray-50 p-3">Product</th>
+                                    <th className="sticky top-0 bg-gray-50 p-3">Action</th>
+                                    <th className="sticky top-0 bg-gray-50 p-3">Warehouse</th>
+                                    <th className="sticky top-0 bg-gray-50 p-3">Qty</th>
+                                    <th className="sticky top-0 bg-gray-50 p-3">Reason</th>
+                                    <th className="sticky top-0 bg-gray-50 p-3">User</th>
                                 </tr>
                             </thead>
                             <tbody>

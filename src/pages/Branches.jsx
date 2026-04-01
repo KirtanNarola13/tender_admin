@@ -90,40 +90,42 @@ const Branches = () => {
     );
 
     return (
-        <div className="space-y-6">
-            {/* Header */}
-            <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-                <div>
-                    {fromDashboard && (
-                        <button 
-                            onClick={() => navigate('/')}
-                            className="flex items-center gap-1.5 text-primary text-xs font-bold uppercase tracking-wider hover:gap-2 transition-all w-fit mb-2"
+        <div className="space-y-4">
+            {/* Sticky header + search bar combined */}
+            <div className="sticky top-0 z-10 bg-gray-50 pb-2 space-y-2">
+                {/* Title row */}
+                <div className="flex items-center justify-between gap-3">
+                    <div className="min-w-0">
+                        {fromDashboard && (
+                            <button
+                                onClick={() => navigate('/')}
+                                className="flex items-center gap-1 text-primary text-xs font-bold uppercase tracking-wider mb-1"
+                            >
+                                <ArrowLeft size={12} /> Back
+                            </button>
+                        )}
+                        <h1 className="text-lg font-bold text-gray-900 leading-tight">Branch Management</h1>
+                        <p className="text-gray-400 text-xs mt-0.5 leading-snug">Define and manage regional territories for KG INFRA.</p>
+                    </div>
+                    {currentUser?.role === 'admin' && (
+                        <button
+                            onClick={() => handleOpenModal()}
+                            className="flex items-center gap-1.5 bg-primary text-white px-3 py-2 rounded-xl font-bold text-xs shadow-md shadow-primary/20 hover:scale-[1.02] active:scale-[0.98] transition-all shrink-0"
                         >
-                            <ArrowLeft size={14} /> Back to Dashboard
+                            <Plus size={15} />
+                            <span className="hidden sm:inline">Add Branch</span>
+                            <span className="sm:hidden">Add</span>
                         </button>
                     )}
-                    <h1 className="text-2xl font-bold text-gray-900 tracking-tight">Branch Management</h1>
-                    <p className="text-gray-500 text-sm mt-1">Define and manage regional territories for KG INFRA.</p>
                 </div>
-                {currentUser?.role === 'admin' && (
-                    <button
-                        onClick={() => handleOpenModal()}
-                        className="flex items-center justify-center gap-2 bg-primary text-white px-5 py-2.5 rounded-xl font-bold text-sm shadow-lg shadow-primary/20 hover:scale-[1.02] active:scale-[0.98] transition-all"
-                    >
-                        <Plus size={18} />
-                        Add New Branch
-                    </button>
-                )}
-            </div>
 
-            {/* Toolbar */}
-            <div className="bg-white p-4 rounded-2xl shadow-sm border border-gray-100 flex flex-col md:flex-row gap-4 items-center justify-between">
-                <div className="relative w-full md:w-96">
-                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={18} />
+                {/* Search bar */}
+                <div className="relative">
+                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={15} />
                     <input
                         type="text"
-                        placeholder="Search by name or location..."
-                        className="w-full pl-10 pr-4 py-2.5 border border-gray-200 rounded-xl focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition-all text-sm"
+                        placeholder="Search branches..."
+                        className="w-full pl-9 pr-4 py-2 border border-gray-200 rounded-xl bg-white focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition-all text-sm shadow-sm"
                         value={searchTerm}
                         onChange={(e) => setSearchTerm(e.target.value)}
                     />
@@ -145,46 +147,45 @@ const Branches = () => {
                     <p className="text-gray-500 text-sm mt-1">Try adjusting your search or add a new branch to get started.</p>
                 </div>
             ) : (
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 md:gap-4">
                     {filteredBranches.map((branch) => (
-                        <div key={branch._id} className="bg-white rounded-2xl border border-gray-100 shadow-sm hover:shadow-md transition-all overflow-hidden group">
-                            <div className="p-6">
-                                <div className="flex items-start justify-between mb-4">
-                                    <div className="w-12 h-12 rounded-xl bg-primary/10 text-primary flex items-center justify-center border border-primary/20">
-                                        <Building2 size={24} />
+                        <div key={branch._id} className="bg-white rounded-xl border border-gray-100 shadow-sm hover:shadow-md transition-all overflow-hidden group">
+                            <div className="p-3 md:p-4">
+                                <div className="flex items-center justify-between mb-2">
+                                    <div className="flex items-center gap-2.5 min-w-0">
+                                        <div className="w-8 h-8 rounded-lg bg-primary/10 text-primary flex items-center justify-center border border-primary/20 shrink-0">
+                                            <Building2 size={16} />
+                                        </div>
+                                        <div className="min-w-0">
+                                            <h3 className="text-sm font-bold text-gray-900 truncate">{branch.name}</h3>
+                                            <div className="flex items-center gap-1 text-gray-400 text-xs">
+                                                <MapPin size={11} className="text-primary/50 shrink-0" />
+                                                <span className="truncate">{branch.location}</span>
+                                            </div>
+                                        </div>
                                     </div>
-                                    <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                                        <button 
+                                    <div className="flex items-center gap-0.5 md:opacity-0 md:group-hover:opacity-100 transition-opacity shrink-0 ml-2">
+                                        <button
                                             onClick={() => handleOpenModal(branch)}
-                                            className="p-2 text-gray-400 hover:text-primary hover:bg-primary/5 rounded-lg transition-colors"
-                                            title="Edit Branch"
+                                            className="p-1.5 text-gray-400 hover:text-primary hover:bg-primary/5 rounded-lg transition-colors"
                                         >
-                                            <Pencil size={18} />
+                                            <Pencil size={14} />
                                         </button>
-                                        <button 
+                                        <button
                                             onClick={() => handleDelete(branch)}
-                                            className="p-2 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded-lg transition-colors"
-                                            title="Delete Branch"
+                                            className="p-1.5 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded-lg transition-colors"
                                         >
-                                            <Trash2 size={18} />
+                                            <Trash2 size={14} />
                                         </button>
                                     </div>
                                 </div>
-                                <h3 className="text-lg font-bold text-gray-900 leading-tight mb-1">{branch.name}</h3>
-                                <div className="flex items-center gap-1.5 text-gray-500 text-sm mb-4">
-                                    <MapPin size={14} className="text-primary/60" />
-                                    {branch.location}
-                                </div>
-                                
-                                <div className="space-y-3 pt-4 border-t border-gray-50">
-                                    <div className="flex items-center justify-between text-xs">
-                                        <span className="text-gray-400 font-bold uppercase tracking-wider">Status</span>
-                                        <span className={`px-2 py-0.5 rounded-full font-bold uppercase tracking-tighter text-[10px] ${
-                                            branch.status === 'active' ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-500'
-                                        }`}>
-                                            {branch.status}
-                                        </span>
-                                    </div>
+                                <div className="flex items-center justify-between pt-2 border-t border-gray-50">
+                                    <span className="text-[10px] text-gray-400 font-bold uppercase tracking-wider">Status</span>
+                                    <span className={`px-2 py-0.5 rounded-full font-bold uppercase tracking-tighter text-[10px] ${
+                                        branch.status === 'active' ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-500'
+                                    }`}>
+                                        {branch.status}
+                                    </span>
                                 </div>
                             </div>
                         </div>

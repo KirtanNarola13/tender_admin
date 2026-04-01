@@ -12,8 +12,9 @@ import {
 } from 'lucide-react';
 import api from '../services/api';
 import { useBranch } from '../context/BranchContext';
+import PageLoader from '../components/PageLoader';
 
-// ── Status colour helper (Synced from Mobile) ─────────
+// ── Status colour helper ─────────────────────────────────
 const getStatusColors = (status) => {
     switch (status) {
         case 'verified':
@@ -79,7 +80,7 @@ const Tasks = () => {
         }
     };
 
-    // Group tasks by Team Leader (for the top-level list view)
+    // Group tasks by Team Leader
     const groupedData = useMemo(() => {
         const filtered = tasks.filter(task => {
             const q = searchQuery.toLowerCase();
@@ -116,77 +117,66 @@ const Tasks = () => {
             if (task.project?.name) acc[teamId].projectNames.add(task.project.name);
             return acc;
         }, {});
-    }, [tasks, searchQuery, statusFilter]);
+    }, [tasks, searchQuery, statusFilter, activeBranch]);
 
-    if (loading) return (
-        <div className="flex justify-center items-center h-64">
-            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
-        </div>
-    );
+    if (loading) return <PageLoader text="Loading tasks..." />;
 
     return (
-        <div className="space-y-6">
-            {/* Header */}
-            <div className="flex flex-col gap-2">
-                {fromDashboard && (
-                    <button 
-                        onClick={() => navigate('/')}
-                        className="flex items-center gap-1.5 text-primary text-xs font-bold uppercase tracking-wider hover:gap-2 transition-all w-fit mb-1"
-                    >
-                        <ArrowLeft size={14} /> Back to Dashboard
-                    </button>
-                )}
-                <h1 className="text-2xl font-bold text-gray-900 tracking-tight">Task Management</h1>
-                <p className="text-gray-500 text-sm mt-1">Click a team leader to view their ledger.</p>
-            </div>
-
-            {/* Filters & Search Toolbar */}
-            <div className="bg-white p-4 rounded-xl shadow-sm border border-gray-200 flex flex-col md:flex-row gap-4 items-center justify-between">
-                <div className="relative w-full md:w-96">
-                    <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" size={18} />
-                    <input
-                        type="text"
-                        placeholder="Search by leader, project, or task..."
-                        className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all text-sm"
-                        value={searchQuery}
-                        onChange={(e) => setSearchQuery(e.target.value)}
-                    />
+        <div className="space-y-3">
+            {/* Sticky header */}
+            <div className=" z-10 bg-gray-50 pb-2 space-y-2">
+                <div className="flex items-center justify-between gap-3">
+                    <div className="min-w-0">
+                        {fromDashboard && (
+                            <button onClick={() => navigate('/')} className="flex items-center gap-1 text-primary text-xs font-bold uppercase tracking-wider mb-1">
+                                <ArrowLeft size={12} /> Back
+                            </button>
+                        )}
+                        <h1 className="text-lg font-bold text-gray-900 leading-tight">Task Management</h1>
+                        <p className="text-gray-400 text-xs mt-0.5">Click a team leader to view their ledger.</p>
+                    </div>
                 </div>
-                <div className="flex items-center gap-3 w-full md:w-auto">
-                    <div className="flex items-center gap-2 text-sm text-gray-500 font-medium whitespace-nowrap">
-                        <Filter size={16} /> Filter:
+
+                {/* Search + filter */}
+                <div className="flex gap-2">
+                    <div className="relative flex-1">
+                        <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
+                        <input
+                            type="text"
+                            placeholder="Search by leader, project, or task..."
+                            className="w-full pl-8 pr-3 py-2 border border-gray-200 rounded-xl bg-white text-xs focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none shadow-sm"
+                            value={searchQuery}
+                            onChange={(e) => setSearchQuery(e.target.value)}
+                        />
                     </div>
                     <select
-                        className="w-full sm:w-48 px-3 py-2 border border-gray-300 rounded-lg text-sm bg-white focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary"
+                        className="border border-gray-200 rounded-xl bg-white px-2 py-2 text-xs font-medium text-gray-600 outline-none shadow-sm focus:ring-2 focus:ring-primary/20 shrink-0"
                         value={statusFilter}
                         onChange={(e) => {
                             const val = e.target.value;
                             setStatusFilter(val);
-                            if (val === 'all') {
-                                searchParams.delete('status');
-                            } else {
-                                searchParams.set('status', val);
-                            }
+                            if (val === 'all') searchParams.delete('status');
+                            else searchParams.set('status', val);
                             setSearchParams(searchParams);
                         }}
                     >
                         <option value="all">All Statuses</option>
-                        <option value="pending">🔴 Pending</option>
-                        <option value="locked">🔴 Locked</option>
-                        <option value="in-progress">🟡 In Progress</option>
-                        <option value="submitted">🟡 Submitted</option>
-                        <option value="completed">🟢 Completed</option>
-                        <option value="verified">🟢 Verified</option>
+                        <option value="pending">Pending</option>
+                        <option value="locked">Locked</option>
+                        <option value="in-progress">In Progress</option>
+                        <option value="submitted">Submitted</option>
+                        <option value="completed">Completed</option>
+                        <option value="verified">Verified</option>
                     </select>
                 </div>
             </div>
 
-            {/* Team Leader Cards — click to go to ledger */}
-            <div className="space-y-4">
+            {/* Team Leader Cards */}
+            <div className="space-y-3">
                 {Object.keys(groupedData).length === 0 ? (
                     <div className="text-center py-16 bg-white rounded-xl shadow-sm border border-gray-200">
-                        <Search size={40} className="mx-auto text-gray-300 mb-4" />
-                        <h3 className="text-lg font-medium text-gray-900">No tasks found</h3>
+                        <Search size={36} className="mx-auto text-gray-300 mb-3" />
+                        <h3 className="text-base font-medium text-gray-900">No tasks found</h3>
                         <p className="text-sm text-gray-500 mt-1">Try adjusting your search or filters.</p>
                     </div>
                 ) : (
@@ -194,55 +184,68 @@ const Tasks = () => {
                         <button
                             key={teamId}
                             onClick={() => navigate(`/tasks/leader/${teamId}${statusFilter !== 'all' ? `?status=${statusFilter}` : ''}`)}
-                            className="w-full bg-white border border-gray-200 shadow-sm rounded-xl p-5 flex items-center justify-between hover:border-primary hover:shadow-md transition-all group text-left"
+                            className="w-full bg-white border border-gray-200 shadow-sm rounded-xl p-4 flex items-center justify-between hover:border-primary hover:shadow-md transition-all group text-left"
                         >
                             {/* Left: Avatar + Info */}
-                            <div className="flex items-center gap-4">
-                                <div className="w-12 h-12 rounded-xl bg-primary/10 text-primary flex items-center justify-center font-black text-xl border border-primary/20 shadow-sm group-hover:bg-primary/20 transition-all shrink-0">
+                            <div className="flex items-center gap-3 min-w-0">
+                                <div className="w-10 h-10 rounded-xl bg-primary/10 text-primary flex items-center justify-center font-black text-lg border border-primary/20 shrink-0 group-hover:bg-primary/20 transition-all">
                                     {teamData.name !== 'Unassigned Leader' ? teamData.name.charAt(0).toUpperCase() : '?'}
                                 </div>
-                                <div>
-                                    <h2 className="text-base font-bold text-gray-900 group-hover:text-primary transition-colors leading-tight">
+                                <div className="min-w-0">
+                                    <h2 className="text-sm font-bold text-gray-900 group-hover:text-primary transition-colors leading-tight truncate">
                                         {teamData.name}
                                     </h2>
-                                    <p className="text-sm text-gray-500 capitalize mt-0.5">
-                                        {teamData.role} • {teamData.taskCount} Tasks
+                                    <p className="text-xs text-gray-500 capitalize mt-0.5">
+                                        {teamData.role} · {teamData.taskCount} Tasks
                                     </p>
-                                    {/* Projects preview */}
                                     {teamData.projectNames.size > 0 && (
-                                        <p className="text-xs text-gray-400 mt-1 flex items-center gap-1">
-                                            <FolderKanban size={11} className="text-primary/60" />
-                                            {[...teamData.projectNames].slice(0, 2).join(', ')}
-                                            {teamData.projectNames.size > 2 && ` +${teamData.projectNames.size - 2} more`}
+                                        <p className="text-xs text-gray-400 mt-0.5 flex items-center gap-1 truncate">
+                                            <FolderKanban size={10} className="text-primary/60 shrink-0" />
+                                            <span className="truncate">
+                                                {[...teamData.projectNames].slice(0, 2).join(', ')}
+                                                {teamData.projectNames.size > 2 && ` +${teamData.projectNames.size - 2}`}
+                                            </span>
                                         </p>
                                     )}
                                 </div>
                             </div>
 
                             {/* Right: Status Pills + Arrow */}
-                            <div className="flex items-center gap-3">
-                                <div className="hidden sm:flex items-center gap-2">
+                            <div className="flex items-center gap-2 shrink-0 ml-2">
+                                <div className="hidden sm:flex items-center gap-1.5">
                                     {teamData.pendingCount > 0 && (
-                                        <span className="flex items-center gap-1 bg-red-50 border border-red-200 text-red-600 text-xs font-bold px-2.5 py-1 rounded-full">
+                                        <span className="flex items-center gap-1 bg-red-50 border border-red-200 text-red-600 text-xs font-bold px-2 py-0.5 rounded-full">
                                             <span className="w-1.5 h-1.5 rounded-full bg-red-400" />
                                             {teamData.pendingCount}
                                         </span>
                                     )}
                                     {teamData.workingCount > 0 && (
-                                        <span className="flex items-center gap-1 bg-yellow-50 border border-yellow-200 text-yellow-700 text-xs font-bold px-2.5 py-1 rounded-full">
+                                        <span className="flex items-center gap-1 bg-yellow-50 border border-yellow-200 text-yellow-700 text-xs font-bold px-2 py-0.5 rounded-full">
                                             <span className="w-1.5 h-1.5 rounded-full bg-yellow-400" />
                                             {teamData.workingCount}
                                         </span>
                                     )}
                                     {teamData.doneCount > 0 && (
-                                        <span className="flex items-center gap-1 bg-green-50 border border-green-200 text-green-700 text-xs font-bold px-2.5 py-1 rounded-full">
+                                        <span className="flex items-center gap-1 bg-green-50 border border-green-200 text-green-700 text-xs font-bold px-2 py-0.5 rounded-full">
                                             <span className="w-1.5 h-1.5 rounded-full bg-green-500" />
                                             {teamData.doneCount}
                                         </span>
                                     )}
                                 </div>
-                                <div className="w-8 h-8 rounded-full flex items-center justify-center text-gray-400 group-hover:bg-primary/10 group-hover:text-primary transition-colors">
-                                    <ChevronRight size={20} />
+                                {/* Mobile: just show total count */}
+                                <div className="sm:hidden flex items-center gap-1">
+                                    {teamData.pendingCount > 0 && (
+                                        <span className="w-5 h-5 rounded-full bg-red-100 text-red-600 text-[10px] font-black flex items-center justify-center">{teamData.pendingCount}</span>
+                                    )}
+                                    {teamData.workingCount > 0 && (
+                                        <span className="w-5 h-5 rounded-full bg-yellow-100 text-yellow-700 text-[10px] font-black flex items-center justify-center">{teamData.workingCount}</span>
+                                    )}
+                                    {teamData.doneCount > 0 && (
+                                        <span className="w-5 h-5 rounded-full bg-green-100 text-green-700 text-[10px] font-black flex items-center justify-center">{teamData.doneCount}</span>
+                                    )}
+                                </div>
+                                <div className="w-7 h-7 rounded-full flex items-center justify-center text-gray-400 group-hover:bg-primary/10 group-hover:text-primary transition-colors">
+                                    <ChevronRight size={18} />
                                 </div>
                             </div>
                         </button>

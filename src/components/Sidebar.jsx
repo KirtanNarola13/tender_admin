@@ -8,10 +8,27 @@ const Sidebar = ({ isOpen, setIsOpen }) => {
     const { logout, user } = useAuth();
     const location = useLocation();
 
-    // Close sidebar on path change (mobile)
     useEffect(() => {
         setIsOpen(false);
     }, [location.pathname, setIsOpen]);
+
+    // Lock body scroll when mobile sidebar is open
+    useEffect(() => {
+        if (isOpen) {
+            document.body.style.overflow = 'hidden';
+            document.body.style.position = 'fixed';
+            document.body.style.width = '100%';
+        } else {
+            document.body.style.overflow = '';
+            document.body.style.position = '';
+            document.body.style.width = '';
+        }
+        return () => {
+            document.body.style.overflow = '';
+            document.body.style.position = '';
+            document.body.style.width = '';
+        };
+    }, [isOpen]);
 
     const links = [
         { name: 'Dashboard', path: '/', icon: LayoutDashboard },
@@ -26,27 +43,39 @@ const Sidebar = ({ isOpen, setIsOpen }) => {
 
     return (
         <>
-            {/* Mobile Overlay */}
+            {/* Overlay: only rendered in DOM when open, avoids stacking context pollution */}
             {isOpen && (
                 <div
-                    className="fixed inset-0 bg-black/50 z-40 md:hidden transition-opacity"
+                    className="md:hidden"
+                    style={{ position: 'fixed', inset: 0, backgroundColor: 'rgba(0,0,0,0.6)', zIndex: 60 }}
                     onClick={() => setIsOpen(false)}
                 />
             )}
 
-            {/* Sidebar Container */}
-            <div className={clsx(
-                "fixed inset-y-0 left-0 z-50 w-64 bg-white shadow-xl flex flex-col h-screen transform transition-transform duration-300 ease-in-out md:relative md:translate-x-0",
-                isOpen ? "translate-x-0" : "-translate-x-full"
-            )}>
-                <div className="p-6 border-b flex justify-between items-start">
+            {/*
+              Sidebar:
+              - Mobile: position fixed, 280px wide, 100dvh tall, slides in/out via translateX
+              - Desktop (md+): position static, normal flow, no transform
+              - NO inline style position — use sidebar-mobile / sidebar-desktop CSS classes
+                so Tailwind md: overrides work correctly (inline styles block Tailwind overrides)
+            */}
+            <aside className={clsx(
+                // shared
+                'flex flex-col bg-white shrink-0',
+                // mobile: fixed drawer
+                'fixed top-0 left-0 sidebar-height w-[280px] shadow-xl transition-transform duration-300 ease-in-out',
+                isOpen ? 'translate-x-0' : '-translate-x-full',
+                // desktop: static in flow
+                'md:static md:translate-x-0 md:w-64 md:shadow-none md:h-full',
+            )}
+            style={{ zIndex: 70 }}
+            >
+                <div className="p-5 border-b flex justify-between items-start shrink-0">
                     <div>
-                        <h1 className="text-2xl font-bold text-primary">KG INFRA Admin</h1>
+                        <h1 className="text-xl font-bold text-primary">KG INFRA Admin</h1>
                         <p className="text-sm text-gray-500 mt-1 truncate max-w-[180px]">{user?.name}</p>
                         <p className="text-xs text-gray-400 capitalize">{user?.role}</p>
                     </div>
-
-                    {/* Mobile Close Button */}
                     <button
                         onClick={() => setIsOpen(false)}
                         className="md:hidden p-1 rounded-lg text-gray-500 hover:bg-gray-100"
@@ -55,7 +84,7 @@ const Sidebar = ({ isOpen, setIsOpen }) => {
                     </button>
                 </div>
 
-                <nav className="flex-1 p-4 space-y-2 overflow-y-auto">
+                <nav className="flex-1 p-4 space-y-1 overflow-y-auto">
                     {links.map((link) => {
                         const Icon = link.icon;
                         const isActive = location.pathname === link.path;
@@ -64,7 +93,7 @@ const Sidebar = ({ isOpen, setIsOpen }) => {
                                 key={link.path}
                                 to={link.path}
                                 className={clsx(
-                                    'flex items-center space-x-3 px-4 py-3 rounded-xl transition-all duration-200 group',
+                                    'flex items-center space-x-3 px-4 py-3 rounded-xl transition-all duration-200',
                                     isActive
                                         ? 'bg-primary-light text-primary border border-primary/20 shadow-sm'
                                         : 'text-gray-500 hover:bg-gray-50 hover:text-gray-900'
@@ -77,7 +106,7 @@ const Sidebar = ({ isOpen, setIsOpen }) => {
                     })}
                 </nav>
 
-                <div className="p-4 border-t">
+                <div className="p-4 border-t shrink-0">
                     <button
                         onClick={logout}
                         className="flex items-center space-x-3 px-4 py-3 w-full text-red-500 hover:bg-red-50 rounded-lg transition"
@@ -86,7 +115,7 @@ const Sidebar = ({ isOpen, setIsOpen }) => {
                         <span className="font-medium">Logout</span>
                     </button>
                 </div>
-            </div>
+            </aside>
         </>
     );
 };

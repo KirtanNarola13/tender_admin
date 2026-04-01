@@ -3,7 +3,7 @@ import { useLocation, useNavigate } from 'react-router-dom';
 import api from '../services/api';
 import { useAuth } from '../context/AuthContext';
 import { useBranch } from '../context/BranchContext';
-import { Plus, Search, Users as UsersIcon, Shield, UserCheck, User, Eye, ArrowLeft } from 'lucide-react';
+import { Plus, Search, Users as UsersIcon, Shield, UserCheck, User, Eye, ArrowLeft, Pencil, Trash2, X, Loader2 } from 'lucide-react';
 
 const ROLE_COLORS = {
     admin: 'bg-primary/10 text-primary border-primary/20',
@@ -34,6 +34,7 @@ const Users = () => {
     const { activeBranch, branches: globalBranches } = useBranch();
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [deletingId, setDeletingId] = useState(null);
+    const [viewingUser, setViewingUser] = useState(null);
 
     useEffect(() => {
         fetchUsers();
@@ -130,61 +131,78 @@ const Users = () => {
     ];
 
     return (
-        <div>
-            {/* Header */}
-            <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-6 gap-4">
-                <div>
-                    {fromDashboard && (
-                        <button 
-                            onClick={() => navigate('/')}
-                            className="flex items-center gap-1.5 text-primary text-xs font-bold uppercase tracking-wider hover:gap-2 transition-all w-fit mb-2"
+        <div className="space-y-3">
+            {/* Sticky header */}
+            <div className="sticky top-0 z-10 bg-gray-50 pb-2 space-y-2">
+                {/* Title row */}
+                <div className="flex items-center justify-between gap-3">
+                    <div className="min-w-0">
+                        {fromDashboard && (
+                            <button
+                                onClick={() => navigate('/')}
+                                className="flex items-center gap-1 text-primary text-xs font-bold uppercase tracking-wider mb-1"
+                            >
+                                <ArrowLeft size={12} /> Back
+                            </button>
+                        )}
+                        <h1 className="text-lg font-bold text-gray-800 leading-tight">User Management</h1>
+                        <p className="text-gray-400 text-xs mt-0.5">Manage admins, team leaders, and employees.</p>
+                    </div>
+                    {currentUser?.role !== 'admin_viewer' && (
+                        <button
+                            onClick={() => handleOpenModal()}
+                            className="flex items-center gap-1.5 bg-primary text-white px-3 py-2 rounded-xl font-bold text-xs shadow-md shadow-primary/20 hover:scale-[1.02] active:scale-[0.98] transition-all shrink-0"
                         >
-                            <ArrowLeft size={14} /> Back to Dashboard
+                            <Plus size={15} />
+                            <span className="hidden sm:inline">Create User</span>
+                            <span className="sm:hidden">Add</span>
                         </button>
                     )}
-                    <h1 className="text-2xl font-bold text-gray-800">User Management</h1>
-                    <p className="text-gray-500 text-sm">Manage admins, team leaders, and employees.</p>
                 </div>
-                {currentUser?.role !== 'admin_viewer' && (
-                    <button
-                        onClick={() => handleOpenModal()}
-                        className="bg-primary hover:bg-opacity-90 text-white px-5 py-2.5 rounded-lg flex items-center gap-2 transition-all shadow-lg shadow-primary/20 font-bold text-sm"
-                    >
-                        <Plus size={18} /> Create User
-                    </button>
-                )}
-            </div>
 
-            {/* Search + Role Tabs */}
-            <div className="flex flex-wrap items-center gap-3 mb-5">
-                <div className="relative flex-1 min-w-[200px]">
-                    <div className="flex flex-col sm:flex-row gap-4">
-                        <div className="relative flex-grow">
-                            <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={18} />
-                            <input 
-                                type="text"
-                                placeholder="Search by name or email..."
-                                className="w-full pl-10 pr-4 py-2.5 border border-gray-200 rounded-xl focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none text-sm transition-all"
-                                value={searchTerm}
-                                onChange={(e) => setSearchTerm(e.target.value)}
-                            />
-                        </div>
+                {/* Search + mobile dropdown filter row */}
+                <div className="flex gap-2">
+                    <div className="relative flex-1">
+                        <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={15} />
+                        <input
+                            type="text"
+                            placeholder="Search by name or email..."
+                            className="w-full pl-9 pr-4 py-2 border border-gray-200 rounded-xl bg-white focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none text-sm shadow-sm"
+                            value={searchTerm}
+                            onChange={(e) => setSearchTerm(e.target.value)}
+                        />
                     </div>
+                    {/* Dropdown — mobile only */}
+                    <select
+                        className="sm:hidden border border-gray-200 rounded-xl bg-white px-2 py-2 text-xs font-bold text-gray-600 outline-none shadow-sm focus:ring-2 focus:ring-primary/20 focus:border-primary shrink-0"
+                        value={roleTab}
+                        onChange={e => setRoleTab(e.target.value)}
+                    >
+                        {tabs.map(tab => (
+                            <option key={tab.key} value={tab.key}>
+                                {tab.label} ({counts[tab.key]})
+                            </option>
+                        ))}
+                    </select>
                 </div>
-                <div className="flex gap-1 bg-gray-100 p-1 rounded-lg">
+
+                {/* Tab pills — desktop only */}
+                <div className="hidden sm:flex gap-1 bg-gray-100 p-1 rounded-xl overflow-x-auto scrollbar-none">
                     {tabs.map(tab => (
                         <button
                             key={tab.key}
                             onClick={() => setRoleTab(tab.key)}
-                            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-black uppercase tracking-wider transition-all ${roleTab === tab.key
+                            className={`flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-[10px] font-black uppercase tracking-wider transition-all whitespace-nowrap shrink-0 ${
+                                roleTab === tab.key
                                     ? 'bg-white text-primary shadow-sm'
                                     : 'text-gray-500 hover:text-gray-700'
-                                }`}
+                            }`}
                         >
                             {tab.icon}
                             {tab.label}
-                            <span className={`ml-0.5 px-1.5 py-0.5 rounded-full text-[10px] font-black ${roleTab === tab.key ? 'bg-primary/10 text-primary' : 'bg-gray-200 text-gray-500'
-                                }`}>{counts[tab.key]}</span>
+                            <span className={`px-1.5 py-0.5 rounded-full text-[9px] font-black ${
+                                roleTab === tab.key ? 'bg-primary/10 text-primary' : 'bg-gray-200 text-gray-500'
+                            }`}>{counts[tab.key]}</span>
                         </button>
                     ))}
                 </div>
@@ -192,104 +210,175 @@ const Users = () => {
 
             {/* Table */}
             <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
-                <div className="overflow-x-auto">
+                <div className="overflow-auto max-h-[60vh]">
                     <table className="w-full">
                         <thead>
                             <tr className="bg-gray-50 border-b border-gray-100">
-                                <th className="text-left p-4 text-xs font-bold text-gray-400 uppercase tracking-wider w-10">#</th>
-                                <th className="text-left p-4 text-xs font-bold text-gray-500 uppercase tracking-wider">Name</th>
-                                <th className="text-left p-4 text-xs font-bold text-gray-500 uppercase tracking-wider">Branch</th>
-                                <th className="text-left p-4 text-xs font-bold text-gray-500 uppercase tracking-wider">Role</th>
-                                <th className="text-left p-4 text-xs font-bold text-gray-500 uppercase tracking-wider">Manager</th>
-                                <th className="text-right p-4 text-xs font-bold text-gray-500 uppercase tracking-wider">Actions</th>
+                                <th className="sticky top-0 bg-gray-50 text-left p-3 text-xs font-bold text-gray-400 uppercase tracking-wider w-8">#</th>
+                                <th className="sticky top-0 bg-gray-50 text-left p-3 text-xs font-bold text-gray-500 uppercase tracking-wider">Name</th>
+                                <th className="sticky top-0 bg-gray-50 text-left p-3 text-xs font-bold text-gray-500 uppercase tracking-wider hidden sm:table-cell">Branch</th>
+                                <th className="sticky top-0 bg-gray-50 text-left p-3 text-xs font-bold text-gray-500 uppercase tracking-wider w-28">Role</th>
+                                <th className="sticky top-0 bg-gray-50 text-left p-3 text-xs font-bold text-gray-500 uppercase tracking-wider hidden md:table-cell">Manager</th>
+                                <th className="sticky top-0 bg-gray-50 text-right p-3 text-xs font-bold text-gray-500 uppercase tracking-wider">Actions</th>
                             </tr>
                         </thead>
                         <tbody className="divide-y divide-gray-100">
                             {filtered.length > 0 ? (
                                 filtered.map((user, idx) => (
                                     <tr key={user._id} className="hover:bg-gray-50 transition-colors">
-                                        <td className="p-4 text-xs text-gray-400 font-mono">{idx + 1}</td>
-                                        <td className="p-4">
-                                            <div className="flex items-center gap-3">
-                                                <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center text-primary font-black text-sm flex-shrink-0 border border-primary/20">
+                                        <td className="p-3 text-xs text-gray-400 font-mono">{idx + 1}</td>
+                                        <td className="p-3">
+                                            <div className="flex items-center gap-2">
+                                                <div className="w-7 h-7 rounded-full bg-primary/10 flex items-center justify-center text-primary font-black text-xs flex-shrink-0 border border-primary/20">
                                                     {user.name.charAt(0).toUpperCase()}
                                                 </div>
-                                                <div>
-                                                    <div className="font-bold text-gray-800 text-sm italic">{user.name}</div>
-                                                    <div className="text-[10px] text-gray-400 lowercase">{user.email}</div>
+                                                <div className="min-w-0">
+                                                    <div className="font-bold text-gray-800 text-sm truncate">{user.name}</div>
+                                                    <div className="text-[10px] text-gray-400 truncate max-w-[110px] sm:max-w-none">{user.email}</div>
                                                 </div>
                                             </div>
                                         </td>
-                                        <td className="p-4">
+                                        <td className="p-3 hidden sm:table-cell">
                                             {user.branches && user.branches.length > 0 ? (
                                                 <div className="flex flex-wrap gap-1">
-                                                     {user.branches.map(b => (
-                                                         <span key={b} className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-primary/10 text-primary text-[9px] font-black uppercase tracking-wider border border-primary/20">
-                                                             🏢 {b}
-                                                         </span>
-                                                     ))}
+                                                    {user.branches.map(b => (
+                                                        <span key={b} className="inline-flex items-center px-1.5 py-0.5 rounded bg-primary/10 text-primary text-[9px] font-black uppercase border border-primary/20">
+                                                            {b}
+                                                        </span>
+                                                    ))}
                                                 </div>
                                             ) : <span className="text-gray-300 text-xs">—</span>}
                                         </td>
-                                        <td className="p-4">
-                                            <span className={`px-2.5 py-1 rounded-full text-xs font-bold uppercase tracking-wide border ${ROLE_COLORS[user.role] || 'bg-gray-100 text-gray-600'}`}>
+                                        <td className="p-3 w-28">
+                                            <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wide border whitespace-nowrap ${ROLE_COLORS[user.role] || 'bg-gray-100 text-gray-600'}`}>
                                                 {ROLE_LABELS[user.role] || user.role}
                                             </span>
                                         </td>
-                                        <td className="p-4 text-sm text-gray-500">
+                                        <td className="p-3 hidden md:table-cell text-sm text-gray-500">
                                             {user.assignedManager?.name
-                                                ? <span className="flex items-center gap-1">
-                                                    <UserCheck size={13} className="text-primary" />
+                                                ? <span className="flex items-center gap-1 text-xs">
+                                                    <UserCheck size={12} className="text-primary" />
                                                     {user.assignedManager.name}
                                                 </span>
                                                 : <span className="text-gray-300">—</span>}
                                         </td>
-                                        <td className="p-4">
-                                            {currentUser?.role !== 'admin_viewer' ? (
-                                                <div className="flex justify-end gap-2">
-                                                    <button
-                                                        onClick={() => handleOpenModal(user)}
-                                                        className="px-3 py-1.5 text-[10px] font-black uppercase tracking-wider text-primary bg-primary/10 hover:bg-primary/20 border border-primary/30 rounded-lg transition-all"
-                                                    >
-                                                        ✏️ Edit
-                                                    </button>
-                                                    <button
-                                                        onClick={() => handleDelete(user)}
-                                                        disabled={deletingId === user._id}
-                                                        className="px-3 py-1.5 text-xs font-bold text-red-600 bg-red-50 hover:bg-red-100 border border-red-200 rounded-lg transition-colors disabled:opacity-50"
-                                                    >
-                                                        {deletingId === user._id ? '...' : '🗑 Delete'}
-                                                    </button>
-                                                </div>
-                                            ) : (
-                                                <div className="text-right text-gray-400 text-xs italic">View Only</div>
-                                            )}
+                                        <td className="p-3">
+                                            <div className="flex justify-end gap-1.5">
+                                                {/* View button — only on mobile where columns are hidden */}
+                                                <button
+                                                    onClick={() => setViewingUser(user)}
+                                                    className="sm:hidden p-1.5 text-gray-500 bg-gray-100 hover:bg-gray-200 border border-gray-200 rounded-lg transition-all"
+                                                >
+                                                    <Eye size={14} />
+                                                </button>
+                                                {currentUser?.role !== 'admin_viewer' ? (
+                                                    <>
+                                                        <button
+                                                            onClick={() => handleOpenModal(user)}
+                                                            className="px-2.5 py-1.5 text-[10px] font-black uppercase tracking-wider text-primary bg-primary/10 hover:bg-primary/20 border border-primary/30 rounded-lg transition-all flex items-center gap-1"
+                                                        >
+                                                            <Pencil size={12} /> <span className="hidden sm:inline">Edit</span>
+                                                        </button>
+                                                        <button
+                                                            onClick={() => handleDelete(user)}
+                                                            disabled={deletingId === user._id}
+                                                            className="px-2.5 py-1.5 text-[10px] font-bold text-red-600 bg-red-50 hover:bg-red-100 border border-red-200 rounded-lg transition-colors disabled:opacity-50 flex items-center gap-1"
+                                                        >
+                                                            {deletingId === user._id ? <Loader2 size={12} className="animate-spin" /> : <Trash2 size={12} />}
+                                                        </button>
+                                                    </>
+                                                ) : (
+                                                    <div className="text-right text-gray-400 text-xs italic">View</div>
+                                                )}
+                                            </div>
                                         </td>
                                     </tr>
                                 ))
                             ) : (
                                 <tr>
-                                    <td colSpan="6" className="p-12 text-center">
-                                        <div className="text-gray-300 text-4xl mb-3">👥</div>
-                                        <div className="text-gray-400 font-medium">No users found</div>
-                                        <div className="text-gray-300 text-sm mt-1">Try adjusting your search or filter</div>
+                                    <td colSpan="6" className="p-10 text-center">
+                                        <UsersIcon size={36} className="text-gray-200 mx-auto mb-2" />
+                                        <div className="text-gray-400 font-medium text-sm">No users found</div>
+                                        <div className="text-gray-300 text-xs mt-1">Try adjusting your search or filter</div>
                                     </td>
                                 </tr>
                             )}
                         </tbody>
                     </table>
                 </div>
-                <div className="px-4 py-3 border-t bg-gray-50 text-sm text-gray-500">
+                <div className="px-4 py-2.5 border-t bg-gray-50 text-xs text-gray-500">
                     Showing <span className="font-semibold text-gray-700">{filtered.length}</span> of <span className="font-semibold text-gray-700">{users.length}</span> users
                 </div>
             </div>
+
+            {/* View User Modal — shows hidden columns on mobile */}
+            {viewingUser && (
+                <div className="fixed inset-0 bg-black/50 flex items-end sm:items-center justify-center p-4 z-50 backdrop-blur-sm" onClick={() => setViewingUser(null)}>
+                    <div className="bg-white w-full max-w-sm rounded-2xl shadow-xl overflow-hidden" onClick={e => e.stopPropagation()}>
+                        <div className="p-4 border-b flex items-center justify-between">
+                            <div className="flex items-center gap-3">
+                                <div className="w-9 h-9 rounded-full bg-primary/10 flex items-center justify-center text-primary font-black border border-primary/20">
+                                    {viewingUser.name.charAt(0).toUpperCase()}
+                                </div>
+                                <div>
+                                    <div className="font-bold text-gray-800 text-sm">{viewingUser.name}</div>
+                                    <div className="text-[10px] text-gray-400">{viewingUser.email}</div>
+                                </div>
+                            </div>
+                            <button onClick={() => setViewingUser(null)} className="p-1.5 rounded-lg hover:bg-gray-100 text-gray-400"><X size={16} /></button>
+                        </div>
+                        <div className="p-4 space-y-3">
+                            <div className="flex items-center justify-between">
+                                <span className="text-xs font-bold text-gray-400 uppercase tracking-wider">Role</span>
+                                <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold uppercase border ${ROLE_COLORS[viewingUser.role] || 'bg-gray-100 text-gray-600'}`}>
+                                    {ROLE_LABELS[viewingUser.role] || viewingUser.role}
+                                </span>
+                            </div>
+                            <div className="flex items-start justify-between gap-4">
+                                <span className="text-xs font-bold text-gray-400 uppercase tracking-wider shrink-0">Branches</span>
+                                <div className="flex flex-wrap gap-1 justify-end">
+                                    {viewingUser.branches?.length > 0
+                                        ? viewingUser.branches.map(b => (
+                                            <span key={b} className="px-1.5 py-0.5 rounded bg-primary/10 text-primary text-[9px] font-black uppercase border border-primary/20">{b}</span>
+                                        ))
+                                        : <span className="text-gray-300 text-xs">—</span>}
+                                </div>
+                            </div>
+                            <div className="flex items-center justify-between">
+                                <span className="text-xs font-bold text-gray-400 uppercase tracking-wider">Manager</span>
+                                <span className="text-xs text-gray-600 font-medium">
+                                    {viewingUser.assignedManager?.name || <span className="text-gray-300">—</span>}
+                                </span>
+                            </div>
+                        </div>
+                        {currentUser?.role !== 'admin_viewer' && (
+                            <div className="p-4 border-t flex gap-2">
+                                <button
+                                    onClick={() => { setViewingUser(null); handleOpenModal(viewingUser); }}
+                                    className="flex-1 py-2 text-xs font-black uppercase tracking-wider text-primary bg-primary/10 hover:bg-primary/20 border border-primary/30 rounded-xl transition-all flex items-center justify-center gap-1.5"
+                                >
+                                    <Pencil size={13} /> Edit
+                                </button>
+                                <button
+                                    onClick={() => { setViewingUser(null); handleDelete(viewingUser); }}
+                                    className="flex-1 py-2 text-xs font-bold text-red-600 bg-red-50 hover:bg-red-100 border border-red-200 rounded-xl transition-colors flex items-center justify-center gap-1.5"
+                                >
+                                    <Trash2 size={13} /> Delete
+                                </button>
+                            </div>
+                        )}
+                    </div>
+                </div>
+            )}
+
 
             {/* Create / Edit Modal */}
             {isModalOpen && (
                 <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50 backdrop-blur-sm">
                     <div className="bg-white p-6 rounded-xl w-full max-w-md shadow-xl">
-                        <h2 className="text-xl font-bold mb-5 text-gray-800">
-                            {editingUser ? '✏️ Edit User' : '➕ Create New User'}
+                        <h2 className="text-xl font-bold mb-5 text-gray-800 flex items-center gap-2">
+                            {editingUser ? <Pencil size={18} /> : <Plus size={18} />}
+                            {editingUser ? 'Edit User' : 'Create New User'}
                         </h2>
                         <div className="space-y-4">
                             <div>
@@ -331,10 +420,10 @@ const Users = () => {
                                         value={formData.role}
                                         onChange={e => setFormData({ ...formData, role: e.target.value, assignedManager: '' })}
                                     >
-                                        <option value="employee">👷 Employee</option>
-                                        <option value="team_leader">👨‍💼 Team Leader</option>
-                                        <option value="admin">🛡 Admin</option>
-                                        <option value="admin_viewer">👁 Admin Viewer</option>
+                                        <option value="employee">Employee</option>
+                                        <option value="team_leader">Team Leader</option>
+                                        <option value="admin">Admin</option>
+                                        <option value="admin_viewer">Admin Viewer</option>
                                     </select>
                                 </div>
                                 <div>

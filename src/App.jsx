@@ -41,14 +41,17 @@ const ProtectedRoute = ({ children }) => {
   }
 
   return (
-    <div className="flex bg-gray-50 min-h-screen md:h-screen md:overflow-hidden">
+    <div
+      className="flex bg-gray-50 overflow-x-hidden"
+      style={{ height: '100dvh' }}
+    >
       <Sidebar isOpen={isSidebarOpen} setIsOpen={setIsSidebarOpen} />
-      
-      <div className="flex-1 flex flex-col min-h-screen md:h-screen md:overflow-hidden">
+
+      <div className="flex-1 flex flex-col min-w-0" style={{ height: '100dvh' }}>
         {/* Mobile Header */}
-        <div className="md:hidden sticky top-0 bg-white border-b p-4 flex items-center justify-between z-10 shrink-0">
+        <div className="md:hidden sticky top-0 bg-white border-b px-4 py-3 flex items-center justify-between z-[50] shrink-0">
             <div className="flex items-center gap-3">
-              <button 
+              <button
                   onClick={() => setIsSidebarOpen(true)}
                   className="p-2 -ml-2 rounded-lg hover:bg-gray-100 text-gray-600"
               >
@@ -59,14 +62,13 @@ const ProtectedRoute = ({ children }) => {
         </div>
 
         {/* Main Content Area */}
-        <div className="flex-1 flex flex-col bg-gray-50">
-          {/* Branch selector only on relevant screens: Dashboard, Projects, Tasks, Users */}
+        <div className="flex-1 flex flex-col bg-gray-50 min-h-0">
           {(location.pathname === '/' || 
             location.pathname.startsWith('/projects') || 
             location.pathname.startsWith('/tasks') || 
             location.pathname.startsWith('/users')) && 
            <BranchTabs />}
-          <div className="flex-1 p-4 md:p-8 overflow-y-auto w-full relative">
+          <div className="flex-1 p-4 md:p-8 overflow-y-auto min-h-0 w-full relative">
             {children}
           </div>
         </div>

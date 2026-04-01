@@ -13,6 +13,7 @@ import {
     Users,
     TrendingUp
 } from 'lucide-react';
+import PageLoader from '../components/PageLoader';
 
 const COLORS = ['#FFBB28', '#00C49F']; // Pending (Orange), Completed (Green)
 
@@ -62,20 +63,20 @@ const Dashboard = () => {
         fetchBranches();
     }, []);
 
-    if (loading) return <div className="p-8 text-center">Loading Dashboard...</div>;
+    if (loading) return <PageLoader text="Loading dashboard..." />;
     if (!stats) return <div className="p-8 text-center text-red-500">Failed to load data</div>;
 
     return (
         <div className="space-y-8">
-            <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2">
                 <div>
-                    <h1 className="text-2xl font-bold text-gray-900 tracking-tight mb-1">Corporate Dashboard</h1>
-                    <p className="text-gray-500 text-sm italic">Overview of projects and infrastructure progress</p>
+                    <h1 className="text-lg font-bold text-gray-900 leading-tight">Corporate Dashboard</h1>
+                    <p className="text-gray-400 text-xs mt-0.5 italic">Overview of projects and infrastructure progress</p>
                 </div>
             </div>
 
             {/* Key Metrics Grid */}
-            <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3">
                 <StatCard
                     title="Total Projects"
                     count={stats.totalProjects}
@@ -114,7 +115,7 @@ const Dashboard = () => {
             </div>
 
             {/* Charts Section */}
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 sm:gap-8">
                 {/* Project Progress Overview */}
                 <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-200 lg:col-span-1 flex flex-col">
                     <h3 className="text-lg font-semibold text-gray-900 mb-4">Project Progress</h3>
@@ -227,9 +228,9 @@ const Dashboard = () => {
             {/* Branch-wise Comparison Overview */}
             {stats.branchSummary && stats.branchSummary.length > 0 && (
                 <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden mt-8">
-                    <div className="px-6 py-4 border-b border-gray-100 flex items-center justify-between bg-gray-50/50">
-                        <h3 className="text-lg font-bold text-gray-900 flex items-center gap-2">
-                            🏢 Regional Branch Performance
+                    <div className="px-4 sm:px-6 py-4 border-b border-gray-100 flex items-center justify-between bg-gray-50/50">
+                        <h3 className="text-base font-bold text-gray-900 flex items-center gap-2">
+                            Regional Branch Performance
                         </h3>
                         <span className="text-[10px] font-black uppercase tracking-widest text-gray-400 bg-white px-2 py-1 rounded border border-gray-200">
                             Comparative View
@@ -239,55 +240,44 @@ const Dashboard = () => {
                         <table className="w-full text-left">
                             <thead>
                                 <tr className="bg-gray-50/50 text-[10px] font-black text-gray-400 uppercase tracking-widest border-b border-gray-100">
-                                    <th className="px-6 py-3">Branch Name</th>
-                                    <th className="px-6 py-3 text-center">Projects</th>
-                                    <th className="px-6 py-3 text-center">Team Leaders</th>
-                                    <th className="px-6 py-3">Avg. Progress</th>
-                                    <th className="px-6 py-3 text-right">Status</th>
+                                    <th className="px-4 py-3">Branch</th>
+                                    <th className="px-4 py-3 text-center">Projects</th>
+                                    <th className="px-4 py-3 text-center hidden sm:table-cell">Leaders</th>
+                                    <th className="px-4 py-3 hidden sm:table-cell">Progress</th>
+                                    <th className="px-4 py-3 text-right">Status</th>
                                 </tr>
                             </thead>
                             <tbody className="divide-y divide-gray-100">
                                 {stats.branchSummary.map((b) => (
                                     <tr key={b.name} className="hover:bg-gray-50/80 transition-colors">
-                                        <td className="px-6 py-4">
-                                            <div className="flex items-center gap-3">
-                                                <div className="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center text-primary border border-primary/20">
-                                                    🏢
-                                                </div>
-                                                <span className="font-bold text-gray-800 text-sm tracking-tight">{b.name}</span>
-                                            </div>
+                                        <td className="px-4 py-3">
+                                            <span className="font-bold text-gray-800 text-sm">{b.name}</span>
                                         </td>
-                                        <td className="px-6 py-4 text-center">
-                                            <span className="inline-flex items-center justify-center w-8 h-8 rounded-full bg-gray-100 text-gray-700 text-xs font-bold border border-gray-200">
+                                        <td className="px-4 py-3 text-center">
+                                            <span className="inline-flex items-center justify-center w-7 h-7 rounded-full bg-gray-100 text-gray-700 text-xs font-bold border border-gray-200">
                                                 {b.projectCount}
                                             </span>
                                         </td>
-                                        <td className="px-6 py-4 text-center">
-                                            <span className="inline-flex items-center justify-center w-8 h-8 rounded-full bg-accent/10 text-accent text-xs font-bold border border-accent/20">
+                                        <td className="px-4 py-3 text-center hidden sm:table-cell">
+                                            <span className="inline-flex items-center justify-center w-7 h-7 rounded-full bg-accent/10 text-accent text-xs font-bold border border-accent/20">
                                                 {b.leaderCount}
                                             </span>
                                         </td>
-                                        <td className="px-6 py-4">
-                                            <div className="w-full max-w-[120px]">
-                                                <div className="flex justify-between items-center mb-1 text-[10px] font-bold text-gray-500 uppercase tracking-tighter">
-                                                    <span>{b.avgProgress}%</span>
+                                        <td className="px-4 py-3 hidden sm:table-cell">
+                                            <div className="flex items-center gap-2">
+                                                <div className="flex-1 h-1.5 bg-gray-100 rounded-full overflow-hidden">
+                                                    <div className="h-full bg-primary transition-all duration-500" style={{ width: `${b.avgProgress}%` }} />
                                                 </div>
-                                                <div className="w-full h-1.5 bg-gray-100 rounded-full overflow-hidden">
-                                                    <div
-                                                        className="h-full bg-primary transition-all duration-500"
-                                                        style={{ width: `${b.avgProgress}%` }}
-                                                    />
-                                                </div>
+                                                <span className="text-xs font-bold text-gray-500 w-8 text-right">{b.avgProgress}%</span>
                                             </div>
                                         </td>
-                                        <td className="px-6 py-4 text-right">
-                                            <span className={`px-2 py-0.5 rounded text-[10px] font-black uppercase tracking-widest border ${b.avgProgress === 100
-                                                ? 'bg-green-50 text-green-600 border-green-200'
-                                                : b.avgProgress > 0
-                                                    ? 'bg-primary/5 text-primary border-primary/20'
-                                                    : 'bg-gray-50 text-gray-400 border-gray-200'
-                                                }`}>
-                                                {b.avgProgress === 100 ? '✅ Completed' : b.avgProgress > 0 ? '⏳ In Progress' : '⚪ Planning'}
+                                        <td className="px-4 py-3 text-right">
+                                            <span className={`px-2 py-0.5 rounded text-[10px] font-black uppercase tracking-widest border whitespace-nowrap ${
+                                                b.avgProgress === 100 ? 'bg-green-50 text-green-600 border-green-200'
+                                                : b.avgProgress > 0 ? 'bg-primary/5 text-primary border-primary/20'
+                                                : 'bg-gray-50 text-gray-400 border-gray-200'
+                                            }`}>
+                                                {b.avgProgress === 100 ? 'Done' : b.avgProgress > 0 ? 'Active' : 'Planning'}
                                             </span>
                                         </td>
                                     </tr>
@@ -305,14 +295,14 @@ const Dashboard = () => {
 const StatCard = ({ title, count, icon: Icon, color, onClick }) => (
     <button
         onClick={onClick}
-        className="bg-white p-6 rounded-xl shadow-sm border border-gray-200 flex items-center justify-between hover:shadow-md transition-all hover:scale-[1.02] active:scale-[0.98] text-left w-full cursor-pointer"
+        className="bg-white p-4 rounded-xl shadow-sm border border-gray-200 flex items-center justify-between hover:shadow-md transition-all hover:scale-[1.02] active:scale-[0.98] text-left w-full cursor-pointer"
     >
-        <div>
-            <p className="text-gray-500 text-sm font-medium uppercase tracking-wide">{title}</p>
-            <h3 className="text-3xl font-bold text-gray-900 mt-1">{count}</h3>
+        <div className="min-w-0">
+            <p className="text-gray-500 text-[10px] font-bold uppercase tracking-wide truncate">{title}</p>
+            <h3 className="text-2xl font-bold text-gray-900 mt-0.5">{count}</h3>
         </div>
-        <div className={`p-3 rounded-full ${color} bg-opacity-10`}>
-            <Icon className={`w-6 h-6 ${color.replace('bg-', 'text-')}`} />
+        <div className={`p-2.5 rounded-full ${color} bg-opacity-10 shrink-0 ml-2`}>
+            <Icon className={`w-5 h-5 ${color.replace('bg-', 'text-')}`} />
         </div>
     </button>
 );
