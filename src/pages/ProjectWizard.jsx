@@ -477,11 +477,11 @@ const ProjectWizard = () => {
                         Next <ChevronRight size={18} />
                     </button>
                 ) : (
-                    <button
-                        onClick={handleSubmit}
-                        disabled={loading}
-                        className="flex items-center gap-2 px-7 py-2.5 rounded-lg bg-green-600 text-white font-bold text-sm hover:bg-green-700 transition disabled:opacity-60 shadow"
-                    >
+                        <button
+                            onClick={handleSubmit}
+                            disabled={loading}
+                            className="flex items-center gap-2 px-7 py-2.5 rounded-lg bg-primary text-white font-bold text-sm hover:bg-opacity-90 transition disabled:opacity-60 shadow-lg shadow-primary/20"
+                        >
                         {loading ? (
                             <><Loader size={16} className="animate-spin" /> Creating...</>
                         ) : (

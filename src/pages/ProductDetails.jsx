@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
-import api from '../services/api';
+import api, { getImageUrl } from '../services/api';
 import { useBranch } from '../context/BranchContext';
 import { generatePOPDF } from '../utils/pdfGenerator';
 import { 
@@ -108,7 +108,7 @@ const ProductDetails = () => {
                 <div className="lg:col-span-2 bg-white rounded-3xl p-8 shadow-sm border border-gray-100 flex flex-col md:flex-row gap-8">
                     <div className="w-48 h-48 bg-gray-50 rounded-2xl flex items-center justify-center border border-dashed border-gray-200 group overflow-hidden relative">
                         {product.images?.[0] ? (
-                            <img src={product.images[0]} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500" />
+                            <img src={getImageUrl(product.images[0])} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500" />
                         ) : (
                             <Package size={48} className="text-gray-200 group-hover:text-primary/20 transition-colors" />
                         )}

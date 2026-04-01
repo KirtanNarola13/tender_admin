@@ -223,11 +223,11 @@ const Users = () => {
                                         <td className="p-4">
                                             {user.branches && user.branches.length > 0 ? (
                                                 <div className="flex flex-wrap gap-1">
-                                                    {user.branches.map(b => (
-                                                        <span key={b} className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-indigo-50 text-indigo-600 text-[9px] font-black uppercase tracking-wider border border-indigo-100">
-                                                            🏙 {b}
-                                                        </span>
-                                                    ))}
+                                                     {user.branches.map(b => (
+                                                         <span key={b} className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-primary/10 text-primary text-[9px] font-black uppercase tracking-wider border border-primary/20">
+                                                             🏢 {b}
+                                                         </span>
+                                                     ))}
                                                 </div>
                                             ) : <span className="text-gray-300 text-xs">—</span>}
                                         </td>

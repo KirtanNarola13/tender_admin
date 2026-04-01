@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
 import { Link } from 'react-router-dom';
-import api from '../services/api';
+import api, { getImageUrl } from '../services/api';
 import { useAuth } from '../context/AuthContext';
 import { useBranch } from '../context/BranchContext';
 import { Plus, Package, Trash2, Upload, Download, CheckCircle, XCircle, Loader2, Search, Filter, Warehouse, List, ArrowDownUp, AlertCircle, RefreshCw, Layers, ShoppingCart } from 'lucide-react';
@@ -76,9 +76,9 @@ const Inventory = () => {
             const imageUrl = res.data.url;
             
             if (type === 'new') {
-                setNewProduct(prev => ({ ...prev, images: [imageUrl] }));
+                setNewProduct(prev => ({ ...prev, images: [...(prev.images || []), imageUrl] }));
             } else {
-                setEditProduct(prev => ({ ...prev, images: [imageUrl] }));
+                setEditProduct(prev => ({ ...prev, images: [...(prev.images || []), imageUrl] }));
             }
         } catch (error) {
             console.error('Image upload failed', error);
@@ -502,7 +502,7 @@ const Inventory = () => {
                                                     <div className="w-10 h-10 mx-auto rounded-lg bg-gray-50 border border-gray-100 flex items-center justify-center overflow-hidden shadow-sm shadow-black/5 group cursor-zoom-in transition-all hover:scale-105 active:scale-95">
                                                         {p.images?.[0] ? (
                                                             <img 
-                                                                src={p.images[0]} 
+                                                                src={getImageUrl(p.images[0])} 
                                                                 alt={p.name} 
                                                                 className="w-full h-full object-cover" 
                                                                 onError={(e) => {
@@ -733,25 +733,35 @@ const Inventory = () => {
 
                         {/* Image Upload / URL Section */}
                         <div className="mt-4 border-t pt-4">
-                            <label className="block text-sm font-bold mb-2 uppercase text-gray-500 tracking-wider text-[10px]">Product Image</label>
+                            <label className="block text-sm font-bold mb-2 uppercase text-gray-500 tracking-wider text-[10px]">Product Gallery</label>
                             
                             <div className="flex flex-col gap-4">
-                                {/* Preview Area */}
-                                <div className="w-full h-40 bg-gray-50 rounded-xl border border-dashed border-gray-200 flex items-center justify-center relative overflow-hidden group">
-                                    {newProduct.images?.[0] ? (
-                                        <>
-                                            <img src={newProduct.images[0]} alt="Product Preview" className="w-full h-full object-contain" />
+                                {/* Preview Gallery */}
+                                <div className="w-full min-h-[120px] bg-gray-50 rounded-xl border border-dashed border-gray-200 p-4 flex flex-wrap gap-3 overflow-y-auto max-h-60">
+                                    {(newProduct.images || []).map((url, idx) => (
+                                        <div key={idx} className="relative w-24 h-24 rounded-lg overflow-hidden border border-gray-200 bg-white group shadow-sm">
+                                            <img 
+                                                src={getImageUrl(url)} 
+                                                alt={`Preview ${idx}`} 
+                                                className="w-full h-full object-cover" 
+                                                onError={(e) => { e.target.onerror = null; e.target.src = 'https://placehold.co/100x100?text=Error'; }}
+                                            />
                                             <button 
-                                                onClick={() => setNewProduct(prev => ({ ...prev, images: [] }))}
-                                                className="absolute top-2 right-2 p-1.5 bg-red-500 text-white rounded-lg opacity-0 group-hover:opacity-100 transition-opacity shadow-lg"
+                                                type="button"
+                                                onClick={() => {
+                                                    const images = newProduct.images.filter((_, i) => i !== idx);
+                                                    setNewProduct({ ...newProduct, images });
+                                                }}
+                                                className="absolute top-1 right-1 p-1 bg-red-500 text-white rounded-md opacity-0 group-hover:opacity-100 transition-opacity shadow-md"
                                             >
-                                                <Trash2 size={14} />
+                                                <Trash2 size={12} />
                                             </button>
-                                        </>
-                                    ) : (
-                                        <div className="flex flex-col items-center gap-2 text-gray-400">
+                                        </div>
+                                    ))}
+                                    {(!newProduct.images || newProduct.images.length === 0) && (
+                                        <div className="w-full h-full flex flex-col items-center justify-center gap-2 text-gray-400 min-h-[100px]">
                                             {isUploadingImage ? <Loader2 size={24} className="animate-spin text-primary" /> : <Package size={32} />}
-                                            <span className="text-[10px] font-bold uppercase tracking-widest">{isUploadingImage ? 'Uploading...' : 'No image selected'}</span>
+                                            <span className="text-[10px] font-bold uppercase tracking-widest">{isUploadingImage ? 'Uploading...' : 'No images added'}</span>
                                         </div>
                                     )}
                                 </div>
@@ -769,19 +779,25 @@ const Inventory = () => {
                                             htmlFor="product-image-new"
                                             className="w-full flex items-center justify-center gap-2 px-4 py-2.5 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-xl text-xs font-black uppercase tracking-widest transition-all cursor-pointer border border-gray-200"
                                         >
-                                            <Upload size={14} /> {newProduct.images?.[0] ? 'Change Image' : 'Select File'}
+                                            <Upload size={14} /> Upload File
                                         </label>
                                     </div>
                                     <div className="flex-[2] relative">
                                         <input
                                             className="w-full border border-gray-200 p-2.5 rounded-xl text-xs focus:ring-2 focus:ring-primary/10 focus:border-primary outline-none transition-all pl-8"
-                                            placeholder="...or paste Image URL"
-                                            value={newProduct.images?.[0] || ''}
-                                            onChange={e => setNewProduct({ ...newProduct, images: [e.target.value] })}
+                                            placeholder="Paste Image URL and press Enter"
+                                            onKeyDown={e => {
+                                                if (e.key === 'Enter' && e.target.value.trim()) {
+                                                    e.preventDefault();
+                                                    setNewProduct({ ...newProduct, images: [...(newProduct.images || []), e.target.value.trim()] });
+                                                    e.target.value = '';
+                                                }
+                                            }}
                                         />
                                         <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400">🔗</span>
                                     </div>
                                 </div>
+                                <p className="text-[9px] text-gray-400 italic font-medium px-1">* Uploaded files and pasted URLs will be added to the gallery.</p>
                             </div>
                         </div>
 
@@ -1110,25 +1126,35 @@ const Inventory = () => {
 
                         {/* Image Upload / URL Section (Edit) */}
                         <div className="mb-6 border-t pt-4">
-                            <label className="block text-sm font-bold mb-2 uppercase text-gray-500 tracking-wider text-[10px]">Product Image</label>
+                            <label className="block text-sm font-bold mb-2 uppercase text-gray-500 tracking-wider text-[10px]">Product Gallery</label>
                             
                             <div className="flex flex-col gap-4">
-                                {/* Preview Area */}
-                                <div className="w-full h-40 bg-gray-50 rounded-xl border border-dashed border-gray-200 flex items-center justify-center relative overflow-hidden group">
-                                    {editProduct.images?.[0] ? (
-                                        <>
-                                            <img src={editProduct.images[0]} alt="Product Preview" className="w-full h-full object-contain" />
+                                {/* Preview Gallery */}
+                                <div className="w-full min-h-[120px] bg-gray-50 rounded-xl border border-dashed border-gray-200 p-4 flex flex-wrap gap-3 overflow-y-auto max-h-60">
+                                    {(editProduct.images || []).map((url, idx) => (
+                                        <div key={idx} className="relative w-24 h-24 rounded-lg overflow-hidden border border-gray-200 bg-white group shadow-sm">
+                                            <img 
+                                                src={getImageUrl(url)} 
+                                                alt={`Preview ${idx}`} 
+                                                className="w-full h-full object-cover" 
+                                                onError={(e) => { e.target.onerror = null; e.target.src = 'https://placehold.co/100x100?text=Error'; }}
+                                            />
                                             <button 
-                                                onClick={() => setEditProduct(prev => ({ ...prev, images: [] }))}
-                                                className="absolute top-2 right-2 p-1.5 bg-red-500 text-white rounded-lg opacity-0 group-hover:opacity-100 transition-opacity shadow-lg"
+                                                type="button"
+                                                onClick={() => {
+                                                    const images = editProduct.images.filter((_, i) => i !== idx);
+                                                    setEditProduct({ ...editProduct, images });
+                                                }}
+                                                className="absolute top-1 right-1 p-1 bg-red-500 text-white rounded-md opacity-0 group-hover:opacity-100 transition-opacity shadow-md"
                                             >
-                                                <Trash2 size={14} />
+                                                <Trash2 size={12} />
                                             </button>
-                                        </>
-                                    ) : (
-                                        <div className="flex flex-col items-center gap-2 text-gray-400">
+                                        </div>
+                                    ))}
+                                    {(!editProduct.images || editProduct.images.length === 0) && (
+                                        <div className="w-full h-full flex flex-col items-center justify-center gap-2 text-gray-400 min-h-[100px]">
                                             {isUploadingImage ? <Loader2 size={24} className="animate-spin text-primary" /> : <Package size={32} />}
-                                            <span className="text-[10px] font-bold uppercase tracking-widest">{isUploadingImage ? 'Uploading...' : 'No image selected'}</span>
+                                            <span className="text-[10px] font-bold uppercase tracking-widest">{isUploadingImage ? 'Uploading...' : 'No images added'}</span>
                                         </div>
                                     )}
                                 </div>
@@ -1146,19 +1172,25 @@ const Inventory = () => {
                                             htmlFor="product-image-edit"
                                             className="w-full flex items-center justify-center gap-2 px-4 py-2.5 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-xl text-xs font-black uppercase tracking-widest transition-all cursor-pointer border border-gray-200"
                                         >
-                                            <Upload size={14} /> {editProduct.images?.[0] ? 'Change Image' : 'Select File'}
+                                            <Upload size={14} /> Upload File
                                         </label>
                                     </div>
                                     <div className="flex-[2] relative">
                                         <input
                                             className="w-full border border-gray-200 p-2.5 rounded-xl text-xs focus:ring-2 focus:ring-primary/10 focus:border-primary outline-none transition-all pl-8"
-                                            placeholder="...or paste Image URL"
-                                            value={editProduct.images?.[0] || ''}
-                                            onChange={e => setEditProduct({ ...editProduct, images: [e.target.value] })}
+                                            placeholder="Paste Image URL and press Enter"
+                                            onKeyDown={e => {
+                                                if (e.key === 'Enter' && e.target.value.trim()) {
+                                                    e.preventDefault();
+                                                    setEditProduct({ ...editProduct, images: [...(editProduct.images || []), e.target.value.trim()] });
+                                                    e.target.value = '';
+                                                }
+                                            }}
                                         />
                                         <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400">🔗</span>
                                     </div>
                                 </div>
+                                <p className="text-[9px] text-gray-400 italic font-medium px-1">* Uploaded files and pasted URLs will be added to the gallery.</p>
                             </div>
                         </div>
 

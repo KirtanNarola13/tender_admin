@@ -229,7 +229,7 @@ const Dashboard = () => {
                 <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden mt-8">
                     <div className="px-6 py-4 border-b border-gray-100 flex items-center justify-between bg-gray-50/50">
                         <h3 className="text-lg font-bold text-gray-900 flex items-center gap-2">
-                            🏙️ Regional Branch Performance
+                            🏢 Regional Branch Performance
                         </h3>
                         <span className="text-[10px] font-black uppercase tracking-widest text-gray-400 bg-white px-2 py-1 rounded border border-gray-200">
                             Comparative View
@@ -252,7 +252,7 @@ const Dashboard = () => {
                                         <td className="px-6 py-4">
                                             <div className="flex items-center gap-3">
                                                 <div className="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center text-primary border border-primary/20">
-                                                    🏙️
+                                                    🏢
                                                 </div>
                                                 <span className="font-bold text-gray-800 text-sm tracking-tight">{b.name}</span>
                                             </div>
