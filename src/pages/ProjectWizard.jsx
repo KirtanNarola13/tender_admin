@@ -226,28 +226,28 @@ const ProjectWizard = () => {
     // ── Step 2: Products ────────────────────────────────────────────
     const renderStep2 = () => (
         <div className="space-y-6">
-            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
+            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
                 <div>
                     <h2 className="text-xl font-bold text-gray-900">Step 2: Products</h2>
                     <p className="text-sm text-gray-400 mt-0.5">Add products to this project's scope of supply</p>
                 </div>
-                <select
-                    className="border border-gray-200 p-2.5 rounded-lg text-sm w-full sm:w-64 bg-white focus:outline-none focus:ring-2 focus:ring-primary"
-                    onChange={(e) => {
-                        addProduct(e.target.value);
-                        e.target.value = '';
-                    }}
-                >
-                    <option value="">+ Add Product</option>
-                    {availableProducts
-                        .filter(p => !selectedProducts.find(sp => sp.product._id === p._id))
-                        .map(p => (
-                            <option key={p._id} value={p._id} disabled={p.totalStock <= 0}>
-                                {p.name} (Stock: {p.totalStock || 0})
-                            </option>
-                        ))
-                    }
-                </select>
+                <div className="w-full sm:w-72">
+                    <FormSelect
+                        placeholder="+ Add Product"
+                        value=""
+                        onChange={(productId) => addProduct(productId)}
+                        options={availableProducts
+                            .filter(p => !selectedProducts.find(sp => sp.product._id === p._id))
+                            .map(p => ({
+                                label: p.name,
+                                value: p._id,
+                                sublabel: `Stock: ${p.totalStock || 0} | ${p.category}`,
+                                disabled: (p.totalStock || 0) <= 0
+                            }))
+                        }
+                        icon={Box}
+                    />
+                </div>
             </div>
 
             {selectedProducts.length === 0 ? (

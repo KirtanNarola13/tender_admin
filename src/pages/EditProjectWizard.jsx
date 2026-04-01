@@ -291,31 +291,31 @@ const EditProjectWizard = () => {
 
     const renderStep2 = () => (
         <div className="space-y-6">
-            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
+            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
                 <div>
                     <h2 className="text-xl font-bold text-gray-900">Step 2: Products</h2>
                     <p className="text-sm text-gray-400 mt-0.5">Add or remove products for this project</p>
                 </div>
-                <select
-                    className="border border-gray-200 p-2.5 rounded-lg text-sm w-full sm:w-64 bg-white focus:outline-none focus:ring-2 focus:ring-primary"
-                    onChange={(e) => {
-                        addProduct(e.target.value);
-                        e.target.value = '';
-                    }}
-                >
-                    <option value="">+ Add Product</option>
-                    {availableProducts
-                        .filter(p => !selectedProducts.find(sp => sp.product._id === p._id))
-                        .map(p => {
-                            const effectiveStock = getEffectiveStock(p);
-                            return (
-                                <option key={p._id} value={p._id} disabled={effectiveStock <= 0}>
-                                    {p.name} (Stock: {effectiveStock})
-                                </option>
-                            );
-                        })
-                    }
-                </select>
+                <div className="w-full sm:w-72">
+                    <FormSelect
+                        placeholder="+ Add Product"
+                        value=""
+                        onChange={(productId) => addProduct(productId)}
+                        options={availableProducts
+                            .filter(p => !selectedProducts.find(sp => sp.product._id === p._id))
+                            .map(p => {
+                                const effStock = getEffectiveStock(p);
+                                return {
+                                    label: p.name,
+                                    value: p._id,
+                                    sublabel: `Stock: ${effStock} | ${p.category}`,
+                                    disabled: effStock <= 0
+                                };
+                            })
+                        }
+                        icon={Box}
+                    />
+                </div>
             </div>
 
             {selectedProducts.length === 0 ? (

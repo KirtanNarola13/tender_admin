@@ -58,6 +58,7 @@ const FormSelect = ({ label, value, onChange, options, placeholder = 'Select an 
                                     <button
                                         key={option.value}
                                         type="button"
+                                        disabled={option.disabled}
                                         onClick={() => {
                                             onChange(option.value);
                                             setIsOpen(false);
@@ -66,7 +67,8 @@ const FormSelect = ({ label, value, onChange, options, placeholder = 'Select an 
                                             "w-full flex items-center justify-between px-3 py-2.5 rounded-xl text-sm transition-all group",
                                             value === option.value
                                                 ? "bg-primary/5 text-primary font-bold"
-                                                : "text-gray-600 hover:bg-gray-50"
+                                                : "text-gray-600 hover:bg-gray-50",
+                                            option.disabled && "opacity-40 grayscale cursor-not-allowed"
                                         )}
                                     >
                                         <div className="flex flex-col items-start truncate overflow-hidden">
