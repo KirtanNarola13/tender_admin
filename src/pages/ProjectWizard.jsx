@@ -3,7 +3,8 @@ import { useNavigate } from 'react-router-dom';
 import api from '../services/api';
 import { useAuth } from '../context/AuthContext';
 import { useBranch } from '../context/BranchContext';
-import { ChevronRight, ChevronLeft, Trash2, Box, ArrowLeft, CheckCircle, Loader } from 'lucide-react';
+import { ChevronRight, ChevronLeft, Trash2, Box, ArrowLeft, CheckCircle, Loader, Calendar, MapPin, User, Tag } from 'lucide-react';
+import FormSelect from '../components/FormSelect';
 
 const CATEGORIES = ['Primary', 'Upper Primary', 'Secondary', 'Higher Secondary', 'Residential'];
 
@@ -127,108 +128,109 @@ const ProjectWizard = () => {
                 <p className="text-sm text-gray-400 mt-0.5">Enter the core information for this project</p>
             </div>
 
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-5">
                 <div>
-                    <label className="block text-xs font-semibold text-gray-600 mb-1.5 uppercase tracking-wide">Site Name *</label>
+                    <label className="block text-xs font-semibold text-gray-600 mb-1.5 uppercase tracking-wide ml-1">Site Name *</label>
                     <input
-                        className="w-full border border-gray-200 p-2.5 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
+                        className="w-full border border-gray-200 p-3 rounded-xl text-sm transition-all focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary bg-white"
                         placeholder="Enter Site Name"
                         value={projectData.name}
                         onChange={e => setProjectData({ ...projectData, name: e.target.value })}
                     />
                 </div>
                 <div>
-                    <label className="block text-xs font-semibold text-gray-600 mb-1.5 uppercase tracking-wide">Client Name</label>
+                    <label className="block text-xs font-semibold text-gray-600 mb-1.5 uppercase tracking-wide ml-1">Client Name</label>
                     <input
-                        className="w-full border border-gray-200 p-2.5 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
+                        className="w-full border border-gray-200 p-3 rounded-xl text-sm transition-all focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary bg-white"
                         placeholder="Enter Client Name"
                         value={projectData.client}
                         onChange={e => setProjectData({ ...projectData, client: e.target.value })}
                     />
                 </div>
+                
+                <FormSelect
+                    label="Category / Type"
+                    value={projectData.category}
+                    onChange={val => setProjectData({ ...projectData, category: val })}
+                    options={CATEGORIES.map(cat => ({ label: cat, value: cat }))}
+                    icon={Tag}
+                />
                 <div>
-                    <label className="block text-xs font-semibold text-gray-600 mb-1.5 uppercase tracking-wide">Category / Type</label>
-                    <select
-                        className="w-full border border-gray-200 p-2.5 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary bg-white"
-                        value={projectData.category}
-                        onChange={e => setProjectData({ ...projectData, category: e.target.value })}
-                    >
-                        {CATEGORIES.map(cat => (
-                            <option key={cat} value={cat}>{cat}</option>
-                        ))}
-                    </select>
-                </div>
-                <div>
-                    <label className="block text-xs font-semibold text-gray-600 mb-1.5 uppercase tracking-wide">Location / City</label>
+                    <label className="block text-xs font-semibold text-gray-600 mb-1.5 uppercase tracking-wide ml-1">Location / City</label>
                     <input
-                        className="w-full border border-gray-200 p-2.5 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
+                        className="w-full border border-gray-200 p-3 rounded-xl text-sm transition-all focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary bg-white"
                         placeholder="Enter Location"
                         value={projectData.location}
                         onChange={e => setProjectData({ ...projectData, location: e.target.value })}
                     />
                 </div>
+
+                <FormSelect
+                    label="Branch / Region *"
+                    value={projectData.branch}
+                    onChange={val => setProjectData({ ...projectData, branch: val })}
+                    options={globalBranches.map(b => ({ label: b, value: b }))}
+                    placeholder="— Select Branch —"
+                    icon={MapPin}
+                />
+
+                <FormSelect
+                    label="Team Leader *"
+                    value={projectData.assignedLeader}
+                    onChange={val => setProjectData({ ...projectData, assignedLeader: val })}
+                    options={filteredLeaders.map(u => ({ 
+                        label: u.name, 
+                        value: u._id,
+                        sublabel: u.email 
+                    }))}
+                    placeholder={projectData.branch ? "— Select Team Leader —" : "Select Branch First"}
+                    icon={User}
+                    error={projectData.branch && filteredLeaders.length === 0 ? `No team leaders assigned to ${projectData.branch}` : null}
+                />
                 <div>
-                    <label className="block text-xs font-semibold text-gray-600 mb-1.5 uppercase tracking-wide">Branch / Region *</label>
-                    <select
-                        className="w-full border border-gray-200 p-2.5 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary bg-white"
-                        value={projectData.branch}
-                        onChange={e => setProjectData({ ...projectData, branch: e.target.value })}
-                    >
-                        <option value="">— Select Branch —</option>
-                        {globalBranches.map(b => (
-                            <option key={b} value={b}>{b}</option>
-                        ))}
-                    </select>
+                    <label className="block text-xs font-semibold text-gray-600 mb-1.5 uppercase tracking-wide ml-1">Start Date</label>
+                    <div className="relative group">
+                        <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-gray-400 group-focus-within:text-primary transition-colors">
+                            <Calendar size={18} />
+                        </div>
+                        <input
+                            type="date"
+                            className="w-full pl-11 pr-4 py-3 border border-gray-200 rounded-xl text-sm transition-all focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary bg-white appearance-none"
+                            value={projectData.startDate}
+                            min={today}
+                            onChange={e => {
+                                const newStartDate = e.target.value;
+                                const updates = { startDate: newStartDate };
+                                if (newStartDate && projectData.deadline && new Date(projectData.deadline) < new Date(newStartDate)) {
+                                    updates.deadline = '';
+                                }
+                                setProjectData({ ...projectData, ...updates });
+                            }}
+                        />
+                    </div>
                 </div>
+
                 <div>
-                    <label className="block text-xs font-semibold text-gray-600 mb-1.5 uppercase tracking-wide">Team Leader *</label>
-                    <select
-                        className="w-full border border-gray-200 p-2.5 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary bg-white"
-                        value={projectData.assignedLeader}
-                        onChange={e => setProjectData({ ...projectData, assignedLeader: e.target.value })}
-                    >
-                        <option value="">— Select Team Leader —</option>
-                        {filteredLeaders.map(u => (
-                            <option key={u._id} value={u._id}>{u.name}</option>
-                        ))}
-                    </select>
-                    {projectData.branch && filteredLeaders.length === 0 && (
-                        <p className="text-[10px] text-red-500 mt-1 font-medium">No team leaders assigned to {projectData.branch}</p>
-                    )}
-                </div>
-                <div>
-                    <label className="block text-xs font-semibold text-gray-600 mb-1.5 uppercase tracking-wide">Start Date</label>
-                    <input
-                        type="date"
-                        className="w-full border border-gray-200 p-2.5 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary"
-                        value={projectData.startDate}
-                        min={today}
-                        onChange={e => {
-                            const newStartDate = e.target.value;
-                            const updates = { startDate: newStartDate };
-                            if (newStartDate && projectData.deadline && new Date(projectData.deadline) < new Date(newStartDate)) {
-                                updates.deadline = '';
-                            }
-                            setProjectData({ ...projectData, ...updates });
-                        }}
-                    />
-                </div>
-                <div>
-                    <label className="block text-xs font-semibold text-gray-600 mb-1.5 uppercase tracking-wide">Deadline / End Date</label>
-                    <input
-                        type="date"
-                        className="w-full border border-gray-200 p-2.5 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary"
-                        value={projectData.deadline}
-                        min={projectData.startDate || today}
-                        onChange={e => setProjectData({ ...projectData, deadline: e.target.value })}
-                    />
+                    <label className="block text-xs font-semibold text-gray-600 mb-1.5 uppercase tracking-wide ml-1">Deadline / End Date</label>
+                    <div className="relative group">
+                        <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-gray-400 group-focus-within:text-primary transition-colors">
+                            <Calendar size={18} />
+                        </div>
+                        <input
+                            type="date"
+                            className="w-full pl-11 pr-4 py-3 border border-gray-200 rounded-xl text-sm transition-all focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary bg-white appearance-none"
+                            value={projectData.deadline}
+                            min={projectData.startDate || today}
+                            onChange={e => setProjectData({ ...projectData, deadline: e.target.value })}
+                        />
+                    </div>
                 </div>
             </div>
 
             <div>
-                <label className="block text-xs font-semibold text-gray-600 mb-1.5 uppercase tracking-wide">Description / Scope of Work</label>
+                <label className="block text-xs font-semibold text-gray-600 mb-1.5 uppercase tracking-wide ml-1">Description / Scope of Work</label>
                 <textarea
-                    className="w-full border border-gray-200 p-2.5 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary resize-none"
+                    className="w-full border border-gray-200 p-4 rounded-xl text-sm transition-all focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary bg-white resize-none"
                     placeholder="Enter scope of work or notes..."
                     rows={3}
                     value={projectData.description}
