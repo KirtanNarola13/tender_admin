@@ -134,14 +134,13 @@ const Projects = () => {
 
     const uniqueBranches = [...new Set(projects.map(p => p.branch).filter(Boolean))].sort();
 
+    const allCategories = Object.keys(groupedProjects);
+    const definedOrder = ['Primary', 'Upper Primary', 'Secondary', 'Higher Secondary', 'Residential'];
     const sortedCategories = [
-        'Primary',
-        'Upper Primary',
-        'Secondary',
-        'Higher Secondary',
-        'Residential',
-        'Other'
-    ].filter(cat => groupedProjects[cat]);
+        ...definedOrder.filter(cat => allCategories.includes(cat)),
+        ...allCategories.filter(cat => !definedOrder.includes(cat) && cat !== 'Other').sort(),
+        ...(allCategories.includes('Other') ? ['Other'] : [])
+    ];
 
     return (
         <div className="w-full space-y-4 sm:space-y-6 max-w-7xl mx-auto pb-8">

@@ -41,12 +41,12 @@ const ProtectedRoute = ({ children }) => {
   }
 
   return (
-    <div className="flex bg-gray-50 h-screen overflow-hidden">
+    <div className="flex bg-gray-50 min-h-screen md:h-screen md:overflow-hidden">
       <Sidebar isOpen={isSidebarOpen} setIsOpen={setIsSidebarOpen} />
       
-      <div className="flex-1 flex flex-col h-screen overflow-hidden">
+      <div className="flex-1 flex flex-col min-h-screen md:h-screen md:overflow-hidden">
         {/* Mobile Header */}
-        <div className="md:hidden bg-white border-b p-4 flex items-center justify-between z-10">
+        <div className="md:hidden sticky top-0 bg-white border-b p-4 flex items-center justify-between z-10 shrink-0">
             <div className="flex items-center gap-3">
               <button 
                   onClick={() => setIsSidebarOpen(true)}
@@ -59,7 +59,7 @@ const ProtectedRoute = ({ children }) => {
         </div>
 
         {/* Main Content Area */}
-        <div className="flex-1 flex flex-col h-screen overflow-hidden bg-gray-50">
+        <div className="flex-1 flex flex-col bg-gray-50">
           {/* Branch selector only on relevant screens: Dashboard, Projects, Tasks, Users */}
           {(location.pathname === '/' || 
             location.pathname.startsWith('/projects') || 

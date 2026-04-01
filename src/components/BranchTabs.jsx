@@ -21,7 +21,7 @@ const BranchTabs = () => {
     const activeBranchName = activeBranch === 'all' ? 'All Regions' : activeBranch;
 
     return (
-        <div className="bg-white border-b border-gray-200 sticky top-0 z-50 py-2.5 px-4 md:px-8 flex items-center justify-start gap-4">
+        <div className="bg-white border-b border-gray-200 sticky top-[65px] md:top-0 z-40 py-2.5 px-4 md:px-8 flex items-center justify-start gap-4">
             <div className="relative" ref={dropdownRef}>
                 {/* Dropdown Trigger */}
                 <button

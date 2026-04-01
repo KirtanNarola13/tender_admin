@@ -118,7 +118,7 @@ const Dashboard = () => {
                 {/* Project Progress Overview */}
                 <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-200 lg:col-span-1 flex flex-col">
                     <h3 className="text-lg font-semibold text-gray-900 mb-4">Project Progress</h3>
-                    <div className="flex-grow overflow-y-auto pr-2 custom-scrollbar" style={{ minHeight: '300px', maxHeight: '400px' }}>
+                    <div className="flex-grow overflow-y-auto md:max-h-[400px] overflow-x-hidden pr-2 custom-scrollbar" style={{ minHeight: '300px' }}>
                         <div style={{ height: `${Math.max(300, (stats?.projectStats?.length || 1) * 45)}px`, width: '100%', minHeight: '1px' }}>
                             <ResponsiveContainer width="100%" height="100%">
                                 <BarChart
@@ -160,7 +160,7 @@ const Dashboard = () => {
                 {/* Inventory Stock Chart */}
                 <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-200 lg:col-span-2">
                     <h3 className="text-lg font-semibold text-gray-900 mb-4">Inventory Stock Levels</h3>
-                    <div className="h-80 overflow-y-auto pr-2 custom-scrollbar" style={{ minHeight: '320px' }}>
+                    <div className="h-auto md:h-80 overflow-y-auto md:overflow-y-auto overflow-x-hidden pr-2 custom-scrollbar" style={{ minHeight: '320px' }}>
                         <div style={{ height: `${Math.max(300, (stats?.inventoryStats?.length || 1) * 45)}px`, width: '100%', minHeight: '1px' }}>
                             <ResponsiveContainer width="100%" height="100%">
                                 <BarChart
