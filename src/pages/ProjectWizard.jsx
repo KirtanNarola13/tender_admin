@@ -5,6 +5,7 @@ import { useAuth } from '../context/AuthContext';
 import { useBranch } from '../context/BranchContext';
 import { ChevronRight, ChevronLeft, Trash2, Box, ArrowLeft, CheckCircle, Loader, Calendar, MapPin, User, Tag } from 'lucide-react';
 import FormSelect from '../components/FormSelect';
+import FormDatePicker from '../components/FormDatePicker';
 
 const CATEGORIES = ['Primary', 'Upper Primary', 'Secondary', 'Higher Secondary', 'Residential'];
 
@@ -187,44 +188,26 @@ const ProjectWizard = () => {
                     icon={User}
                     error={projectData.branch && filteredLeaders.length === 0 ? `No team leaders assigned to ${projectData.branch}` : null}
                 />
-                <div>
-                    <label className="block text-xs font-semibold text-gray-600 mb-1.5 uppercase tracking-wide ml-1">Start Date</label>
-                    <div className="relative group">
-                        <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-gray-400 group-focus-within:text-primary transition-colors">
-                            <Calendar size={18} />
-                        </div>
-                        <input
-                            type="date"
-                            className="w-full pl-11 pr-4 py-3 border border-gray-200 rounded-xl text-sm transition-all focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary bg-white appearance-none"
-                            value={projectData.startDate}
-                            min={today}
-                            onChange={e => {
-                                const newStartDate = e.target.value;
-                                const updates = { startDate: newStartDate };
-                                if (newStartDate && projectData.deadline && new Date(projectData.deadline) < new Date(newStartDate)) {
-                                    updates.deadline = '';
-                                }
-                                setProjectData({ ...projectData, ...updates });
-                            }}
-                        />
-                    </div>
-                </div>
 
-                <div>
-                    <label className="block text-xs font-semibold text-gray-600 mb-1.5 uppercase tracking-wide ml-1">Deadline / End Date</label>
-                    <div className="relative group">
-                        <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-gray-400 group-focus-within:text-primary transition-colors">
-                            <Calendar size={18} />
-                        </div>
-                        <input
-                            type="date"
-                            className="w-full pl-11 pr-4 py-3 border border-gray-200 rounded-xl text-sm transition-all focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary bg-white appearance-none"
-                            value={projectData.deadline}
-                            min={projectData.startDate || today}
-                            onChange={e => setProjectData({ ...projectData, deadline: e.target.value })}
-                        />
-                    </div>
-                </div>
+                <FormDatePicker
+                    label="Start Date"
+                    value={projectData.startDate}
+                    min={today}
+                    onChange={val => {
+                        const updates = { startDate: val };
+                        if (val && projectData.deadline && new Date(projectData.deadline) < new Date(val)) {
+                            updates.deadline = '';
+                        }
+                        setProjectData({ ...projectData, ...updates });
+                    }}
+                />
+
+                <FormDatePicker
+                    label="Deadline / End Date"
+                    value={projectData.deadline}
+                    min={projectData.startDate || today}
+                    onChange={val => setProjectData({ ...projectData, deadline: val })}
+                />
             </div>
 
             <div>
