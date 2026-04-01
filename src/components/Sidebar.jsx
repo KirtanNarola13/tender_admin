@@ -1,6 +1,6 @@
 import { Link, useLocation } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
-import { LayoutDashboard, FolderKanban, ClipboardCheck, Users, Warehouse, LogOut, CheckCircle, BarChart3, X } from 'lucide-react';
+import { LayoutDashboard, FolderKanban, ClipboardCheck, Building2, Users, Warehouse, LogOut, BarChart3, X, ShoppingCart } from 'lucide-react';
 import clsx from 'clsx';
 import { useEffect } from 'react';
 
@@ -19,7 +19,9 @@ const Sidebar = ({ isOpen, setIsOpen }) => {
         { name: 'Projects', path: '/projects', icon: FolderKanban },
         { name: 'Tasks', path: '/tasks', icon: ClipboardCheck },
         { name: 'Inventory', path: '/inventory', icon: Warehouse },
+        { name: 'Purchase Orders', path: '/purchase-orders', icon: ShoppingCart },
         { name: 'Users', path: '/users', icon: Users },
+        { name: 'Branches', path: '/branches', icon: Building2 },
     ];
 
     return (

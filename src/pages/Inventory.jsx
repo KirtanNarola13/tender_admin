@@ -1,13 +1,16 @@
 import { useState, useEffect, useRef } from 'react';
+import { Link } from 'react-router-dom';
 import api from '../services/api';
 import { useAuth } from '../context/AuthContext';
-import { Plus, Package, Trash2, Upload, Download, CheckCircle, XCircle, Loader2, Search, Filter, Warehouse, List, ArrowDownUp, AlertCircle, RefreshCw, Layers } from 'lucide-react';
+import { useBranch } from '../context/BranchContext';
+import { Plus, Package, Trash2, Upload, Download, CheckCircle, XCircle, Loader2, Search, Filter, Warehouse, List, ArrowDownUp, AlertCircle, RefreshCw, Layers, ShoppingCart } from 'lucide-react';
 
 const Inventory = () => {
     const { user: currentUser } = useAuth();
+    const { activeBranch } = useBranch();
     const [products, setProducts] = useState([]);
     const [warehouses, setWarehouses] = useState([]);
-    const [activeTab, setActiveTab] = useState('products'); // 'products' or 'warehouses' or 'logs'
+    const [activeTab, setActiveTab] = useState('products');
     const [logs, setLogs] = useState([]);
 
     // Forms
@@ -21,19 +24,21 @@ const Inventory = () => {
         sku: '', 
         category: '', 
         description: '',
+        images: [],
         initialStock: { warehouseId: '', quantity: '' }
     });
+    const [isUploadingImage, setIsUploadingImage] = useState(false);
     const [newWarehouse, setNewWarehouse] = useState({ name: '', location: '' });
 
     useEffect(() => {
         fetchData();
-    }, []);
+    }, []); // Removed activeBranch dependency to keep inventory global
 
     const fetchData = async () => {
         try {
             const [prodRes, wareRes, logsRes] = await Promise.all([
-                api.get('/inventory/products'),
-                api.get('/inventory/warehouses'),
+                api.get(`/inventory/products?branch=all`),
+                api.get(`/inventory/warehouses?branch=all`),
                 api.get('/inventory/logs')
             ]);
             console.log('Products:', prodRes.data);
@@ -54,20 +59,36 @@ const Inventory = () => {
         } catch (e) { alert('Error creating product'); }
     };
 
-    const [showAddStockModal, setShowAddStockModal] = useState(false);
     const [showTransferStockModal, setShowTransferStockModal] = useState(false);
 
-    const [stockData, setStockData] = useState({ productId: '', warehouseId: '', quantity: '' });
     const [transferData, setTransferData] = useState({ productId: '', fromWarehouseId: '', toWarehouseId: '', quantity: '' });
 
-    const handleAddStock = async () => {
+    const handleImageUpload = async (file, type = 'new') => {
+        if (!file) return;
+        const formData = new FormData();
+        formData.append('image', file);
+
+        setIsUploadingImage(true);
         try {
-            await api.post('/inventory/stock/add', stockData);
-            setShowAddStockModal(false);
-            fetchData();
-            alert('Stock added successfully');
-        } catch (e) { alert('Error adding stock'); }
+            const res = await api.post('/upload', formData, {
+                headers: { 'Content-Type': 'multipart/form-data' }
+            });
+            const imageUrl = res.data.url;
+            
+            if (type === 'new') {
+                setNewProduct(prev => ({ ...prev, images: [imageUrl] }));
+            } else {
+                setEditProduct(prev => ({ ...prev, images: [imageUrl] }));
+            }
+        } catch (error) {
+            console.error('Image upload failed', error);
+            alert('Image upload failed. Please try again.');
+        } finally {
+            setIsUploadingImage(false);
+        }
     };
+
+
 
     const handleTransferStock = async () => {
         try {
@@ -80,7 +101,10 @@ const Inventory = () => {
 
     const createWarehouse = async () => {
         try {
-            await api.post('/inventory/warehouses', newWarehouse);
+            await api.post('/inventory/warehouses', {
+                ...newWarehouse,
+                branch: activeBranch !== 'all' ? activeBranch : undefined
+            });
             setShowWarehouseModal(false);
             fetchData();
         } catch (e) { alert('Error creating warehouse'); }
@@ -183,6 +207,7 @@ const Inventory = () => {
                     category: category || undefined,
                     description: description || undefined,
                     steps: steps.length > 0 ? steps : undefined,
+                    images: [] // Enforce empty image array for CSV imports
                 });
                 results.push({ row: i + 2, name, status: 'success' });
             } catch (err) {
@@ -211,7 +236,6 @@ const Inventory = () => {
             description: product.description || '',
             images: product.images || [],
             steps: product.steps ? product.steps.map(s => ({ ...s })) : [],
-            additionalStock: { warehouseId: '', quantity: '' }
         });
         setShowEditModal(true);
     };
@@ -327,9 +351,9 @@ const Inventory = () => {
 
                 {currentUser?.role !== 'admin_viewer' && (
                     <div className="flex flex-wrap gap-2">
-                        <button onClick={() => setShowAddStockModal(true)} className="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg text-sm font-medium flex items-center gap-2 transition-colors">
-                            <Plus size={18} /> Add Stock
-                        </button>
+                        <Link to="/purchase-orders" className="bg-emerald-600 hover:bg-emerald-700 text-white px-4 py-2.5 rounded-lg text-sm font-bold flex items-center gap-2 transition-all shadow-lg shadow-emerald-200">
+                            <ShoppingCart size={18} /> Create PO (Add Stock)
+                        </Link>
                         <button onClick={() => setShowTransferStockModal(true)} className="bg-primary hover:bg-opacity-90 text-white px-5 py-2.5 rounded-lg text-sm font-bold flex items-center gap-2 transition-all shadow-lg shadow-primary/20">
                             <Package size={18} /> Transfer
                         </button>
@@ -454,6 +478,7 @@ const Inventory = () => {
                             <thead>
                                 <tr className="text-left bg-gray-50 border-b">
                                     <th className="p-4 text-xs font-bold text-gray-400 uppercase tracking-wider w-12">#</th>
+                                    <th className="p-4 text-xs font-bold text-gray-500 uppercase tracking-wider text-center">Image</th>
                                     <th className="p-4 text-xs font-bold text-gray-500 uppercase tracking-wider">Name</th>
                                     <th className="p-4 text-xs font-bold text-gray-500 uppercase tracking-wider">SKU</th>
                                     <th className="p-4 text-xs font-bold text-gray-500 uppercase tracking-wider">Category</th>
@@ -472,6 +497,24 @@ const Inventory = () => {
                                             <tr key={p._id} className={`hover:bg-gray-50 transition-colors ${isLowStock ? 'bg-red-50 hover:bg-red-100' : ''}`}>
                                                 {/* SR */}
                                                 <td className="p-4 text-xs text-gray-400 font-mono">{globalIdx}</td>
+                                                {/* Image */}
+                                                <td className="p-4 text-center">
+                                                    <div className="w-10 h-10 mx-auto rounded-lg bg-gray-50 border border-gray-100 flex items-center justify-center overflow-hidden shadow-sm shadow-black/5 group cursor-zoom-in transition-all hover:scale-105 active:scale-95">
+                                                        {p.images?.[0] ? (
+                                                            <img 
+                                                                src={p.images[0]} 
+                                                                alt={p.name} 
+                                                                className="w-full h-full object-cover" 
+                                                                onError={(e) => {
+                                                                    e.target.onerror = null;
+                                                                    e.target.src = 'https://placehold.co/40x40?text=Error';
+                                                                }}
+                                                            />
+                                                        ) : (
+                                                            <Package size={20} className="text-gray-300 group-hover:text-primary transition-colors" />
+                                                        )}
+                                                    </div>
+                                                </td>
                                                 {/* Name */}
                                                 <td className="p-4">
                                                     <div className="font-semibold text-gray-800 text-sm">{p.name}</div>
@@ -518,6 +561,12 @@ const Inventory = () => {
                                                 <td className="p-4">
                                                     {currentUser?.role !== 'admin_viewer' ? (
                                                         <div className="flex items-center justify-end gap-2">
+                                                            <Link
+                                                                to={`/inventory/product/${p._id}`}
+                                                                className="px-3 py-1.5 text-[10px] font-black uppercase tracking-wider text-emerald-600 bg-emerald-50 hover:bg-emerald-100 border border-emerald-200 rounded-lg transition-all"
+                                                            >
+                                                                🔍 Details
+                                                            </Link>
                                                             <button
                                                                 onClick={() => openEditModal(p)}
                                                                 className="px-3 py-1.5 text-[10px] font-black uppercase tracking-wider text-primary bg-primary/10 hover:bg-primary/20 border border-primary/30 rounded-lg transition-all"
@@ -682,12 +731,59 @@ const Inventory = () => {
                         <input className="w-full border p-2 mb-2 rounded" placeholder="Category" onChange={e => setNewProduct({ ...newProduct, category: e.target.value })} />
                         <textarea className="w-full border p-2 mb-2 rounded" placeholder="Description" onChange={e => setNewProduct({ ...newProduct, description: e.target.value })} />
 
-                        {/* Image URL Input (MVP) */}
-                        <input
-                            className="w-full border p-2 mb-4 rounded"
-                            placeholder="Image URL (http://...)"
-                            onChange={e => setNewProduct({ ...newProduct, images: [e.target.value] })}
-                        />
+                        {/* Image Upload / URL Section */}
+                        <div className="mt-4 border-t pt-4">
+                            <label className="block text-sm font-bold mb-2 uppercase text-gray-500 tracking-wider text-[10px]">Product Image</label>
+                            
+                            <div className="flex flex-col gap-4">
+                                {/* Preview Area */}
+                                <div className="w-full h-40 bg-gray-50 rounded-xl border border-dashed border-gray-200 flex items-center justify-center relative overflow-hidden group">
+                                    {newProduct.images?.[0] ? (
+                                        <>
+                                            <img src={newProduct.images[0]} alt="Product Preview" className="w-full h-full object-contain" />
+                                            <button 
+                                                onClick={() => setNewProduct(prev => ({ ...prev, images: [] }))}
+                                                className="absolute top-2 right-2 p-1.5 bg-red-500 text-white rounded-lg opacity-0 group-hover:opacity-100 transition-opacity shadow-lg"
+                                            >
+                                                <Trash2 size={14} />
+                                            </button>
+                                        </>
+                                    ) : (
+                                        <div className="flex flex-col items-center gap-2 text-gray-400">
+                                            {isUploadingImage ? <Loader2 size={24} className="animate-spin text-primary" /> : <Package size={32} />}
+                                            <span className="text-[10px] font-bold uppercase tracking-widest">{isUploadingImage ? 'Uploading...' : 'No image selected'}</span>
+                                        </div>
+                                    )}
+                                </div>
+
+                                <div className="flex gap-2">
+                                    <div className="flex-1">
+                                        <input 
+                                            type="file" 
+                                            id="product-image-new"
+                                            className="hidden" 
+                                            accept="image/*"
+                                            onChange={(e) => handleImageUpload(e.target.files[0], 'new')}
+                                        />
+                                        <label 
+                                            htmlFor="product-image-new"
+                                            className="w-full flex items-center justify-center gap-2 px-4 py-2.5 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-xl text-xs font-black uppercase tracking-widest transition-all cursor-pointer border border-gray-200"
+                                        >
+                                            <Upload size={14} /> {newProduct.images?.[0] ? 'Change Image' : 'Select File'}
+                                        </label>
+                                    </div>
+                                    <div className="flex-[2] relative">
+                                        <input
+                                            className="w-full border border-gray-200 p-2.5 rounded-xl text-xs focus:ring-2 focus:ring-primary/10 focus:border-primary outline-none transition-all pl-8"
+                                            placeholder="...or paste Image URL"
+                                            value={newProduct.images?.[0] || ''}
+                                            onChange={e => setNewProduct({ ...newProduct, images: [e.target.value] })}
+                                        />
+                                        <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400">🔗</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
 
                         {/* Initial Stock Section */}
                         <div className="mt-4 border-t pt-4">
@@ -827,27 +923,6 @@ const Inventory = () => {
                 </div>
             )}
 
-            {/* Stock Operations Modals */}
-            {showAddStockModal && (
-                <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center p-4 z-50">
-                    <div className="bg-white p-6 rounded-xl shadow-xl w-full max-w-md">
-                        <h3 className="text-xl font-bold mb-4">Add Stock</h3>
-                        <select className="w-full border p-2 mb-2 rounded" onChange={e => setStockData({ ...stockData, productId: e.target.value })}>
-                            <option value="">Select Product</option>
-                            {products.map(p => <option key={p._id} value={p._id}>{p.name}</option>)}
-                        </select>
-                        <select className="w-full border p-2 mb-2 rounded" onChange={e => setStockData({ ...stockData, warehouseId: e.target.value })}>
-                            <option value="">Select Warehouse</option>
-                            {warehouses.map(w => <option key={w._id} value={w._id}>{w.name}</option>)}
-                        </select>
-                        <input type="number" className="w-full border p-2 mb-2 rounded" placeholder="Quantity" onChange={e => setStockData({ ...stockData, quantity: e.target.value })} />
-                        <div className="flex justify-end gap-2 mt-4">
-                            <button onClick={() => setShowAddStockModal(false)} className="px-4 py-2 border rounded">Cancel</button>
-                            <button onClick={handleAddStock} className="px-4 py-2 bg-green-600 text-white rounded">Add Stock</button>
-                        </div>
-                    </div>
-                </div>
-            )}
 
             {showTransferStockModal && (
                 <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center p-4 z-50">
@@ -1033,31 +1108,57 @@ const Inventory = () => {
                             />
                         </div>
 
-                        {/* Add Stock Section */}
-                        <div className="mt-4 border-t pt-4 mb-4">
-                            <label className="block text-sm font-bold mb-2">Add Stock (Optional)</label>
-                            <div className="grid grid-cols-2 gap-4">
-                                <select 
-                                    className="border p-2 rounded text-sm" 
-                                    value={editProduct.additionalStock.warehouseId}
-                                    onChange={e => setEditProduct({ 
-                                        ...editProduct, 
-                                        additionalStock: { ...editProduct.additionalStock, warehouseId: e.target.value } 
-                                    })}
-                                >
-                                    <option value="">Select Warehouse</option>
-                                    {warehouses.map(w => <option key={w._id} value={w._id}>{w.name}</option>)}
-                                </select>
-                                <input 
-                                    type="number" 
-                                    className="border p-2 rounded text-sm" 
-                                    placeholder="Add Quantity" 
-                                    value={editProduct.additionalStock.quantity}
-                                    onChange={e => setEditProduct({ 
-                                        ...editProduct, 
-                                        additionalStock: { ...editProduct.additionalStock, quantity: e.target.value } 
-                                    })}
-                                />
+                        {/* Image Upload / URL Section (Edit) */}
+                        <div className="mb-6 border-t pt-4">
+                            <label className="block text-sm font-bold mb-2 uppercase text-gray-500 tracking-wider text-[10px]">Product Image</label>
+                            
+                            <div className="flex flex-col gap-4">
+                                {/* Preview Area */}
+                                <div className="w-full h-40 bg-gray-50 rounded-xl border border-dashed border-gray-200 flex items-center justify-center relative overflow-hidden group">
+                                    {editProduct.images?.[0] ? (
+                                        <>
+                                            <img src={editProduct.images[0]} alt="Product Preview" className="w-full h-full object-contain" />
+                                            <button 
+                                                onClick={() => setEditProduct(prev => ({ ...prev, images: [] }))}
+                                                className="absolute top-2 right-2 p-1.5 bg-red-500 text-white rounded-lg opacity-0 group-hover:opacity-100 transition-opacity shadow-lg"
+                                            >
+                                                <Trash2 size={14} />
+                                            </button>
+                                        </>
+                                    ) : (
+                                        <div className="flex flex-col items-center gap-2 text-gray-400">
+                                            {isUploadingImage ? <Loader2 size={24} className="animate-spin text-primary" /> : <Package size={32} />}
+                                            <span className="text-[10px] font-bold uppercase tracking-widest">{isUploadingImage ? 'Uploading...' : 'No image selected'}</span>
+                                        </div>
+                                    )}
+                                </div>
+
+                                <div className="flex gap-2">
+                                    <div className="flex-1">
+                                        <input 
+                                            type="file" 
+                                            id="product-image-edit"
+                                            className="hidden" 
+                                            accept="image/*"
+                                            onChange={(e) => handleImageUpload(e.target.files[0], 'edit')}
+                                        />
+                                        <label 
+                                            htmlFor="product-image-edit"
+                                            className="w-full flex items-center justify-center gap-2 px-4 py-2.5 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-xl text-xs font-black uppercase tracking-widest transition-all cursor-pointer border border-gray-200"
+                                        >
+                                            <Upload size={14} /> {editProduct.images?.[0] ? 'Change Image' : 'Select File'}
+                                        </label>
+                                    </div>
+                                    <div className="flex-[2] relative">
+                                        <input
+                                            className="w-full border border-gray-200 p-2.5 rounded-xl text-xs focus:ring-2 focus:ring-primary/10 focus:border-primary outline-none transition-all pl-8"
+                                            placeholder="...or paste Image URL"
+                                            value={editProduct.images?.[0] || ''}
+                                            onChange={e => setEditProduct({ ...editProduct, images: [e.target.value] })}
+                                        />
+                                        <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400">🔗</span>
+                                    </div>
+                                </div>
                             </div>
                         </div>
 

@@ -11,6 +11,7 @@ import {
     ArrowLeft,
 } from 'lucide-react';
 import api from '../services/api';
+import { useBranch } from '../context/BranchContext';
 
 // ── Status colour helper (Synced from Mobile) ─────────
 const getStatusColors = (status) => {
@@ -55,6 +56,7 @@ const Tasks = () => {
     const initialStatus = searchParams.get('status') || 'all';
 
     const [tasks, setTasks] = useState([]);
+    const { activeBranch } = useBranch();
     const [loading, setLoading] = useState(true);
     const [searchQuery, setSearchQuery] = useState('');
     const [statusFilter, setStatusFilter] = useState(initialStatus);
@@ -87,7 +89,8 @@ const Tasks = () => {
                 (task.project?.name && task.project.name.toLowerCase().includes(q)) ||
                 (task.assignedTo?.name && task.assignedTo.name.toLowerCase().includes(q));
             const matchStatus = statusFilter === 'all' || task.status === statusFilter;
-            return matchSearch && matchStatus;
+            const matchBranch = activeBranch === 'all' || task.project?.branch === activeBranch;
+            return matchSearch && matchStatus && matchBranch;
         });
 
         return filtered.reduce((acc, task) => {

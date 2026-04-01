@@ -4,6 +4,7 @@ import api from '../services/api';
 import {
     ArrowLeft, Search, X, ChevronRight, FolderKanban, SlidersHorizontal
 } from 'lucide-react';
+import { useBranch } from '../context/BranchContext';
 
 // ── Status colour helper (shared) ─────────────────────────────────────────────
 export const getStatusColors = (status) => {
@@ -46,6 +47,7 @@ export const getStatusColors = (status) => {
 const TaskLedger = () => {
     const { leaderId } = useParams();
     const navigate = useNavigate();
+    const { activeBranch } = useBranch();
     const [searchParams, setSearchParams] = useSearchParams();
     const initialStatus = searchParams.get('status') || 'all';
 
@@ -77,10 +79,12 @@ const TaskLedger = () => {
     const projectMap = useMemo(() => {
         const map = {};
         
-        // --- Apply Status Filter BEFORE grouping ---
-        const filtered = allTasks.filter(t => 
-            statusFilter === 'all' || t.status === statusFilter
-        );
+        // --- Apply Status & Branch Filter BEFORE grouping ---
+        const filtered = allTasks.filter(t => {
+            const matchStatus = statusFilter === 'all' || t.status === statusFilter;
+            const matchBranch = activeBranch === 'all' || t.project?.branch === activeBranch;
+            return matchStatus && matchBranch;
+        });
 
         filtered.forEach(t => {
             const pid = t.project?._id || 'unknown';

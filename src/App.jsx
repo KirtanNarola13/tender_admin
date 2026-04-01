@@ -1,5 +1,6 @@
-import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
+import { BrowserRouter, Routes, Route, Navigate, useLocation } from 'react-router-dom';
 import { AuthProvider, useAuth } from './context/AuthContext';
+import { BranchProvider, useBranch } from './context/BranchContext';
 import Login from './pages/Login';
 import Dashboard from './pages/Dashboard';
 import Tasks from './pages/Tasks';
@@ -16,6 +17,10 @@ import Reports from './pages/Reports';
 import TaskLedger from './pages/TaskLedger';
 import TaskProducts from './pages/TaskProducts';
 import TaskSteps from './pages/TaskSteps';
+import ProductDetails from './pages/ProductDetails';
+import PurchaseOrders from './pages/PurchaseOrders';
+import BranchTabs from './components/BranchTabs';
+import Branches from './pages/Branches';
 
 import VerifyDashboard from './pages/VerifyDashboard';
 
@@ -24,6 +29,7 @@ import { Menu } from 'lucide-react';
 
 const ProtectedRoute = ({ children }) => {
   const { user, loading, logout } = useAuth();
+  const location = useLocation();
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
 
   if (loading) return <div>Loading...</div>;
@@ -53,8 +59,16 @@ const ProtectedRoute = ({ children }) => {
         </div>
 
         {/* Main Content Area */}
-        <div className="flex-1 p-4 md:p-8 overflow-y-auto w-full relative">
-          {children}
+        <div className="flex-1 flex flex-col h-screen overflow-hidden bg-gray-50">
+          {/* Branch selector only on relevant screens: Dashboard, Projects, Tasks, Users */}
+          {(location.pathname === '/' || 
+            location.pathname.startsWith('/projects') || 
+            location.pathname.startsWith('/tasks') || 
+            location.pathname.startsWith('/users')) && 
+           <BranchTabs />}
+          <div className="flex-1 p-4 md:p-8 overflow-y-auto w-full relative">
+            {children}
+          </div>
         </div>
       </div>
     </div>
@@ -65,7 +79,8 @@ function App() {
   return (
     <BrowserRouter>
       <AuthProvider>
-        <Routes>
+        <BranchProvider>
+          <Routes>
           <Route path="/login" element={<Login />} />
           <Route path="/" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
           <Route path="/projects" element={<ProtectedRoute><Projects /></ProtectedRoute>} />
@@ -81,8 +96,12 @@ function App() {
           <Route path="/verify" element={<ProtectedRoute><VerifyDashboard /></ProtectedRoute>} />
           <Route path="/users" element={<ProtectedRoute><Users /></ProtectedRoute>} />
           <Route path="/inventory" element={<ProtectedRoute><Inventory /></ProtectedRoute>} />
+          <Route path="/inventory/product/:id" element={<ProtectedRoute><ProductDetails /></ProtectedRoute>} />
+          <Route path="/purchase-orders" element={<ProtectedRoute><PurchaseOrders /></ProtectedRoute>} />
           <Route path="/reports" element={<ProtectedRoute><Reports /></ProtectedRoute>} />
-        </Routes>
+          <Route path="/branches" element={<ProtectedRoute><Branches /></ProtectedRoute>} />
+          </Routes>
+        </BranchProvider>
       </AuthProvider>
     </BrowserRouter>
   );

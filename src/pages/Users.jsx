@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import api from '../services/api';
 import { useAuth } from '../context/AuthContext';
+import { useBranch } from '../context/BranchContext';
 import { Plus, Search, Users as UsersIcon, Shield, UserCheck, User, Eye, ArrowLeft } from 'lucide-react';
 
 const ROLE_COLORS = {
@@ -29,7 +30,8 @@ const Users = () => {
     const [roleTab, setRoleTab] = useState('all');
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [editingUser, setEditingUser] = useState(null);
-    const [formData, setFormData] = useState({ name: '', email: '', password: '', role: 'employee', assignedManager: '' });
+    const [formData, setFormData] = useState({ name: '', email: '', password: '', role: 'employee', assignedManager: '', branches: [] });
+    const { activeBranch, branches: globalBranches } = useBranch();
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [deletingId, setDeletingId] = useState(null);
 
@@ -56,10 +58,11 @@ const Users = () => {
                 password: '',
                 role: user.role,
                 assignedManager: user.assignedManager?._id || user.assignedManager || '',
+                branches: user.branches || [],
             });
         } else {
             setEditingUser(null);
-            setFormData({ name: '', email: '', password: '', role: 'employee', assignedManager: '' });
+            setFormData({ name: '', email: '', password: '', role: 'employee', assignedManager: '', branches: [] });
         }
         setIsModalOpen(true);
     };
@@ -98,7 +101,12 @@ const Users = () => {
         }
     };
 
-    const filtered = users.filter(u => {
+    const baseFiltered = users.filter(u => {
+        const isGlobalRole = u.role === 'admin' || u.role === 'admin_viewer';
+        return activeBranch === 'all' || isGlobalRole || (u.branches && u.branches.includes(activeBranch));
+    });
+
+    const filtered = baseFiltered.filter(u => {
         const q = searchTerm.toLowerCase();
         const matchSearch = u.name.toLowerCase().includes(q) || u.email.toLowerCase().includes(q);
         const matchRole = roleTab === 'all' || u.role === roleTab;
@@ -106,11 +114,11 @@ const Users = () => {
     });
 
     const counts = {
-        all: users.length,
-        admin: users.filter(u => u.role === 'admin').length,
-        team_leader: users.filter(u => u.role === 'team_leader').length,
-        employee: users.filter(u => u.role === 'employee').length,
-        admin_viewer: users.filter(u => u.role === 'admin_viewer').length,
+        all: baseFiltered.length,
+        admin: baseFiltered.filter(u => u.role === 'admin').length,
+        team_leader: baseFiltered.filter(u => u.role === 'team_leader').length,
+        employee: baseFiltered.filter(u => u.role === 'employee').length,
+        admin_viewer: baseFiltered.filter(u => u.role === 'admin_viewer').length,
     };
 
     const tabs = [
@@ -150,14 +158,18 @@ const Users = () => {
             {/* Search + Role Tabs */}
             <div className="flex flex-wrap items-center gap-3 mb-5">
                 <div className="relative flex-1 min-w-[200px]">
-                    <Search size={15} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
-                    <input
-                        type="text"
-                        placeholder="Search by name or email..."
-                        className="w-full pl-8 pr-4 py-2.5 border rounded-lg focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none text-sm bg-gray-50/50"
-                        value={searchTerm}
-                        onChange={e => setSearchTerm(e.target.value)}
-                    />
+                    <div className="flex flex-col sm:flex-row gap-4">
+                        <div className="relative flex-grow">
+                            <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={18} />
+                            <input 
+                                type="text"
+                                placeholder="Search by name or email..."
+                                className="w-full pl-10 pr-4 py-2.5 border border-gray-200 rounded-xl focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none text-sm transition-all"
+                                value={searchTerm}
+                                onChange={(e) => setSearchTerm(e.target.value)}
+                            />
+                        </div>
+                    </div>
                 </div>
                 <div className="flex gap-1 bg-gray-100 p-1 rounded-lg">
                     {tabs.map(tab => (
@@ -186,7 +198,7 @@ const Users = () => {
                             <tr className="bg-gray-50 border-b border-gray-100">
                                 <th className="text-left p-4 text-xs font-bold text-gray-400 uppercase tracking-wider w-10">#</th>
                                 <th className="text-left p-4 text-xs font-bold text-gray-500 uppercase tracking-wider">Name</th>
-                                <th className="text-left p-4 text-xs font-bold text-gray-500 uppercase tracking-wider">Email</th>
+                                <th className="text-left p-4 text-xs font-bold text-gray-500 uppercase tracking-wider">Branch</th>
                                 <th className="text-left p-4 text-xs font-bold text-gray-500 uppercase tracking-wider">Role</th>
                                 <th className="text-left p-4 text-xs font-bold text-gray-500 uppercase tracking-wider">Manager</th>
                                 <th className="text-right p-4 text-xs font-bold text-gray-500 uppercase tracking-wider">Actions</th>
@@ -202,10 +214,23 @@ const Users = () => {
                                                 <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center text-primary font-black text-sm flex-shrink-0 border border-primary/20">
                                                     {user.name.charAt(0).toUpperCase()}
                                                 </div>
-                                                <span className="font-bold text-gray-800 text-sm italic">{user.name}</span>
+                                                <div>
+                                                    <div className="font-bold text-gray-800 text-sm italic">{user.name}</div>
+                                                    <div className="text-[10px] text-gray-400 lowercase">{user.email}</div>
+                                                </div>
                                             </div>
                                         </td>
-                                        <td className="p-4 text-gray-500 text-sm">{user.email}</td>
+                                        <td className="p-4">
+                                            {user.branches && user.branches.length > 0 ? (
+                                                <div className="flex flex-wrap gap-1">
+                                                    {user.branches.map(b => (
+                                                        <span key={b} className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-indigo-50 text-indigo-600 text-[9px] font-black uppercase tracking-wider border border-indigo-100">
+                                                            🏙 {b}
+                                                        </span>
+                                                    ))}
+                                                </div>
+                                            ) : <span className="text-gray-300 text-xs">—</span>}
+                                        </td>
                                         <td className="p-4">
                                             <span className={`px-2.5 py-1 rounded-full text-xs font-bold uppercase tracking-wide border ${ROLE_COLORS[user.role] || 'bg-gray-100 text-gray-600'}`}>
                                                 {ROLE_LABELS[user.role] || user.role}
@@ -298,18 +323,46 @@ const Users = () => {
                                     onChange={e => setFormData({ ...formData, password: e.target.value })}
                                 />
                             </div>
-                            <div>
-                                <label className="block text-sm font-semibold text-gray-700 mb-1">Role *</label>
-                                <select
-                                    className="w-full border border-gray-300 p-2.5 rounded-lg focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none bg-white text-sm"
-                                    value={formData.role}
-                                    onChange={e => setFormData({ ...formData, role: e.target.value, assignedManager: '' })}
-                                >
-                                    <option value="employee">👷 Employee</option>
-                                    <option value="team_leader">👨‍💼 Team Leader</option>
-                                    <option value="admin">🛡 Admin</option>
-                                    <option value="admin_viewer">👁 Admin Viewer</option>
-                                </select>
+                            <div className="grid grid-cols-2 gap-4">
+                                <div>
+                                    <label className="block text-sm font-semibold text-gray-700 mb-1">Role *</label>
+                                    <select
+                                        className="w-full border border-gray-300 p-2.5 rounded-lg focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none bg-white text-sm"
+                                        value={formData.role}
+                                        onChange={e => setFormData({ ...formData, role: e.target.value, assignedManager: '' })}
+                                    >
+                                        <option value="employee">👷 Employee</option>
+                                        <option value="team_leader">👨‍💼 Team Leader</option>
+                                        <option value="admin">🛡 Admin</option>
+                                        <option value="admin_viewer">👁 Admin Viewer</option>
+                                    </select>
+                                </div>
+                                <div>
+                                    <label className="block text-sm font-semibold text-gray-700 mb-1">Authorized Branches</label>
+                                    <div className="flex flex-wrap gap-1.5 p-2 border border-gray-300 rounded-lg min-h-[42px] bg-gray-50/30 font-medium">
+                                        {globalBranches.length === 0 ? (
+                                            <span className="text-[10px] text-gray-400 italic">No branches defined</span>
+                                        ) : globalBranches.map(b => (
+                                            <button
+                                                key={b}
+                                                type="button"
+                                                onClick={() => {
+                                                    const newBranches = formData.branches.includes(b)
+                                                        ? formData.branches.filter(x => x !== b)
+                                                        : [...formData.branches, b];
+                                                    setFormData({ ...formData, branches: newBranches });
+                                                }}
+                                                className={`text-[10px] px-2 py-0.5 rounded-full border transition-all ${
+                                                    formData.branches.includes(b)
+                                                        ? 'bg-primary text-white border-primary shadow-sm'
+                                                        : 'bg-white text-gray-400 border-gray-200 hover:border-gray-400'
+                                                }`}
+                                            >
+                                                {b}
+                                            </button>
+                                        ))}
+                                    </div>
+                                </div>
                             </div>
 
                             {/* Assigned Manager — only for Employee */}

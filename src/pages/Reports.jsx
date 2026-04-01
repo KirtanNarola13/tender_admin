@@ -1,18 +1,20 @@
 import { useEffect, useState } from 'react';
 import api from '../services/api';
+import { useBranch } from '../context/BranchContext';
 import {
     BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer
 } from 'recharts';
 import { Trophy, AlertCircle } from 'lucide-react';
 
 const Reports = () => {
+    const { activeBranch } = useBranch();
     const [data, setData] = useState([]);
     const [loading, setLoading] = useState(true);
 
     useEffect(() => {
         const fetchData = async () => {
             try {
-                const res = await api.get('/dashboard/employee-performance');
+                const res = await api.get(`/dashboard/employee-performance?branch=all`);
                 setData(res.data);
             } catch (error) {
                 console.error("Failed to fetch reports", error);
@@ -21,7 +23,7 @@ const Reports = () => {
             }
         };
         fetchData();
-    }, []);
+    }, []); // Removed activeBranch dependency to keep reports global
 
     if (loading) return <div className="p-8 text-center">Loading Reports...</div>;
 

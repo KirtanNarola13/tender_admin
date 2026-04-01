@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import api from '../services/api';
 import { useAuth } from '../context/AuthContext';
+import { useBranch } from '../context/BranchContext';
 import { ChevronRight, ChevronLeft, Trash2, Box, ArrowLeft, CheckCircle, Loader } from 'lucide-react';
 
 const CATEGORIES = ['Primary', 'Upper Primary', 'Secondary', 'Higher Secondary', 'Residential'];
@@ -10,6 +11,7 @@ const today = new Date().toISOString().split('T')[0];
 
 const EditProjectWizard = () => {
     const { user: currentUser } = useAuth();
+    const { branches: globalBranches } = useBranch();
     const { id } = useParams();
     const navigate = useNavigate();
     const [step, setStep] = useState(1);
@@ -26,7 +28,8 @@ const EditProjectWizard = () => {
         deadline: '',
         description: '',
         status: 'active',
-        assignedLeader: ''
+        assignedLeader: '',
+        branch: ''
     });
 
     const [availableProducts, setAvailableProducts] = useState([]);
@@ -38,6 +41,21 @@ const EditProjectWizard = () => {
     // To track stock already allocated to this project before editing
     const [initialQuantities, setInitialQuantities] = useState({}); // { productId: qty }
 
+    // Filtered team leaders based on selected branch
+    const filteredLeaders = teamLeaders.filter(tl => 
+        !projectData.branch || (tl.branches && tl.branches.includes(projectData.branch))
+    );
+
+    // Sync assigned leader when branch changes
+    useEffect(() => {
+        if (projectData.branch && projectData.assignedLeader && !loading) {
+            const isAuthorized = filteredLeaders.some(tl => tl._id === projectData.assignedLeader);
+            if (!isAuthorized) {
+                setProjectData(prev => ({ ...prev, assignedLeader: '' }));
+            }
+        }
+    }, [projectData.branch, filteredLeaders, loading]);
+
     // ── Load existing project + master data ─────────────────────────
     useEffect(() => {
         if (currentUser?.role === 'admin_viewer') {
@@ -46,10 +64,11 @@ const EditProjectWizard = () => {
         }
         const load = async () => {
             try {
-                const [projRes, prodRes, usersRes] = await Promise.all([
+                const [projRes, prodRes, usersRes, projectsRes] = await Promise.all([
                     api.get(`/projects/${id}`),
                     api.get('/inventory/products'),
-                    api.get('/users?role=team_leader')
+                    api.get('/users?role=team_leader'),
+                    api.get('/projects')
                 ]);
 
                 const proj = projRes.data;
@@ -69,7 +88,8 @@ const EditProjectWizard = () => {
                     deadline: proj.deadline ? proj.deadline.substring(0, 10) : '',
                     description: proj.description || '',
                     status: proj.status || 'active',
-                    assignedLeader: proj.assignedLeader?._id || proj.assignedLeader || ''
+                    assignedLeader: proj.assignedLeader?._id || proj.assignedLeader || '',
+                    branch: proj.branch || ''
                 });
 
                 // Pre-fill selected products (populate from availableProducts)
@@ -101,7 +121,8 @@ const EditProjectWizard = () => {
                 setLoading(false);
             }
         };
-        load();
+
+    load();
     }, [id]);
 
     // ── Product helpers ─────────────────────────────────────────────
@@ -206,6 +227,19 @@ const EditProjectWizard = () => {
                     />
                 </div>
                 <div>
+                    <label className="block text-xs font-semibold text-gray-600 mb-1.5 uppercase tracking-wide">Branch / Region *</label>
+                    <select
+                        className="w-full border border-gray-200 p-2.5 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary bg-white"
+                        value={projectData.branch}
+                        onChange={e => setProjectData({ ...projectData, branch: e.target.value })}
+                    >
+                        <option value="">— Select Branch —</option>
+                        {globalBranches.map(b => (
+                            <option key={b} value={b}>{b}</option>
+                        ))}
+                    </select>
+                </div>
+                <div>
                     <label className="block text-xs font-semibold text-gray-600 mb-1.5 uppercase tracking-wide">Team Leader</label>
                     <select
                         className="w-full border border-gray-200 p-2.5 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary bg-white"
@@ -213,10 +247,13 @@ const EditProjectWizard = () => {
                         onChange={e => setProjectData({ ...projectData, assignedLeader: e.target.value })}
                     >
                         <option value="">— Unassigned —</option>
-                        {teamLeaders.map(u => (
+                        {filteredLeaders.map(u => (
                             <option key={u._id} value={u._id}>{u.name}</option>
                         ))}
                     </select>
+                    {projectData.branch && filteredLeaders.length === 0 && (
+                        <p className="text-[10px] text-red-500 mt-1 font-medium">No team leaders assigned to {projectData.branch}</p>
+                    )}
                 </div>
                 <div>
                     <label className="block text-xs font-semibold text-gray-600 mb-1.5 uppercase tracking-wide">Status</label>
@@ -385,6 +422,7 @@ const EditProjectWizard = () => {
                         { label: 'Site Name', value: projectData.name },
                         { label: 'Client', value: projectData.client },
                         { label: 'Category', value: projectData.category },
+                        { label: 'Branch', value: projectData.branch },
                         { label: 'Location', value: projectData.location },
                         { label: 'Status', value: projectData.status },
                         { label: 'Team Leader', value: teamLeaders.find(u => u._id === projectData.assignedLeader)?.name || 'Unassigned' },

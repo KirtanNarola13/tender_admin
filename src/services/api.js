@@ -3,10 +3,8 @@ import axios from 'axios';
 // 1. Determine the correct API base URL
 // - Use relative '/api' in development to let Vite proxy handle CORS.
 // - Use absolute URL in production (e.g., when deployed on Vercel).
-const isDev = import.meta.env.MODE === 'development';
-const BASE_URL = isDev ? '/api' : 'https://tender-api.reliablesolution.in/api';
-
-export const FILE_BASE_URL = isDev ? window.location.origin : 'https://tender-api.reliablesolution.in';
+const BASE_URL = 'https://tender-api.reliablesolution.in/api';
+export const FILE_BASE_URL = 'https://tender-api.reliablesolution.in';
 
 const api = axios.create({
     baseURL: BASE_URL,

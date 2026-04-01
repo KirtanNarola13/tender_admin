@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import api from '../services/api';
 import { useAuth } from '../context/AuthContext';
+import { useBranch } from '../context/BranchContext';
 import { ChevronRight, ChevronLeft, Trash2, Box, ArrowLeft, CheckCircle, Loader } from 'lucide-react';
 
 const CATEGORIES = ['Primary', 'Upper Primary', 'Secondary', 'Higher Secondary', 'Residential'];
@@ -11,6 +12,7 @@ const today = new Date().toISOString().split('T')[0];
 const ProjectWizard = () => {
     const { user: currentUser } = useAuth();
     const navigate = useNavigate();
+    const { activeBranch, branches: globalBranches } = useBranch();
     const [step, setStep] = useState(1);
     const [loading, setLoading] = useState(false);
 
@@ -22,13 +24,29 @@ const ProjectWizard = () => {
         startDate: '',
         deadline: '',
         description: '',
-        assignedLeader: ''
+        assignedLeader: '',
+        branch: activeBranch !== 'all' ? activeBranch : ''
     });
-
     const [availableProducts, setAvailableProducts] = useState([]);
     const [teamLeaders, setTeamLeaders] = useState([]);
     const [selectedProducts, setSelectedProducts] = useState([]);
+    const [branches, setBranches] = useState([]);
     const [dataLoading, setDataLoading] = useState(true);
+    
+    // Filtered team leaders based on selected branch
+    const filteredLeaders = teamLeaders.filter(tl => 
+        !projectData.branch || (tl.branches && tl.branches.includes(projectData.branch))
+    );
+
+    // Sync assigned leader when branch changes
+    useEffect(() => {
+        if (projectData.branch && projectData.assignedLeader) {
+            const isAuthorized = filteredLeaders.some(tl => tl._id === projectData.assignedLeader);
+            if (!isAuthorized) {
+                setProjectData(prev => ({ ...prev, assignedLeader: '' }));
+            }
+        }
+    }, [projectData.branch, filteredLeaders]);
 
     useEffect(() => {
         if (currentUser?.role === 'admin_viewer') {
@@ -40,9 +58,10 @@ const ProjectWizard = () => {
 
     const fetchInitialData = async () => {
         try {
-            const [prodRes, usersRes] = await Promise.all([
+            const [prodRes, usersRes, projectsRes] = await Promise.all([
                 api.get('/inventory/products'),
-                api.get('/users?role=team_leader')
+                api.get('/users?role=team_leader'),
+                api.get('/projects')
             ]);
             setAvailableProducts(prodRes.data);
             setTeamLeaders(usersRes.data.filter(u => u.role === 'team_leader'));
@@ -52,6 +71,7 @@ const ProjectWizard = () => {
             setDataLoading(false);
         }
     };
+
 
     // ── Product helpers ─────────────────────────────────────────────
     const addProduct = (productId) => {
@@ -148,6 +168,19 @@ const ProjectWizard = () => {
                     />
                 </div>
                 <div>
+                    <label className="block text-xs font-semibold text-gray-600 mb-1.5 uppercase tracking-wide">Branch / Region *</label>
+                    <select
+                        className="w-full border border-gray-200 p-2.5 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary bg-white"
+                        value={projectData.branch}
+                        onChange={e => setProjectData({ ...projectData, branch: e.target.value })}
+                    >
+                        <option value="">— Select Branch —</option>
+                        {globalBranches.map(b => (
+                            <option key={b} value={b}>{b}</option>
+                        ))}
+                    </select>
+                </div>
+                <div>
                     <label className="block text-xs font-semibold text-gray-600 mb-1.5 uppercase tracking-wide">Team Leader *</label>
                     <select
                         className="w-full border border-gray-200 p-2.5 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary bg-white"
@@ -155,10 +188,13 @@ const ProjectWizard = () => {
                         onChange={e => setProjectData({ ...projectData, assignedLeader: e.target.value })}
                     >
                         <option value="">— Select Team Leader —</option>
-                        {teamLeaders.map(u => (
+                        {filteredLeaders.map(u => (
                             <option key={u._id} value={u._id}>{u.name}</option>
                         ))}
                     </select>
+                    {projectData.branch && filteredLeaders.length === 0 && (
+                        <p className="text-[10px] text-red-500 mt-1 font-medium">No team leaders assigned to {projectData.branch}</p>
+                    )}
                 </div>
                 <div>
                     <label className="block text-xs font-semibold text-gray-600 mb-1.5 uppercase tracking-wide">Start Date</label>
@@ -298,6 +334,7 @@ const ProjectWizard = () => {
                         { label: 'Site Name', value: projectData.name },
                         { label: 'Client', value: projectData.client },
                         { label: 'Category', value: projectData.category },
+                        { label: 'Branch', value: projectData.branch },
                         { label: 'Location', value: projectData.location },
                         { label: 'Team Leader', value: teamLeaders.find(u => u._id === projectData.assignedLeader)?.name || 'Unassigned' },
                         { label: 'Start Date', value: projectData.startDate || '—' },

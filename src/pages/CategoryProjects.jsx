@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
 import api from '../services/api';
 import { useAuth } from '../context/AuthContext';
+import { useBranch } from '../context/BranchContext';
 import {
     ArrowLeft, Search, Filter, Briefcase, Users, ChevronRight,
     Trash2, SlidersHorizontal, Layout, X, Calendar
@@ -22,6 +23,7 @@ const CategoryProjects = () => {
     const navigate = useNavigate();
     const { user: currentUser } = useAuth();
 
+    const { activeBranch } = useBranch();
     const [allProjects, setAllProjects] = useState([]);
     const [loading, setLoading] = useState(true);
     const [searchQuery, setSearchQuery] = useState('');
@@ -74,7 +76,8 @@ const CategoryProjects = () => {
                 p.name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
                 p.description?.toLowerCase().includes(searchQuery.toLowerCase());
             const matchStatus = statusFilter === 'all' || (p.status || 'pending') === statusFilter;
-            return matchSearch && matchStatus;
+            const matchBranch = activeBranch === 'all' || p.branch === activeBranch;
+            return matchSearch && matchStatus && matchBranch;
         })
         .sort((a, b) => {
             if (sortBy === 'name_asc') return (a.name || '').localeCompare(b.name || '');

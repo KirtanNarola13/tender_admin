@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { useLocation, Link, useNavigate } from 'react-router-dom';
 import api from '../services/api';
 import { useAuth } from '../context/AuthContext';
+import { useBranch } from '../context/BranchContext';
 import { Plus, Briefcase, Layout, Search, Filter, ChevronRight, ArrowLeft } from 'lucide-react';
 import DeleteConfirmModal from '../components/DeleteConfirmModal';
 
@@ -11,10 +12,11 @@ const Projects = () => {
     const location = useLocation();
     const fromDashboard = location.state?.fromDashboard;
     const [projects, setProjects] = useState([]);
+    const { activeBranch } = useBranch();
     const [isModalOpen, setIsModalOpen] = useState(false);
-    const [newProject, setNewProject] = useState({ name: '', description: '' });
     const [searchQuery, setSearchQuery] = useState('');
     const [sortBy, setSortBy] = useState('updatedAt_desc');
+    const [newProject, setNewProject] = useState({ name: '', description: '' });
 
     // School & Assignment
     const [showSchoolModal, setShowSchoolModal] = useState(false);
@@ -107,7 +109,11 @@ const Projects = () => {
     };
 
     const filteredAndSortedProjects = [...projects]
-        .filter(p => p.name?.toLowerCase().includes(searchQuery.toLowerCase()) || p.description?.toLowerCase().includes(searchQuery.toLowerCase()))
+        .filter(p => {
+            const matchesSearch = p.name?.toLowerCase().includes(searchQuery.toLowerCase()) || p.description?.toLowerCase().includes(searchQuery.toLowerCase());
+            const matchesBranch = activeBranch === 'all' || p.branch === activeBranch;
+            return matchesSearch && matchesBranch;
+        })
         .sort((a, b) => {
             if (sortBy === 'name_asc') {
                 return (a.name || '').localeCompare(b.name || '');
@@ -125,6 +131,8 @@ const Projects = () => {
         acc[category].push(project);
         return acc;
     }, {});
+
+    const uniqueBranches = [...new Set(projects.map(p => p.branch).filter(Boolean))].sort();
 
     const sortedCategories = [
         'Primary',
@@ -172,7 +180,7 @@ const Projects = () => {
                     </div>
                     <input
                         type="text"
-                        placeholder="Search projects by name or description..."
+                        placeholder="Search projects..."
                         className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition-all"
                         value={searchQuery}
                         onChange={(e) => setSearchQuery(e.target.value)}

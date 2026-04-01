@@ -7,12 +7,12 @@ export default defineConfig({
   server: {
     proxy: {
       '/api': {
-        target: 'https://tender-api.reliablesolution.in',
+        target: 'http://localhost:3000',
         changeOrigin: true,
         secure: false,
       },
       '/uploads': {
-        target: 'https://tender-api.reliablesolution.in',
+        target: 'http://localhost:3000',
         changeOrigin: true,
         secure: false,
       }
