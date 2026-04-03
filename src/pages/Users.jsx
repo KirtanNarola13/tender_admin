@@ -58,6 +58,14 @@ const Users = () => {
         fetchUsers();
     }, []);
 
+    useEffect(() => {
+        const searchParams = new URLSearchParams(location.search);
+        const role = searchParams.get('role');
+        if (role && ROLE_TAB_OPTIONS.some(opt => opt.value === role)) {
+            setRoleTab(role);
+        }
+    }, [location.search]);
+
     const fetchUsers = async () => {
         try {
             const res = await api.get('/users');
@@ -110,7 +118,7 @@ const Users = () => {
     const handleToggleBlock = async (user) => {
         const action = user.isBlocked ? 'unblock' : 'block';
         if (!window.confirm(`Are you sure you want to ${action} "${user.name}"? ${user.isBlocked ? 'They will regain access to their account.' : 'They will be immediately logged out and lose access.'}`)) return;
-        
+
         setDeletingId(user._id);
         try {
             await api.delete(`/users/${user._id}`); // This route now toggles block
@@ -153,7 +161,7 @@ const Users = () => {
     return (
         <div className="space-y-3">
             {/* Sticky header */}
-            <div className="sticky top-0 z-10 bg-gray-50 pb-2 space-y-2">
+            <div className="sticky top-0 z-10 bg-gray-50 pt-0 md:pt-4 pb-2 space-y-2 border-b border-gray-50">
                 {/* Title row */}
                 <div className="flex items-center justify-between gap-3">
                     <div className="min-w-0">
@@ -207,17 +215,15 @@ const Users = () => {
                         <button
                             key={tab.key}
                             onClick={() => setRoleTab(tab.key)}
-                            className={`flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-[10px] font-black uppercase tracking-wider transition-all whitespace-nowrap shrink-0 ${
-                                roleTab === tab.key
-                                    ? 'bg-white text-primary shadow-sm'
-                                    : 'text-gray-500 hover:text-gray-700'
-                            }`}
+                            className={`flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-[10px] font-black uppercase tracking-wider transition-all whitespace-nowrap shrink-0 ${roleTab === tab.key
+                                ? 'bg-white text-primary shadow-sm'
+                                : 'text-gray-500 hover:text-gray-700'
+                                }`}
                         >
                             {tab.icon}
                             {tab.label}
-                            <span className={`px-1.5 py-0.5 rounded-full text-[9px] font-black ${
-                                roleTab === tab.key ? 'bg-primary/10 text-primary' : 'bg-gray-200 text-gray-500'
-                            }`}>{counts[tab.key]}</span>
+                            <span className={`px-1.5 py-0.5 rounded-full text-[9px] font-black ${roleTab === tab.key ? 'bg-primary/10 text-primary' : 'bg-gray-200 text-gray-500'
+                                }`}>{counts[tab.key]}</span>
                         </button>
                     ))}
                 </div>
@@ -475,11 +481,10 @@ const Users = () => {
                                                         : [...formData.branches, b];
                                                     setFormData({ ...formData, branches: newBranches });
                                                 }}
-                                                className={`text-[10px] px-2 py-0.5 rounded-full border transition-all ${
-                                                    formData.branches.includes(b)
-                                                        ? 'bg-primary text-white border-primary shadow-sm'
-                                                        : 'bg-white text-gray-400 border-gray-200 hover:border-gray-400'
-                                                }`}
+                                                className={`text-[10px] px-2 py-0.5 rounded-full border transition-all ${formData.branches.includes(b)
+                                                    ? 'bg-primary text-white border-primary shadow-sm'
+                                                    : 'bg-white text-gray-400 border-gray-200 hover:border-gray-400'
+                                                    }`}
                                             >
                                                 {b}
                                             </button>
@@ -491,7 +496,7 @@ const Users = () => {
                             {/* Assigned Manager — only for Employee */}
                             {formData.role === 'employee' && (
                                 <div>
-                                <label className="block text-sm font-semibold text-gray-700 mb-1">Assigned Manager (Team Leader)</label>
+                                    <label className="block text-sm font-semibold text-gray-700 mb-1">Assigned Manager (Team Leader)</label>
                                     <FormSelect
                                         value={formData.assignedManager}
                                         onChange={(val) => setFormData({ ...formData, assignedManager: val })}

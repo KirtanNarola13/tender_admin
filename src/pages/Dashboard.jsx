@@ -74,7 +74,7 @@ const Dashboard = () => {
             {/* Top Metrics Row */}
             <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4">
                 <StatCard
-                    title="Active Sites"
+                    title="Active Projects"
                     count={stats.totalProjects}
                     icon={Briefcase}
                     color="text-indigo-600"
@@ -83,7 +83,7 @@ const Dashboard = () => {
                     onClick={() => navigate('/projects')}
                 />
                 <StatCard
-                    title="Management"
+                    title="Team Leaders"
                     count={stats.totalTeamLeaders}
                     icon={Shield}
                     color="text-primary"
@@ -92,7 +92,7 @@ const Dashboard = () => {
                     onClick={() => navigate('/users?role=team_leader')}
                 />
                 <StatCard
-                    title="Field Workforce"
+                    title="Employees"
                     count={stats.totalEmployees}
                     icon={Users}
                     color="text-sky-600"
@@ -101,22 +101,22 @@ const Dashboard = () => {
                     onClick={() => navigate('/users?role=employee')}
                 />
                 <StatCard
-                    title="Pending Ops"
+                    title="Pending Tasks"
                     count={stats.pendingTasks}
                     icon={Clock}
                     color="text-amber-600"
                     bg="bg-amber-50"
                     border="border-amber-100"
-                    onClick={() => navigate('/tasks')}
+                    onClick={() => navigate('/tasks?status=pending')}
                 />
                 <StatCard
-                    title="Dispatches"
+                    title="Completed Tasks"
                     count={stats.completedTasks}
                     icon={CheckCircle}
                     color="text-emerald-600"
                     bg="bg-emerald-50"
                     border="border-emerald-100"
-                    onClick={() => navigate('/tasks')}
+                    onClick={() => navigate('/tasks?status=completed')}
                 />
             </div>
 
@@ -136,14 +136,20 @@ const Dashboard = () => {
                     </div>
 
                     <div className="relative flex-1 flex flex-col items-center justify-center min-h-[220px]">
-                        <ResponsiveContainer width="100%" height={240}>
+                        {/* Center Overlay Label (Rendered before chart so tooltip is on top) */}
+                        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 text-center pointer-events-none">
+                            <div className="text-3xl font-black text-gray-900 leading-tight">{totalTasks}</div>
+                            <div className="text-[10px] font-black text-gray-400 uppercase tracking-widest mt-0.5">Total Tasks</div>
+                        </div>
+
+                        <ResponsiveContainer width="100%" height={240} className="relative z-10">
                             <PieChart>
                                 <Pie
                                     data={taskDistributionData}
                                     cx="50%"
                                     cy="50%"
-                                    innerRadius={65}
-                                    outerRadius={85}
+                                    innerRadius={70}
+                                    outerRadius={90}
                                     paddingAngle={8}
                                     dataKey="value"
                                     animationBegin={0}
@@ -154,16 +160,18 @@ const Dashboard = () => {
                                     ))}
                                 </Pie>
                                 <Tooltip
-                                    contentStyle={{ borderRadius: '12px', border: 'none', boxShadow: '0 10px 25px -5px rgba(0,0,0,0.1)', fontSize: '11px', fontWeight: 'bold' }}
+                                    wrapperStyle={{ zIndex: 50 }}
+                                    contentStyle={{ 
+                                        borderRadius: '12px', 
+                                        border: 'none', 
+                                        boxShadow: '0 10px 25px -5px rgba(0,0,0,0.2)', 
+                                        fontSize: '11px', 
+                                        fontWeight: 'bold',
+                                        backgroundColor: '#ffffff'
+                                    }}
                                 />
                             </PieChart>
                         </ResponsiveContainer>
-
-                        {/* Center Overlay Label */}
-                        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 text-center">
-                            <div className="text-2xl font-black text-gray-900 leading-tight">{totalTasks}</div>
-                            <div className="text-[9px] font-black text-gray-400 uppercase tracking-tighter">Total Tasks</div>
-                        </div>
                     </div>
 
                     <div className="grid grid-cols-2 gap-4 mt-4 pt-4 border-t border-gray-50">

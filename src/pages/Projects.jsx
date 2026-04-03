@@ -235,8 +235,8 @@ const Projects = () => {
 
     const handleSaveCategory = async () => {
         if (!newCatName.trim()) return alert('Category name cannot be empty');
-        
-        const updatedCategories = selectedWON.categories.map(c => 
+
+        const updatedCategories = selectedWON.categories.map(c =>
             c.name === editingCatName ? { ...c, name: newCatName } : c
         );
 
@@ -248,7 +248,7 @@ const Projects = () => {
             fetchWorkOrders();
             // If the filtered category was exactly this one, we may optionally clear selection.
             if (selectedCategory && selectedCategory.name === editingCatName) {
-                 setSelectedCategory(null); // Or update it to the new name in search params
+                setSelectedCategory(null); // Or update it to the new name in search params
             }
         } catch (error) {
             alert('Failed to update category: ' + (error.response?.data?.message || error.message));
@@ -271,7 +271,7 @@ const Projects = () => {
             setCatToDelete(null);
             fetchWorkOrders();
         } catch (error) {
-             alert('Failed to delete category: ' + (error.response?.data?.message || error.message));
+            alert('Failed to delete category: ' + (error.response?.data?.message || error.message));
         }
     };
 
@@ -294,7 +294,7 @@ const Projects = () => {
     return (
         <div className="w-full space-y-3 max-w-7xl mx-auto pb-8">
             {/* Sticky header */}
-            <div className="sticky top-0 z-10 bg-gray-50 pb-2 space-y-2">
+            <div className="bg-gray-50 pt-2 md:pt-4 pb-2 space-y-2 border-b border-gray-50">
                 <div className="flex items-center justify-between gap-3">
                     <div className="min-w-0">
                         {(fromDashboard || wonId) && (

@@ -79,6 +79,13 @@ const Tasks = () => {
         fetchTasks();
     }, []);
 
+    useEffect(() => {
+        const paramStatus = searchParams.get('status');
+        if (paramStatus && STATUS_OPTIONS.some(opt => opt.value === paramStatus)) {
+            setStatusFilter(paramStatus);
+        }
+    }, [searchParams]);
+
     const fetchTasks = async () => {
         try {
             const res = await api.get('/tasks');
@@ -134,7 +141,7 @@ const Tasks = () => {
     return (
         <div className="space-y-3">
             {/* Sticky header */}
-            <div className=" z-10 bg-gray-50 pb-2 space-y-2">
+            <div className=" bg-gray-50 pt-2 md:pt-4 pb-2 space-y-2 border-b border-gray-50">
                 <div className="flex items-center justify-between gap-3">
                     <div className="min-w-0">
                         {fromDashboard && (
