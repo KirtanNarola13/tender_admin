@@ -33,7 +33,9 @@ const CreatePOModal = ({ isOpen, onClose, onSuccess, editData }) => {
                         address: editData.party?.address || '', 
                         email: editData.party?.email || '' 
                     },
+                    poNumber: editData.poNumber || '',
                     warehouse: editData.warehouse?._id || editData.warehouse || '',
+                    project: editData.project?._id || editData.project || '',
                     items: editData.items?.map(i => ({
                         product: i.product?._id || i.product || '',
                         quantity: i.quantity,
@@ -139,18 +141,22 @@ const CreatePOModal = ({ isOpen, onClose, onSuccess, editData }) => {
         }
     };
 
+    const [showPartyDetails, setShowPartyDetails] = useState(false);
+
     if (!isOpen) return null;
 
     return (
         <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-[100] flex items-center justify-center p-4 overflow-y-auto">
-            <div className="bg-white rounded-2xl shadow-2xl w-full max-w-4xl my-8 overflow-hidden transform transition-all animate-in fade-in zoom-in duration-200">
+            <div className="bg-white rounded-3xl shadow-2xl w-full max-w-3xl my-8 overflow-hidden transform transition-all animate-in fade-in zoom-in duration-200">
                 {/* Header */}
-                <div className="bg-primary p-6 text-white flex justify-between items-center bg-gradient-to-r from-primary to-primary/90">
+                <div className="bg-primary p-5 text-white flex justify-between items-center bg-gradient-to-r from-primary to-primary-dark">
                     <div className="flex items-center gap-3">
-                        <ShoppingCart size={24} />
+                        <div className="bg-white/20 p-2 rounded-xl">
+                            <ShoppingCart size={20} />
+                        </div>
                         <div>
-                            <h3 className="text-xl font-bold">{editData ? 'Update Purchase Order' : 'New Purchase Order'}</h3>
-                            <p className="text-primary-light/80 text-xs mt-0.5">{editData ? 'Modify the details of your existing PO.' : 'Fill in the details to create a new PO and track stock.'}</p>
+                            <h3 className="text-lg font-black">{editData ? 'Edit Purchase Order' : 'New Purchase Order'}</h3>
+                            <p className="text-primary-light/70 text-[10px] font-bold uppercase tracking-widest">{editData ? 'Update existing details' : 'Stock replenishment order'}</p>
                         </div>
                     </div>
                     <button onClick={onClose} className="p-2 hover:bg-white/10 rounded-full transition-colors">
@@ -158,244 +164,233 @@ const CreatePOModal = ({ isOpen, onClose, onSuccess, editData }) => {
                     </button>
                 </div>
 
-                <form onSubmit={handleSubmit} className="p-6 overflow-y-auto max-h-[80vh] custom-scrollbar">
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-                        {/* Left Column: Party & Basic Info */}
-                        <div className="space-y-6">
-                            <section>
-                                <h4 className="flex items-center gap-2 text-sm font-black uppercase tracking-wider text-gray-400 mb-4">
-                                    <User size={16} /> Party Details (Supplier)
-                                </h4>
-                                <div className="space-y-3">
+                <form onSubmit={handleSubmit} className="p-6 overflow-y-auto max-h-[85vh] custom-scrollbar">
+                    <div className="space-y-8">
+                        {/* 1. Basic Party & Logistic Info */}
+                        <section className="space-y-4">
+                            <div className="flex items-center justify-between">
+                                <h4 className="text-[10px] font-black uppercase tracking-[0.2em] text-gray-400">Order Information</h4>
+                                <button 
+                                    type="button"
+                                    onClick={() => setShowPartyDetails(!showPartyDetails)}
+                                    className="text-[10px] font-black uppercase text-primary hover:text-primary-dark transition-colors"
+                                >
+                                    {showPartyDetails ? '- Hide Contact' : '+ Add Party Contact'}
+                                </button>
+                            </div>
+                            
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                <div className="md:col-span-2">
+                                    <label className="text-[9px] font-black uppercase text-gray-400 mb-1 ml-1 block">Party / Supplier Name</label>
                                     <input 
                                         required
-                                        className="w-full border border-gray-200 p-3 rounded-xl focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition-all text-sm" 
-                                        placeholder="Party/Client Name" 
+                                        className="w-full border border-gray-200 p-3 rounded-xl focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition-all text-sm font-semibold" 
+                                        placeholder="Who are you ordering from?" 
                                         value={formData.party.name}
                                         onChange={e => setFormData({ ...formData, party: { ...formData.party, name: e.target.value } })}
                                     />
-                                    <div className="grid grid-cols-2 gap-3">
+                                </div>
+
+                                {showPartyDetails && (
+                                    <div className="md:col-span-2 grid grid-cols-1 md:grid-cols-2 gap-3 p-4 bg-gray-50 rounded-2xl border border-gray-100 animate-in slide-in-from-top-2 duration-300">
                                         <div>
                                             <input 
                                                 className={clsx(
-                                                    "w-full border p-3 rounded-xl focus:ring-2 focus:border-primary outline-none transition-all text-sm",
-                                                    errors.phone ? "border-red-500 focus:ring-red-200" : "border-gray-200 focus:ring-primary/20"
+                                                    "w-full border p-2.5 rounded-xl focus:ring-2 focus:border-primary outline-none transition-all text-sm",
+                                                    errors.phone ? "border-red-500" : "border-gray-200"
                                                 )}
-                                                placeholder="Phone Number" 
+                                                placeholder="Phone (10 digits)" 
                                                 maxLength={10}
                                                 value={formData.party.phone}
                                                 onChange={e => setFormData({ ...formData, party: { ...formData.party, phone: e.target.value.replace(/\D/g, '') } })}
                                             />
-                                            {errors.phone && <p className="text-[9px] text-red-500 font-bold ml-2 mt-1">{errors.phone}</p>}
                                         </div>
                                         <div>
                                             <input 
                                                 className={clsx(
-                                                    "w-full border p-3 rounded-xl focus:ring-2 focus:border-primary outline-none transition-all text-sm",
-                                                    errors.email ? "border-red-500 focus:ring-red-200" : "border-gray-200 focus:ring-primary/20"
+                                                    "w-full border p-2.5 rounded-xl focus:ring-2 focus:border-primary outline-none transition-all text-sm",
+                                                    errors.email ? "border-red-500" : "border-gray-200"
                                                 )}
                                                 placeholder="Email Address" 
                                                 value={formData.party.email}
                                                 onChange={e => setFormData({ ...formData, party: { ...formData.party, email: e.target.value } })}
                                             />
-                                            {errors.email && <p className="text-[9px] text-red-500 font-bold ml-2 mt-1">{errors.email}</p>}
                                         </div>
-                                    </div>
-                                    <textarea 
-                                        className="w-full border border-gray-200 p-3 rounded-xl focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition-all text-sm" 
-                                        placeholder="Full Billing Address" 
-                                        rows="2"
-                                        value={formData.party.address}
-                                        onChange={e => setFormData({ ...formData, party: { ...formData.party, address: e.target.value } })}
-                                    />
-                                </div>
-                            </section>
-
-                            <section>
-                                <h4 className="flex items-center gap-2 text-sm font-black uppercase tracking-wider text-gray-400 mb-4">
-                                    <Home size={16} /> Logistic Details
-                                </h4>
-                                <div className="space-y-3">
-                                    <div>
-                                        <label className="text-[10px] font-black uppercase text-gray-400 mb-1 block ml-1">Site / Project (Optional)</label>
-                                        <select 
-                                            className="w-full border border-gray-200 p-3 rounded-xl focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition-all text-sm bg-white"
-                                            value={formData.project}
-                                            onChange={e => {
-                                                const projId = e.target.value;
-                                                const proj = projects.find(p => p._id === projId);
-                                                setFormData({ 
-                                                    ...formData, 
-                                                    project: projId,
-                                                    // Auto-fill PO Number if it's currently empty or previously auto-filled
-                                                    poNumber: (proj?.workOrder?.workOrderNumber || proj?.name || formData.poNumber) 
-                                                });
-                                            }}
-                                        >
-                                            <option value="">Select Project...</option>
-                                            {projects.map(p => <option key={p._id} value={p._id}>{p.name} ({p.workOrder?.workOrderNumber || 'No WON'})</option>)}
-                                        </select>
-                                    </div>
-                                    <div>
-                                        <label className="text-[10px] font-black uppercase text-gray-400 mb-1 block ml-1">PO Number (Auto-gen if empty)</label>
-                                        <input 
-                                            className="w-full border border-gray-200 p-3 rounded-xl focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition-all text-sm" 
-                                            placeholder="e.g. WON-2024-001" 
-                                            value={formData.poNumber}
-                                            onChange={e => setFormData({ ...formData, poNumber: e.target.value })}
-                                        />
-                                    </div>
-                                    <div className="grid grid-cols-2 gap-3">
-                                        <div>
-                                            <label className="text-[10px] font-black uppercase text-gray-400 mb-1 block ml-1">PO Date</label>
-                                            <input 
-                                                type="date"
-                                                className="w-full border border-gray-200 p-3 rounded-xl focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition-all text-sm" 
-                                                value={formData.date}
-                                                onChange={e => setFormData({ ...formData, date: e.target.value })}
+                                        <div className="md:col-span-2">
+                                            <textarea 
+                                                className="w-full border border-gray-200 p-2.5 rounded-xl focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition-all text-sm" 
+                                                placeholder="Full Billing Address" 
+                                                rows="2"
+                                                value={formData.party.address}
+                                                onChange={e => setFormData({ ...formData, party: { ...formData.party, address: e.target.value } })}
                                             />
                                         </div>
-                                        <div>
-                                            <label className="text-[10px] font-black uppercase text-gray-400 mb-1 block ml-1">Warehouse</label>
-                                            <select 
-                                                required
-                                                className="w-full border border-gray-200 p-3 rounded-xl focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition-all text-sm bg-white"
-                                                value={formData.warehouse}
-                                                onChange={e => setFormData({ ...formData, warehouse: e.target.value })}
-                                            >
-                                                <option value="">Select Target...</option>
-                                                {warehouses.map(w => <option key={w._id} value={w._id}>{w.name}</option>)}
-                                            </select>
+                                    </div>
+                                )}
+
+                                <div>
+                                    <label className="text-[9px] font-black uppercase text-gray-400 mb-1 ml-1 block">PO Date</label>
+                                    <input 
+                                        type="date"
+                                        className="w-full border border-gray-200 p-3 rounded-xl focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition-all text-sm font-semibold" 
+                                        value={formData.date}
+                                        onChange={e => setFormData({ ...formData, date: e.target.value })}
+                                    />
+                                </div>
+
+                                <div>
+                                    <label className="text-[9px] font-black uppercase text-gray-400 mb-1 ml-1 block">Target Warehouse</label>
+                                    <select 
+                                        required
+                                        className="w-full border border-gray-200 p-3 rounded-xl focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition-all text-sm font-semibold bg-white"
+                                        value={formData.warehouse}
+                                        onChange={e => setFormData({ ...formData, warehouse: e.target.value })}
+                                    >
+                                        <option value="">Select Target...</option>
+                                        {warehouses.map(w => <option key={w._id} value={w._id}>{w.name}</option>)}
+                                    </select>
+                                </div>
+
+                                <div className="md:col-span-2">
+                                    <label className="text-[9px] font-black uppercase text-gray-400 mb-1 ml-1 block">Work Order Number (WON)</label>
+                                    <select 
+                                        required
+                                        className="w-full border border-gray-200 p-3 rounded-xl focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition-all text-sm font-semibold bg-white"
+                                        value={formData.project}
+                                        onChange={e => setFormData({ ...formData, project: e.target.value })}
+                                    >
+                                        <option value="">Select Work Order...</option>
+                                        {(() => {
+                                            const seen = new Set();
+                                            return projects
+                                                .filter(p => p.workOrder?.workOrderNumber)
+                                                .filter(p => {
+                                                    const won = p.workOrder.workOrderNumber;
+                                                    if (seen.has(won)) return false;
+                                                    seen.add(won);
+                                                    return true;
+                                                })
+                                                .map(p => (
+                                                    <option key={p._id} value={p._id}>
+                                                        {p.workOrder.workOrderNumber}
+                                                    </option>
+                                                ));
+                                        })()}
+                                    </select>
+                                </div>
+
+                                {editData && (
+                                    <div className="md:col-span-2">
+                                        <label className="text-[9px] font-black uppercase text-gray-400 mb-1 ml-1 block">Purchase Order #</label>
+                                        <div className="w-full bg-primary/5 border border-primary/10 p-3 rounded-xl text-sm font-black text-primary">
+                                            {formData.poNumber}
                                         </div>
                                     </div>
-                                </div>
-                            </section>
-                        </div>
+                                )}
+                            </div>
+                        </section>
 
-                        {/* Right Column: Items */}
-                        <div className="bg-gray-50 rounded-2xl p-5 border border-gray-100 flex flex-col h-full">
-                            <h4 className="flex items-center justify-between text-sm font-black uppercase tracking-wider text-gray-400 mb-4">
-                                <span className="flex items-center gap-2"><Receipt size={16} /> Order Items</span>
+                        {/* 2. Order Items Table-style */}
+                        <section className="space-y-4">
+                            <div className="flex items-center justify-between border-b border-gray-100 pb-2">
+                                <h4 className="text-[10px] font-black uppercase tracking-[0.2em] text-gray-400">Order Items</h4>
                                 <button 
                                     type="button" 
                                     onClick={addItem}
-                                    className="text-primary hover:text-primary-dark font-black text-[10px] py-1 px-3 bg-primary/10 rounded-full border border-primary/20 transition-all hover:bg-primary/20"
+                                    className="flex items-center gap-1.5 text-primary hover:text-primary-dark font-black text-[10px] uppercase transition-all"
                                 >
-                                    + ADD ITEM
+                                    <Plus size={14} /> Add Product
                                 </button>
-                            </h4>
+                            </div>
 
-                            <div className="space-y-4 flex-1 overflow-y-auto max-h-[400px] pr-2 custom-scrollbar">
+                            <div className="space-y-3">
                                 {formData.items.map((item, idx) => (
-                                    <div key={idx} className="bg-white p-4 rounded-xl border border-gray-100 shadow-sm space-y-3 relative group">
+                                    <div key={idx} className="flex flex-col md:flex-row gap-3 items-start p-4 bg-gray-50 border border-gray-100 rounded-2xl relative group">
                                         <button 
                                             type="button" 
                                             onClick={() => removeItem(idx)}
                                             className={clsx(
-                                                "absolute -top-2 -right-2 p-1.5 bg-red-50 text-red-500 rounded-full border border-red-100 shadow-sm hover:bg-red-500 hover:text-white transition-all opacity-0 group-hover:opacity-100",
+                                                "absolute -top-2 -right-2 p-1.5 bg-white text-red-500 rounded-full border border-gray-200 shadow-sm hover:bg-red-500 hover:text-white transition-all",
                                                 formData.items.length === 1 && "hidden"
                                             )}
                                         >
-                                            <Trash2 size={14} />
+                                            <Trash2 size={13} />
                                         </button>
-                                        
-                                        <select 
-                                            required
-                                            className="w-full border border-gray-200 p-2.5 rounded-lg focus:ring-2 focus:ring-primary/20 outline-none text-sm bg-white"
-                                            value={item.product}
-                                            onChange={e => updateItem(idx, 'product', e.target.value)}
-                                        >
-                                            <option value="">Select Product...</option>
-                                            {products.map(p => {
-                                                // Find stock in selected warehouse
-                                                const whStock = p.stock?.find(s => (s.warehouse?._id || s.warehouse) === formData.warehouse)?.quantity || 0;
-                                                return (
-                                                    <option key={p._id} value={p._id}>
-                                                        {p.name} (Wh Stock: {whStock})
-                                                    </option>
-                                                );
-                                            })}
-                                        </select>
 
-                                        {item.product && formData.warehouse && (() => {
-                                            const pObj = products.find(p => p._id === item.product);
-                                            const whName = warehouses.find(w => w._id === formData.warehouse)?.name;
-                                            const whStock = pObj?.stock?.find(s => (s.warehouse?._id || s.warehouse) === formData.warehouse)?.quantity || 0;
-                                            return (
-                                                <div className="flex items-center justify-between px-2 py-1.5 bg-gray-50 rounded-lg border border-gray-100">
-                                                    <span className="text-[10px] font-bold text-gray-400 uppercase tracking-tighter">Current in {whName || 'Warehouse'}</span>
-                                                    <span className={clsx(
-                                                        "text-xs font-black",
-                                                        whStock === 0 ? "text-amber-500" : "text-primary"
-                                                    )}>
-                                                        {whStock} PCS
-                                                    </span>
-                                                </div>
-                                            );
-                                        })()}
+                                        <div className="flex-1 w-full">
+                                            <select 
+                                                required
+                                                className="w-full border border-gray-200 p-2.5 rounded-xl focus:ring-2 focus:ring-primary/20 outline-none text-sm font-semibold bg-white"
+                                                value={item.product}
+                                                onChange={e => updateItem(idx, 'product', e.target.value)}
+                                            >
+                                                <option value="">Select Product...</option>
+                                                {products.map(p => {
+                                                    const whStock = p.stock?.find(s => (s.warehouse?._id || s.warehouse) === formData.warehouse)?.quantity || 0;
+                                                    return <option key={p._id} value={p._id}>{p.name} {formData.warehouse ? `(${whStock} in stock)` : ''}</option>;
+                                                })}
+                                            </select>
+                                        </div>
 
-                                        <div className="grid grid-cols-2 gap-3">
-                                            <div className="relative">
+                                        <div className="flex gap-2 w-full md:w-auto">
+                                            <div className="relative w-full md:w-28">
                                                 <input 
                                                     required
                                                     type="number"
-                                                    className="w-full border border-gray-200 p-2.5 rounded-lg focus:ring-2 focus:ring-primary/20 outline-none text-sm pr-12" 
+                                                    className="w-full border border-gray-200 p-2.5 rounded-xl focus:ring-2 focus:ring-primary/20 outline-none text-sm font-black pr-10" 
                                                     placeholder="Qty" 
                                                     value={item.quantity}
                                                     onChange={e => updateItem(idx, 'quantity', e.target.value)}
                                                 />
-                                                <span className="absolute right-3 top-1/2 -translate-y-1/2 text-[10px] font-black text-gray-300">PCS</span>
+                                                <span className="absolute right-3 top-1/2 -translate-y-1/2 text-[8px] font-black text-gray-400">PCS</span>
                                             </div>
-                                            <div className="relative">
+                                            <div className="relative w-full md:w-32">
                                                 <input 
                                                     type="number"
-                                                    className="w-full border border-gray-200 p-2.5 rounded-lg focus:ring-2 focus:ring-primary/20 outline-none text-sm pr-12" 
-                                                    placeholder="Rate (Opt)" 
+                                                    className="w-full border border-gray-200 p-2.5 rounded-xl focus:ring-2 focus:ring-primary/20 outline-none text-sm font-black pr-10" 
+                                                    placeholder="Rate" 
                                                     value={item.unitPrice}
                                                     onChange={e => updateItem(idx, 'unitPrice', e.target.value)}
                                                 />
-                                                <span className="absolute right-3 top-1/2 -translate-y-1/2 text-[10px] font-black text-gray-300">INR</span>
+                                                <span className="absolute right-3 top-1/2 -translate-y-1/2 text-[8px] font-black text-gray-400">INR</span>
                                             </div>
                                         </div>
                                     </div>
                                 ))}
                             </div>
+                        </section>
 
-                            <div className="pt-4 mt-auto border-t border-gray-200 flex items-center justify-between">
-                                <div className="text-xs text-gray-400 font-bold">
-                                    Items: <span className="text-gray-900">{formData.items.length}</span>
-                                </div>
-                                <div className="text-right">
-                                    {formData.items.reduce((acc, curr) => acc + (Number(curr.quantity) * Number(curr.unitPrice) || 0), 0) > 0 ? (
-                                        <>
-                                            <p className="text-[10px] text-gray-400 font-black uppercase">Estimation</p>
-                                            <p className="text-lg font-black text-primary">
-                                                INR {formData.items.reduce((acc, curr) => acc + (Number(curr.quantity) * Number(curr.unitPrice) || 0), 0).toLocaleString()}
-                                            </p>
-                                        </>
-                                    ) : (
-                                        <p className="text-[10px] text-gray-400 font-black uppercase italic">Price not specified (Optional)</p>
-                                    )}
-                                </div>
+                        {/* 3. Summary & Calculations */}
+                        <div className="bg-primary/5 rounded-2xl p-5 border border-primary/10 flex items-center justify-between">
+                            <div>
+                                <p className="text-[9px] font-black text-primary/60 uppercase tracking-[0.2em] mb-1">Total Estimation</p>
+                                <p className="text-2xl font-black text-primary">
+                                    INR {formData.items.reduce((acc, curr) => acc + (Number(curr.quantity) * Number(curr.unitPrice) || 0), 0).toLocaleString()}
+                                </p>
+                            </div>
+                            <div className="text-right">
+                                <p className="text-[10px] font-black text-gray-400 uppercase">{formData.items.length} Items Listed</p>
+                                <p className="text-xs font-bold text-gray-500">Excl. Taxes & Freight</p>
                             </div>
                         </div>
                     </div>
 
                     {/* Footer Actions */}
-                    <div className="mt-8 pt-6 border-t flex flex-col sm:flex-row gap-3 justify-end">
+                    <div className="mt-8 flex flex-col sm:flex-row gap-3 justify-end items-center">
                         <button 
                             type="button" 
                             onClick={onClose}
-                            className="px-6 py-3 rounded-xl border border-gray-200 text-gray-500 font-bold hover:bg-gray-50 transition-all text-sm mb-2 sm:mb-0 order-2 sm:order-none"
+                            className="text-gray-400 font-bold hover:text-gray-600 transition-all text-xs uppercase tracking-widest px-6 py-3"
                         >
-                            Discard
+                            Cancel
                         </button>
                         <button 
                             type="submit" 
                             disabled={submitting}
-                            className="px-10 py-3 rounded-xl bg-primary text-white font-black shadow-lg shadow-primary/20 hover:bg-primary-dark transition-all active:scale-95 disabled:opacity-50 flex items-center gap-2 text-sm order-1 sm:order-none"
+                            className="w-full sm:w-auto px-12 py-4 rounded-2xl bg-primary text-white font-black shadow-xl shadow-primary/30 hover:bg-primary-dark transition-all active:scale-95 disabled:opacity-50 flex items-center justify-center gap-3 text-sm"
                         >
-                            {submitting ? <><Loader2 size={18} className="animate-spin" /> {editData ? 'Updating...' : 'Processing...'}</> : <><Save size={18} /> {editData ? 'Update PO' : 'Create PO'}</>}
+                            {submitting ? <Loader2 size={18} className="animate-spin" /> : <Save size={18} />}
+                            {submitting ? 'Processing...' : (editData ? 'Update Order' : 'Create Order')}
                         </button>
                     </div>
                 </form>
