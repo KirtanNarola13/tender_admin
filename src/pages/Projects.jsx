@@ -16,6 +16,8 @@ const SORT_OPTIONS = [
     { value: 'name_asc', label: 'Name A–Z' },
 ];
 
+const CATEGORIES = ['Primary', 'Upper Primary', 'Secondary', 'Higher Secondary', 'Residential'];
+
 const Projects = () => {
 
     const { user: currentUser } = useAuth();
@@ -43,6 +45,8 @@ const Projects = () => {
 
     const [workOrders, setWorkOrders] = useState([]);
     const [searchParams, setSearchParams] = useSearchParams();
+    const [wonTab, setWonTab] = useState('with_projects');
+    const [catTab, setCatTab] = useState('with_projects');
 
     // Drill-down State derived from URL
     const wonId = searchParams.get('won');
@@ -165,9 +169,77 @@ const Projects = () => {
             return 0;
         });
 
+    const filteredAndSortedWorkOrders = [...workOrders]
+        .filter(won => {
+            const hasAnyProject = projects.some(p => (p.workOrder?._id || p.workOrder) === won._id);
+            const hasProjectInBranch = projects.some(p =>
+                (p.workOrder?._id || p.workOrder) === won._id && p.branch === activeBranch
+            );
+
+            let matchesBranch = false;
+
+            if (wonTab === 'with_projects') {
+                matchesBranch = activeBranch === 'all' ? hasAnyProject : hasProjectInBranch;
+            } else {
+                matchesBranch = activeBranch === 'all' || hasProjectInBranch || !hasAnyProject;
+            }
+
+            const q = searchQuery.toLowerCase();
+            const matchesSearch = won.workOrderNumber?.toString().toLowerCase().includes(q) ||
+                (won.description || '').toLowerCase().includes(q) ||
+                (won.categories || []).some(c => c.name.toLowerCase().includes(q)) ||
+                projects.some(p =>
+                    (p.workOrder?._id || p.workOrder) === won._id &&
+                    ((p.name || '').toLowerCase().includes(q) || (p.description || '').toLowerCase().includes(q))
+                );
+
+            return matchesBranch && (searchQuery === '' || matchesSearch);
+        })
+        .sort((a, b) => {
+            if (sortBy === 'name_asc') return (a.workOrderNumber || '').toString().localeCompare((b.workOrderNumber || '').toString());
+            if (sortBy === 'createdAt_desc') return new Date(b.createdAt || 0) - new Date(a.createdAt || 0);
+            if (sortBy === 'updatedAt_desc') return new Date(b.updatedAt || 0) - new Date(a.updatedAt || 0);
+            return 0;
+        });
+
+    const filteredAndSortedCategories = selectedWON ? [...(selectedWON.categories || [])]
+        .filter(cat => {
+            const hasAnyProject = projects.some(p =>
+                (p.workOrder?._id || p.workOrder) === selectedWON._id &&
+                p.workOrderCategory === cat.name
+            );
+            const hasProjectInBranch = projects.some(p =>
+                (p.workOrder?._id || p.workOrder) === selectedWON._id &&
+                p.workOrderCategory === cat.name &&
+                p.branch === activeBranch
+            );
+
+            let matchesBranch = false;
+
+            if (catTab === 'with_projects') {
+                matchesBranch = activeBranch === 'all' ? hasAnyProject : hasProjectInBranch;
+            } else {
+                matchesBranch = activeBranch === 'all' || hasProjectInBranch || !hasAnyProject;
+            }
+
+            const q = searchQuery.toLowerCase();
+            const matchesSearch = cat.name.toLowerCase().includes(q) ||
+                projects.some(p =>
+                    (p.workOrder?._id || p.workOrder) === selectedWON._id &&
+                    p.workOrderCategory === cat.name &&
+                    ((p.name || '').toLowerCase().includes(q) || (p.description || '').toLowerCase().includes(q))
+                );
+
+            return matchesBranch && (searchQuery === '' || matchesSearch);
+        })
+        .sort((a, b) => {
+            if (sortBy === 'name_asc') return (a.name || '').localeCompare(b.name || '');
+            return 0;
+        }) : [];
+
     const [isWOModalOpen, setIsWOModalOpen] = useState(false);
     const [editingWO, setEditingWO] = useState(null);
-    const [newWO, setNewWO] = useState({ workOrderNumber: '', description: '', categories: [{ name: '' }] });
+    const [newWO, setNewWO] = useState({ workOrderNumber: '', description: '', categories: CATEGORIES.map(c => ({ name: c })) });
 
     const [showWODeleteModal, setShowWODeleteModal] = useState(false);
     const [woToDelete, setWoToDelete] = useState(null);
@@ -191,7 +263,7 @@ const Projects = () => {
             }
             setIsWOModalOpen(false);
             setEditingWO(null);
-            setNewWO({ workOrderNumber: '', description: '', categories: [{ name: '' }] });
+            setNewWO({ workOrderNumber: '', description: '', categories: CATEGORIES.map(c => ({ name: c })) });
             fetchWorkOrders();
         } catch (error) {
             alert('Failed to process Work Order: ' + (error.response?.data?.message || error.message));
@@ -295,8 +367,8 @@ const Projects = () => {
         <div className="w-full space-y-3 max-w-7xl mx-auto pb-8">
             {/* Sticky header */}
             <div className="bg-gray-50 pt-2 md:pt-4 pb-2 space-y-2 border-b border-gray-50">
-                <div className="flex items-center justify-between gap-3">
-                    <div className="min-w-0">
+                <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 w-full">
+                    <div className="min-w-0 w-full sm:w-auto">
                         {(fromDashboard || wonId) && (
                             <button
                                 onClick={() => {
@@ -316,11 +388,11 @@ const Projects = () => {
                             {selectedCategory ? 'Projects in this category' : selectedWON ? 'Categories in this work order' : 'Select a work order to view projects.'}
                         </p>
                     </div>
-                    <div className="flex gap-2">
+                    <div className="flex gap-2 w-full sm:w-auto flex-wrap sm:flex-nowrap">
                         {!selectedWON && currentUser?.role !== 'admin_viewer' && (
                             <button
                                 onClick={() => setIsWOModalOpen(true)}
-                                className="flex items-center gap-1.5 bg-white text-primary border border-primary px-3 py-3 rounded-md font-bold text-xs shadow-sm hover:bg-primary/5 transition-all shrink-0"
+                                className="flex-1 sm:flex-none flex justify-center items-center gap-1.5 bg-white text-primary border border-primary px-3 py-3 rounded-md font-bold text-xs shadow-sm hover:bg-primary/5 transition-all shrink-0"
                             >
                                 <Plus size={14} /> New WON
                             </button>
@@ -328,7 +400,7 @@ const Projects = () => {
                         {currentUser?.role !== 'admin_viewer' && (
                             <Link
                                 to="/projects/new"
-                                className="flex items-center gap-1.5 bg-primary text-white px-3 py-3 rounded-md font-bold text-xs shadow-md shadow-primary/20 hover:scale-[1.02] active:scale-[0.98] transition-all shrink-0"
+                                className="flex-1 sm:flex-none flex justify-center items-center gap-1.5 bg-primary text-white px-3 py-3 rounded-md font-bold text-xs shadow-md shadow-primary/20 hover:scale-[1.02] active:scale-[0.98] transition-all shrink-0"
                             >
                                 <Plus size={14} /> New Project
                             </Link>
@@ -356,10 +428,26 @@ const Projects = () => {
             </div>
 
             <div className="space-y-3">
+                {!selectedWON && (
+                    <div className="flex border-b border-gray-200 mb-2">
+                        <button
+                            onClick={() => setWonTab('all')}
+                            className={`px-4 py-2.5 text-sm font-semibold border-b-2 transition-all ${wonTab === 'all' ? 'border-primary text-primary' : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'}`}
+                        >
+                            All Work Orders
+                        </button>
+                        <button
+                            onClick={() => setWonTab('with_projects')}
+                            className={`px-4 py-2.5 text-sm font-semibold border-b-2 transition-all ${wonTab === 'with_projects' ? 'border-primary text-primary' : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'}`}
+                        >
+                            With Projects
+                        </button>
+                    </div>
+                )}
                 {!selectedWON ? (
                     // VIEW 1: WON LIST
-                    workOrders
-                        .map((won) => (
+                    <div className="space-y-3">
+                        {filteredAndSortedWorkOrders.map((won) => (
                             <button
                                 key={won._id}
                                 onClick={() => setSelectedWON(won)}
@@ -402,54 +490,76 @@ const Projects = () => {
                                     </div>
                                 </div>
                             </button>
-                        ))
+                        ))}
+                    </div>
                 ) : !selectedCategory ? (
                     // VIEW 2: CATEGORY LIST
-                    selectedWON.categories
-                        .map((cat) => (
+                    <>
+                        <div className="flex border-b border-gray-200 mb-2">
                             <button
-                                key={cat.name}
-                                onClick={() => setSelectedCategory(cat)}
-                                className="w-full flex items-center justify-between bg-white border border-gray-200 shadow-sm p-3 sm:p-4 rounded-xl transition-all group focus:outline-none hover:border-primary hover:shadow-md"
+                                onClick={() => setCatTab('all')}
+                                className={`px-4 py-2.5 text-sm font-semibold border-b-2 transition-all ${catTab === 'all' ? 'border-primary text-primary' : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'}`}
                             >
-                                <div className="flex items-center gap-3">
-                                    <div className="w-10 h-10 rounded-lg flex shrink-0 items-center justify-center bg-primary/10 text-primary border border-primary/20 group-hover:bg-primary/20 transition-all">
-                                        <Layout size={18} strokeWidth={2} />
-                                    </div>
-                                    <div className="text-left">
-                                        <h2 className="font-bold text-gray-900 text-sm sm:text-base group-hover:text-primary transition-colors leading-tight">
-                                            {cat.name}
-                                        </h2>
-                                        <p className="text-xs text-gray-500 mt-0.5">
-                                            {cat.projects?.length || 0} Projects in this category
-                                        </p>
-                                    </div>
-                                </div>
-                                <div className="flex items-center gap-2">
-                                    {currentUser?.role !== 'admin_viewer' && (
-                                        <div className="flex items-center gap-1.5 mr-2">
-                                            <button
-                                                onClick={(e) => handleEditCategory(e, cat)}
-                                                className="w-8 h-8 rounded-lg flex shrink-0 items-center justify-center bg-gray-50 text-primary border border-gray-100 hover:bg-primary/10 transition-all shadow-sm"
-                                                title="Edit Category"
-                                            >
-                                                <Pencil size={14} />
-                                            </button>
-                                            <button
-                                                onClick={(e) => handleDeleteCategoryBtn(e, cat)}
-                                                className="w-8 h-8 rounded-lg flex shrink-0 items-center justify-center bg-gray-50 text-red-500 border border-gray-100 hover:bg-red-50 transition-all shadow-sm"
-                                                title="Delete Category"
-                                            >
-                                                <Trash2 size={14} />
-                                            </button>
-                                        </div>
-                                    )}
-                                    <div className="w-7 h-7 rounded-full flex shrink-0 items-center justify-center text-gray-400 group-hover:bg-primary/10 group-hover:text-primary transition-colors">
-                                        <ChevronRight size={18} />
-                                    </div>
-                                </div>
+                                All Categories
                             </button>
-                        ))
+                            <button
+                                onClick={() => setCatTab('with_projects')}
+                                className={`px-4 py-2.5 text-sm font-semibold border-b-2 transition-all ${catTab === 'with_projects' ? 'border-primary text-primary' : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'}`}
+                            >
+                                With Projects
+                            </button>
+                        </div>
+                        <div className="space-y-3">
+                            {filteredAndSortedCategories.map((cat) => (
+                                <button
+                                    key={cat.name}
+                                    onClick={() => setSelectedCategory(cat)}
+                                    className="w-full flex items-center justify-between bg-white border border-gray-200 shadow-sm p-3 sm:p-4 rounded-xl transition-all group focus:outline-none hover:border-primary hover:shadow-md"
+                                >
+                                    <div className="flex items-center gap-3">
+                                        <div className="w-10 h-10 rounded-lg flex shrink-0 items-center justify-center bg-primary/10 text-primary border border-primary/20 group-hover:bg-primary/20 transition-all">
+                                            <Layout size={18} strokeWidth={2} />
+                                        </div>
+                                        <div className="text-left">
+                                            <h2 className="font-bold text-gray-900 text-sm sm:text-base group-hover:text-primary transition-colors leading-tight">
+                                                {cat.name}
+                                            </h2>
+                                            <p className="text-xs text-gray-500 mt-0.5">
+                                                {cat.projects?.length || 0} Projects in this category
+                                            </p>
+                                        </div>
+                                    </div>
+                                    <div className="flex items-center gap-2">
+                                        {currentUser?.role !== 'admin_viewer' && (
+                                            <div className="flex items-center gap-1.5 mr-2">
+                                                {!CATEGORIES.includes(cat.name) && (
+                                                    <button
+                                                        onClick={(e) => handleEditCategory(e, cat)}
+                                                        className="w-8 h-8 rounded-lg flex shrink-0 items-center justify-center bg-gray-50 text-primary border border-gray-100 hover:bg-primary/10 transition-all shadow-sm"
+                                                        title="Edit Category"
+                                                    >
+                                                        <Pencil size={14} />
+                                                    </button>
+                                                )}
+                                                {!CATEGORIES.includes(cat.name) && (
+                                                    <button
+                                                        onClick={(e) => handleDeleteCategoryBtn(e, cat)}
+                                                        className="w-8 h-8 rounded-lg flex shrink-0 items-center justify-center bg-gray-50 text-red-500 border border-gray-100 hover:bg-red-50 transition-all shadow-sm"
+                                                        title="Delete Category"
+                                                    >
+                                                        <Trash2 size={14} />
+                                                    </button>
+                                                )}
+                                            </div>
+                                        )}
+                                        <div className="w-7 h-7 rounded-full flex shrink-0 items-center justify-center text-gray-400 group-hover:bg-primary/10 group-hover:text-primary transition-colors">
+                                            <ChevronRight size={18} />
+                                        </div>
+                                    </div>
+                                </button>
+                            ))}
+                        </div>
+                    </>
                 ) : (
                     // VIEW 3: PROJECT LIST
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -540,6 +650,34 @@ const Projects = () => {
                                     </div>
                                 </div>
 
+                                {/* Project Progress */}
+                                {(() => {
+                                    let progressPercent = project.progress;
+                                    if (project.status === 'completed') {
+                                        progressPercent = 100;
+                                    } else if (progressPercent === undefined && project.products?.length > 0) {
+                                        const prods = project.products.filter(p => typeof p.progress === 'number');
+                                        progressPercent = prods.length > 0 ? Math.round(prods.reduce((sum, p) => sum + p.progress, 0) / prods.length) : 0;
+                                    } else {
+                                        progressPercent = progressPercent || 0;
+                                    }
+
+                                    return (
+                                        <div className="mb-4 space-y-1.5">
+                                            <div className="flex justify-between items-end">
+                                                <span className="text-[10px] font-bold text-gray-400 uppercase tracking-tight">Completion Velocity</span>
+                                                <span className="text-[10px] font-black text-primary">{progressPercent}%</span>
+                                            </div>
+                                            <div className="w-full bg-gray-100 rounded-full h-1.5 overflow-hidden shadow-inner flex-shrink-0">
+                                                <div 
+                                                    className={`h-full rounded-full transition-all duration-1000 ease-out ${progressPercent === 100 ? 'bg-green-500' : 'bg-primary'}`} 
+                                                    style={{ width: `${progressPercent}%` }}
+                                                />
+                                            </div>
+                                        </div>
+                                    );
+                                })()}
+
                                 {/* Footer */}
                                 <div className="flex items-center justify-between pt-4 border-t border-gray-100 mt-auto">
                                     <div className="flex items-center gap-3">
@@ -565,11 +703,11 @@ const Projects = () => {
                     </div>
                 )}
 
-                {(workOrders.length === 0 && !loading) && (
+                {(filteredAndSortedWorkOrders.length === 0 && !loading && !selectedWON) && (
                     <div className="text-center py-16 bg-white rounded-xl shadow-sm border border-gray-200">
                         <Briefcase size={36} className="mx-auto text-gray-300 mb-3" />
                         <h3 className="text-base font-medium text-gray-900">No Work Orders found</h3>
-                        <p className="text-sm text-gray-500 mt-1">Please create a work order in the admin panel first.</p>
+                        <p className="text-sm text-gray-500 mt-1">Please create a work order or adjust your filters.</p>
                     </div>
                 )}
             </div>
@@ -624,12 +762,13 @@ const Projects = () => {
                             {newWO.categories.map((cat, idx) => (
                                 <div key={idx} className="flex gap-2">
                                     <input
-                                        className="flex-1 border border-gray-300 p-2.5 rounded-xl text-sm focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none"
+                                        className={`flex-1 border border-gray-300 p-2.5 rounded-xl text-sm focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none ${CATEGORIES.includes(cat.name) ? 'bg-gray-100 text-gray-500 cursor-not-allowed' : ''}`}
                                         placeholder="Category Name"
                                         value={cat.name}
                                         onChange={(e) => updateWOCategory(idx, e.target.value)}
+                                        disabled={CATEGORIES.includes(cat.name)}
                                     />
-                                    {newWO.categories.length > 1 && (
+                                    {newWO.categories.length > 1 && !CATEGORIES.includes(cat.name) && (
                                         <button
                                             onClick={() => removeWOCategory(idx)}
                                             className="text-gray-400 hover:text-red-500 p-1.5 transition-colors"
@@ -648,7 +787,7 @@ const Projects = () => {
                         </div>
 
                         <div className="flex justify-end gap-3 mt-4">
-                            <button onClick={() => { setIsWOModalOpen(false); setEditingWO(null); setNewWO({ workOrderNumber: '', description: '', categories: [{ name: '' }] }); }} className="px-4 py-3 text-sm font-medium text-gray-700 hover:bg-gray-100 rounded-md">Cancel</button>
+                            <button onClick={() => { setIsWOModalOpen(false); setEditingWO(null); setNewWO({ workOrderNumber: '', description: '', categories: CATEGORIES.map(c => ({ name: c })) }); }} className="px-4 py-3 text-sm font-medium text-gray-700 hover:bg-gray-100 rounded-md">Cancel</button>
                             <button onClick={handleCreateWO} className="px-6 py-3 text-sm font-bold bg-primary text-white hover:bg-opacity-90 rounded-md shadow-lg shadow-primary/20">{editingWO ? 'Update WON' : 'Create WON'}</button>
                         </div>
                     </div>

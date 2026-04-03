@@ -7,7 +7,7 @@ import { ChevronRight, ChevronLeft, Trash2, Box, ArrowLeft, CheckCircle, Loader,
 import FormSelect from '../components/FormSelect';
 import FormDatePicker from '../components/FormDatePicker';
 
-const CATEGORIES = ['Primary'];
+const CATEGORIES = ['Primary', 'Upper Primary', 'Secondary', 'Higher Secondary', 'Residential'];
 
 const today = new Date().toISOString().split('T')[0];
 

@@ -128,7 +128,7 @@ const ProjectDetails = () => {
     const totalTasksCount = tasks.length;
     const completedTasksCount = tasks.filter(t => ['completed', 'verified', 'submitted'].includes(t.status)).length;
     const pendingTasksCount = totalTasksCount - completedTasksCount;
-    const projectProgressPercent = totalTasksCount > 0 ? Math.round((completedTasksCount / totalTasksCount) * 100) : 0;
+    const projectProgressPercent = project.status === 'completed' ? 100 : (totalTasksCount > 0 ? Math.round((completedTasksCount / totalTasksCount) * 100) : 0);
 
     const chartData = [
         { name: 'Completed', value: completedTasksCount, color: '#10B981' },
