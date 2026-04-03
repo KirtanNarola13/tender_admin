@@ -143,11 +143,7 @@ const ProjectDetails = () => {
                 <div className="flex items-center gap-3 w-full sm:w-auto">
                     {/* Back Button */}
                     <button
-                        onClick={() => navigate(
-                            project.category
-                                ? `/projects/category/${encodeURIComponent(project.category)}`
-                                : '/projects'
-                        )}
+                        onClick={() => navigate(-1)}
                         className="flex shrink-0 w-9 h-9 sm:w-auto sm:h-auto items-center justify-center sm:px-3 sm:py-2 rounded-lg border border-gray-200 bg-white text-gray-600 hover:bg-gray-50 hover:border-gray-300 transition text-sm font-medium shadow-sm"
                     >
                         <ArrowLeft size={16} />
@@ -164,11 +160,6 @@ const ProjectDetails = () => {
                             {project.workOrderCategory && (
                                 <span className="text-[10px] font-black bg-purple-100 text-purple-700 px-2.5 py-1 rounded-md uppercase tracking-wider border border-purple-200">
                                     Category: {project.workOrderCategory}
-                                </span>
-                            )}
-                            {project.category && (
-                                <span className="text-[10px] font-black bg-primary/10 text-primary px-2.5 py-1 rounded-md uppercase tracking-wider border border-primary/20">
-                                    Type: {project.category}
                                 </span>
                             )}
                         </div>
@@ -216,7 +207,7 @@ const ProjectDetails = () => {
                     <span className="text-gray-400 block text-xs font-medium uppercase tracking-wide mb-1">Status</span>
                     <span className={`font-bold capitalize ${
                         project.status === 'active' ? 'text-green-600' :
-                        project.status === 'completed' ? 'text-primary' :
+                        project.status === 'completed' ? 'text-green-600' :
                         'text-red-500'
                     }`}>
                         {project.status}
