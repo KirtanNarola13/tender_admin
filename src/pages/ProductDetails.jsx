@@ -322,12 +322,6 @@ const ProductDetails = () => {
                                                     <Receipt size={10} className="text-gray-300" />
                                                     Reference PO: <span className="text-gray-700 font-black">{log.purchaseOrder.poNumber || log.purchaseOrder}</span>
                                                 </p>
-                                                {displayWON && (
-                                                    <div className="flex items-center gap-1.5 px-2 py-1 bg-primary/5 border border-primary/10 rounded-lg w-fit mt-1">
-                                                        <Tag size={10} className="text-primary" />
-                                                        <span className="text-[10px] font-black text-primary uppercase tracking-widest">WON: {displayWON}</span>
-                                                    </div>
-                                                )}
                                             </div>
                                         )}
                                         <p className="text-[10px] font-bold text-gray-500 flex items-center gap-1">

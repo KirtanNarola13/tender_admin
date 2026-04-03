@@ -79,14 +79,14 @@ const RecordDeliveryModal = ({ order, onClose, onSuccess }) => {
                     </div>
                     <button onClick={onClose} className="p-2 hover:bg-white/10 rounded-full transition-colors"><X size={20} /></button>
                 </div>
-                
+
                 <form onSubmit={handleSubmit} className="flex-1 overflow-y-auto p-6 space-y-6 custom-scrollbar">
                     <div className="space-y-4">
                         {order.items.map((item, idx) => {
                             const pId = item.product._id || item.product;
                             const received = item.receivedQuantity || 0;
                             const remaining = item.quantity - received;
-                            
+
                             return (
                                 <div key={idx} className="bg-gray-50 border border-gray-100 rounded-2xl p-4 space-y-3">
                                     <div className="flex justify-between items-start">
@@ -96,7 +96,7 @@ const RecordDeliveryModal = ({ order, onClose, onSuccess }) => {
                                             <p className="text-xs font-black text-gray-600">{item.quantity} PCS</p>
                                         </div>
                                     </div>
-                                    
+
                                     <div className="grid grid-cols-2 gap-4">
                                         <div className="bg-white/60 p-2 rounded-xl border border-gray-100">
                                             <p className="text-[10px] font-bold text-gray-400 uppercase mb-0.5">Received</p>
@@ -110,7 +110,7 @@ const RecordDeliveryModal = ({ order, onClose, onSuccess }) => {
 
                                     <div>
                                         <label className="text-[10px] font-black text-primary uppercase tracking-widest mb-1.5 block">Delivering Now</label>
-                                        <input 
+                                        <input
                                             type="number"
                                             max={remaining}
                                             min={0}
@@ -128,7 +128,7 @@ const RecordDeliveryModal = ({ order, onClose, onSuccess }) => {
                 <div className="p-6 bg-gray-50 border-t flex gap-3">
                     <button type="button" onClick={onClose} className="flex-1 py-3 px-4 bg-white border border-gray-200 rounded-md font-bold text-sm text-gray-600 hover:bg-gray-100 transition-all">Cancel</button>
                     <button type="submit" onClick={handleSubmit} disabled={submitting} className="flex-2 py-3 px-8 bg-emerald-600 text-white rounded-md font-black text-sm hover:bg-emerald-700 transition-all flex items-center justify-center gap-2 shadow-lg shadow-emerald-200 disabled:opacity-50">
-                        {submitting ? <Clock size={16} className="animate-spin" /> : <CheckCircle size={16} />} 
+                        {submitting ? <Clock size={16} className="animate-spin" /> : <CheckCircle size={16} />}
                         {submitting ? 'Recording...' : 'Record Delivery'}
                     </button>
                 </div>
@@ -149,12 +149,12 @@ const ViewPOModal = ({ order, onClose }) => {
                             <div className="flex items-center gap-3">
                                 <h3 className="text-base sm:text-xl font-black">{order.poNumber}</h3>
                                 {order.project?.workOrder?.workOrderNumber && (
-                                    <span className="bg-white/20 px-2 py-0.5 rounded text-[10px] font-black uppercase tracking-wider backdrop-blur-sm">
+                                    <span className="bg-white/20 px-2 py-1 rounded text-xs font-black uppercase tracking-wider backdrop-blur-sm">
                                         WON: {order.project.workOrder.workOrderNumber}
                                     </span>
                                 )}
                             </div>
-                            <p className="text-white/70 text-xs font-bold uppercase tracking-widest">
+                            <p className="text-white/70 text-sm font-bold uppercase tracking-widest mt-1">
                                 {new Date(order.date).toLocaleDateString()}
                             </p>
                         </div>
@@ -163,15 +163,15 @@ const ViewPOModal = ({ order, onClose }) => {
                         <X size={20} />
                     </button>
                 </div>
-                <div className="p-4 sm:p-8 space-y-6 overflow-y-auto italic custom-scrollbar">
+                <div className="p-4 sm:p-8 space-y-6 overflow-y-auto custom-scrollbar">
                     {/* Status Timeline */}
-                    <div className="bg-gray-50/50 p-6 rounded-2xl border border-gray-100 italic">
-                        <h4 className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-6 border-b pb-2">Shipment Timeline</h4>
+                    <div className="bg-gray-50/50 p-6 rounded-2xl border border-gray-100">
+                        <h4 className="text-xs font-black text-gray-500 uppercase tracking-widest mb-6 border-b pb-2">Shipment Timeline</h4>
                         <div className="relative flex justify-between items-start">
                             {/* Connector Line */}
                             <div className="absolute top-4 left-[10%] right-[10%] h-0.5 bg-gray-200 z-0">
-                                <div 
-                                    className="h-full bg-primary transition-all duration-1000" 
+                                <div
+                                    className="h-full bg-primary transition-all duration-1000"
                                     style={{ width: order.deliveryStatus === 'PENDING' ? '0%' : order.deliveryStatus === 'IN_TRANSIT' ? '50%' : '100%' }}
                                 />
                             </div>
@@ -179,12 +179,12 @@ const ViewPOModal = ({ order, onClose }) => {
                             {[
                                 { label: 'Order Placed', status: 'PENDING', time: order.createdAt },
                                 { label: 'In Transit', status: 'IN_TRANSIT', time: order.updatedAt, activeIf: ['IN_TRANSIT', 'PARTIAL', 'DELIVERED'] },
-                                { 
-                                    label: order.deliveryStatus === 'PARTIAL' ? 'Part-Received' : 'Delivered', 
-                                    status: 'DELIVERED', 
-                                    time: order.partialDeliveries?.[order.partialDeliveries.length - 1]?.deliveredAt || order.updatedAt, 
+                                {
+                                    label: order.deliveryStatus === 'PARTIAL' ? 'Part-Received' : 'Delivered',
+                                    status: 'DELIVERED',
+                                    time: order.partialDeliveries?.[order.partialDeliveries.length - 1]?.deliveredAt || order.updatedAt,
                                     activeIf: ['PARTIAL', 'DELIVERED'],
-                                    sub: `${order.items.reduce((acc, i) => acc + (i.receivedQuantity || 0), 0)} PCS` 
+                                    sub: `${order.items.reduce((acc, i) => acc + (i.receivedQuantity || 0), 0)} PCS`
                                 }
                             ].map((step, idx) => {
                                 const isActive = step.activeIf ? step.activeIf.includes(order.deliveryStatus) : true;
@@ -196,8 +196,8 @@ const ViewPOModal = ({ order, onClose }) => {
                                         )}>
                                             {idx === 0 ? <Receipt size={14} /> : idx === 1 ? <Truck size={14} /> : <CheckCircle size={14} />}
                                         </div>
-                                        <p className={clsx("text-[9px] font-black uppercase mt-2", isActive ? "text-primary" : "text-gray-400")}>{step.label}</p>
-                                        <p className="text-[8px] text-gray-400 mt-0.5 font-bold">
+                                        <p className={clsx("text-xs font-black uppercase mt-2", isActive ? "text-primary" : "text-gray-400")}>{step.label}</p>
+                                        <p className="text-xs text-gray-500 mt-1 font-bold">
                                             {step.sub && <span className="text-primary block leading-none mb-1 font-black">{step.sub}</span>}
                                             {new Date(step.time).toLocaleDateString()}
                                             <br />
@@ -211,54 +211,54 @@ const ViewPOModal = ({ order, onClose }) => {
 
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-8 font-medium">
                         <div className="space-y-3 bg-gray-50/50 p-4 rounded-2xl border border-gray-100">
-                            <h4 className="text-[10px] font-black text-gray-400 uppercase tracking-widest border-b pb-2 mb-2">Party / Vendor</h4>
-                            <p className="flex items-center gap-2 text-sm text-gray-800 font-bold"><User size={13} className="text-primary shrink-0" />{order.party.name}</p>
-                            <p className="flex items-center gap-2 text-sm text-gray-600"><Phone size={13} className="text-gray-400 shrink-0" />{order.party.phone || 'N/A'}</p>
-                            <p className="flex items-center gap-2 text-sm text-gray-600"><Mail size={13} className="text-gray-400 shrink-0" />{order.party.email || 'N/A'}</p>
-                            <p className="flex items-start gap-2 text-sm text-gray-600 leading-relaxed"><MapPin size={13} className="text-gray-400 shrink-0 mt-0.5" />{order.party.address || 'N/A'}</p>
+                            <h4 className="text-xs font-black text-gray-500 uppercase tracking-widest border-b pb-2 mb-2">Party / Vendor</h4>
+                            <p className="flex items-center gap-3 text-base text-gray-800 font-bold"><User size={16} className="text-primary shrink-0" />{order.party.name}</p>
+                            <p className="flex items-center gap-3 text-sm text-gray-600"><Phone size={16} className="text-gray-400 shrink-0" />{order.party.phone || 'N/A'}</p>
+                            <p className="flex items-center gap-3 text-sm text-gray-600"><Mail size={16} className="text-gray-400 shrink-0" />{order.party.email || 'N/A'}</p>
+                            <p className="flex items-start gap-3 text-sm text-gray-600 leading-relaxed"><MapPin size={16} className="text-gray-400 shrink-0 mt-0.5" />{order.party.address || 'N/A'}</p>
                         </div>
                         <div className="space-y-4">
                             <div className="bg-primary/5 p-4 rounded-2xl border border-primary/10">
-                                <h4 className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2">Target Point</h4>
-                                <p className="flex items-center gap-2 text-sm font-black text-primary uppercase mb-2">
-                                    <Warehouse size={14} className="shrink-0" />
+                                <h4 className="text-xs font-black text-gray-500 uppercase tracking-widest mb-2">Target Point</h4>
+                                <p className="flex items-center gap-3 text-base font-black text-primary uppercase mb-2">
+                                    <Warehouse size={16} className="shrink-0" />
                                     {order.warehouse?.name || 'N/A'}
                                 </p>
                                 {order.project?.workOrder?.workOrderNumber && (
-                                    <div className="flex items-center gap-1.5 text-[10px] font-black text-primary/60 uppercase tracking-widest border-t border-primary/10 pt-2">
-                                        <Tag size={12} />
+                                    <div className="flex items-center gap-1.5 text-xs font-black text-primary/70 uppercase tracking-widest border-t border-primary/10 pt-2 mt-2">
+                                        <Tag size={14} />
                                         Linked WON: {order.project.workOrder.workOrderNumber}
                                     </div>
                                 )}
                             </div>
                             <div>
-                                <h4 className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2 px-1">Order Progress</h4>
+                                <h4 className="text-xs font-black text-gray-500 uppercase tracking-widest mb-2 px-1">Order Progress</h4>
                                 <div className="flex items-center gap-3">
-                                    <div className="flex-1 bg-gray-100 h-2 rounded-full overflow-hidden">
-                                        <div 
-                                            className="h-full bg-emerald-500 rounded-full transition-all duration-1000" 
+                                    <div className="flex-1 bg-gray-100 h-2.5 rounded-full overflow-hidden shadow-inner">
+                                        <div
+                                            className="h-full bg-emerald-500 rounded-full transition-all duration-1000"
                                             style={{ width: `${Math.min(100, (order.items.reduce((acc, i) => acc + (i.receivedQuantity || 0), 0) / order.totals.totalQuantity) * 100)}%` }}
                                         />
                                     </div>
-                                    <span className="text-[10px] font-black text-gray-400 uppercase tracking-widest">
+                                    <span className="text-xs font-black text-gray-500 uppercase tracking-widest">
                                         {Math.round((order.items.reduce((acc, i) => acc + (i.receivedQuantity || 0), 0) / order.totals.totalQuantity) * 100)}%
                                     </span>
                                 </div>
                             </div>
                         </div>
                     </div>
-                    
+
                     <div>
-                        <h4 className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-3 px-1">Itemized Summary</h4>
+                        <h4 className="text-xs font-black text-gray-500 uppercase tracking-widest mb-3 px-1">Itemized Summary</h4>
                         <div className="border border-gray-100 rounded-2xl overflow-hidden overflow-x-auto shadow-sm">
-                            <table className="w-full text-sm text-left">
+                            <table className="w-full text-base text-left">
                                 <thead className="bg-gray-50/50 border-b">
                                     <tr>
-                                        <th className="px-4 py-4 font-black text-[10px] text-gray-400 uppercase">Item</th>
-                                        <th className="px-4 py-4 font-black text-[10px] text-gray-400 uppercase text-center">Ordered</th>
-                                        <th className="px-4 py-4 font-black text-[10px] text-gray-400 uppercase text-center">Received</th>
-                                        <th className="px-4 py-4 font-black text-[10px] text-gray-400 uppercase text-center">Pending</th>
-                                        <th className="px-4 py-4 font-black text-[10px] text-gray-400 uppercase text-right">Value</th>
+                                        <th className="px-4 py-4 font-black text-xs text-gray-500 uppercase">Item</th>
+                                        <th className="px-4 py-4 font-black text-xs text-gray-500 uppercase text-center">Ordered</th>
+                                        <th className="px-4 py-4 font-black text-xs text-gray-500 uppercase text-center">Received</th>
+                                        <th className="px-4 py-4 font-black text-xs text-gray-500 uppercase text-center">Pending</th>
+                                        <th className="px-4 py-4 font-black text-xs text-gray-500 uppercase text-right">Value</th>
                                     </tr>
                                 </thead>
                                 <tbody className="divide-y divide-gray-50">
@@ -267,7 +267,7 @@ const ViewPOModal = ({ order, onClose }) => {
                                         return (
                                             <tr key={i} className="hover:bg-gray-50/30 transition-colors">
                                                 <td className="px-4 py-4 font-black text-gray-900 leading-tight">{item.productName}</td>
-                                                <td className="px-4 py-4 text-center font-bold text-gray-400">{item.quantity}</td>
+                                                <td className="px-4 py-4 text-center font-bold text-gray-500">{item.quantity}</td>
                                                 <td className="px-4 py-4 text-center font-black text-emerald-600">{item.receivedQuantity || 0}</td>
                                                 <td className={clsx("px-4 py-4 text-center font-black", pending > 0 ? "text-amber-500" : "text-gray-300")}>{pending}</td>
                                                 <td className="px-4 py-4 text-right font-black text-gray-900 whitespace-nowrap">INR {item.amount?.toLocaleString() || '—'}</td>
@@ -281,18 +281,18 @@ const ViewPOModal = ({ order, onClose }) => {
 
                     {order.partialDeliveries?.length > 0 && (
                         <div>
-                            <h4 className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-3 px-1">Activity Log (Partial Shipments)</h4>
-                            <div className="space-y-2">
+                            <h4 className="text-xs font-black text-gray-500 uppercase tracking-widest mb-3 px-1 mt-6">Activity Log (Partial Shipments)</h4>
+                            <div className="space-y-3">
                                 {order.partialDeliveries.map((delivery, dIdx) => (
-                                    <div key={dIdx} className="bg-gray-50 border border-gray-100 rounded-xl p-3 flex justify-between items-center group hover:bg-gray-100/50 transition-all">
+                                    <div key={dIdx} className="bg-gray-50 border border-gray-100 rounded-xl p-4 flex justify-between items-center group hover:bg-gray-100/50 transition-all">
                                         <div>
-                                            <p className="text-[10px] font-black text-gray-900 group-hover:text-primary transition-colors">Shipment #{order.partialDeliveries.length - dIdx}</p>
-                                            <p className="text-[9px] text-gray-400 font-bold uppercase tracking-tight">
+                                            <p className="text-sm font-black text-gray-900 group-hover:text-primary transition-colors">Shipment {dIdx + 1}</p>
+                                            <p className="text-xs text-gray-500 font-bold uppercase tracking-tight mt-1">
                                                 {new Date(delivery.deliveredAt).toLocaleString()} • {delivery.performedBy?.name || 'Admin'}
                                             </p>
                                         </div>
                                         <div className="text-right">
-                                            <span className="text-xs font-black text-emerald-600">+{delivery.items.reduce((acc, i) => acc + i.quantity, 0)} Units</span>
+                                            <span className="text-base font-black text-emerald-600">+{delivery.items.reduce((acc, i) => acc + i.quantity, 0)} Units</span>
                                         </div>
                                     </div>
                                 ))}
@@ -468,8 +468,8 @@ const PurchaseOrders = () => {
                                                 {po.items.reduce((acc, i) => acc + (i.receivedQuantity || 0), 0)} / {po.totals.totalQuantity}
                                             </span>
                                             <div className="w-16 h-1 bg-gray-100 rounded-full mt-1.5 overflow-hidden">
-                                                <div 
-                                                    className="h-full bg-primary transition-all duration-700" 
+                                                <div
+                                                    className="h-full bg-primary transition-all duration-700"
                                                     style={{ width: `${Math.min(100, (po.items.reduce((acc, i) => acc + (i.receivedQuantity || 0), 0) / po.totals.totalQuantity) * 100)}%` }}
                                                 />
                                             </div>

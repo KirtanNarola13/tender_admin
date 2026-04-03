@@ -109,7 +109,7 @@ export const generatePOPDF = (po) => {
         doc.text('Partial Shipments Received:', 14, finalY + 32);
         
         const deliveryHistory = po.partialDeliveries.map((d, i) => [
-            `Shipment #${po.partialDeliveries.length - i}`,
+            `Shipment #${i + 1}`,
             new Date(d.deliveredAt).toLocaleString(),
             d.performedBy?.name || 'Admin',
             `${d.items.reduce((acc, item) => acc + item.quantity, 0)} Units`
