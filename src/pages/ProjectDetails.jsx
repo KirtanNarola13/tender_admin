@@ -132,7 +132,7 @@ const ProjectDetails = () => {
 
     const chartData = [
         { name: 'Completed', value: completedTasksCount, color: '#10B981' },
-        { name: 'Pending', value: pendingTasksCount, color: '#F59E0B' }
+        { name: 'Pending', value: pendingTasksCount, color: '#EF4444' }
     ].filter(d => d.value > 0);
 
     return (
@@ -155,11 +155,23 @@ const ProjectDetails = () => {
                     </button>
                     <div>
                         <h1 className="text-xl md:text-2xl font-bold text-gray-900 leading-tight">{project.name}</h1>
-                        {project.category && (
-                            <span className="text-[10px] font-black bg-primary/10 text-primary px-2.5 py-1 rounded-md uppercase tracking-wider border border-primary/20">
-                                {project.category}
-                            </span>
-                        )}
+                        <div className="flex flex-wrap gap-2 mt-1">
+                            {project.workOrder && (
+                                <span className="text-[10px] font-black bg-blue-100 text-blue-700 px-2.5 py-1 rounded-md uppercase tracking-wider border border-blue-200">
+                                    WON: {project.workOrder.workOrderNumber}
+                                </span>
+                            )}
+                            {project.workOrderCategory && (
+                                <span className="text-[10px] font-black bg-purple-100 text-purple-700 px-2.5 py-1 rounded-md uppercase tracking-wider border border-purple-200">
+                                    Category: {project.workOrderCategory}
+                                </span>
+                            )}
+                            {project.category && (
+                                <span className="text-[10px] font-black bg-primary/10 text-primary px-2.5 py-1 rounded-md uppercase tracking-wider border border-primary/20">
+                                    Type: {project.category}
+                                </span>
+                            )}
+                        </div>
                     </div>
                 </div>
 
@@ -205,7 +217,7 @@ const ProjectDetails = () => {
                     <span className={`font-bold capitalize ${
                         project.status === 'active' ? 'text-green-600' :
                         project.status === 'completed' ? 'text-primary' :
-                        'text-orange-500'
+                        'text-red-500'
                     }`}>
                         {project.status}
                     </span>
@@ -238,9 +250,9 @@ const ProjectDetails = () => {
                             <span className="text-[10px] font-bold text-green-500 uppercase tracking-wider block mb-1">Completed</span>
                             <span className="text-xl font-bold text-green-600">{completedTasksCount}</span>
                         </div>
-                        <div className="bg-orange-50/50 p-3 rounded-xl border border-orange-100">
-                            <span className="text-[10px] font-bold text-orange-500 uppercase tracking-wider block mb-1">Pending</span>
-                            <span className="text-xl font-bold text-orange-600">{pendingTasksCount}</span>
+                        <div className="bg-red-50/50 p-3 rounded-xl border border-red-100">
+                            <span className="text-[10px] font-bold text-red-500 uppercase tracking-wider block mb-1">Pending</span>
+                            <span className="text-xl font-bold text-red-600">{pendingTasksCount}</span>
                         </div>
                     </div>
 

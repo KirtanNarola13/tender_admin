@@ -1,9 +1,10 @@
 import { useState, useRef, useEffect } from 'react';
-import { ChevronDown, Check } from 'lucide-react';
+import { ChevronDown, Check, Search } from 'lucide-react';
 import clsx from 'clsx';
 
-const FormSelect = ({ label, value, onChange, options, placeholder = 'Select an option', icon: Icon, error }) => {
+const FormSelect = ({ label, value, onChange, options, placeholder = 'Select an option', icon: Icon, error, searchable, footer }) => {
     const [isOpen, setIsOpen] = useState(false);
+    const [search, setSearch] = useState('');
     const dropdownRef = useRef(null);
 
     useEffect(() => {
@@ -16,7 +17,15 @@ const FormSelect = ({ label, value, onChange, options, placeholder = 'Select an 
         return () => document.removeEventListener('mousedown', handleClickOutside);
     }, []);
 
+    useEffect(() => {
+        if (!isOpen) setSearch('');
+    }, [isOpen]);
+
     const selectedOption = options.find(opt => opt.value === value);
+
+    const filteredOptions = options.filter(opt =>
+        !search || (opt.label || '').toLowerCase().includes(search.toLowerCase())
+    );
 
     return (
         <div className="space-y-1.5 w-full text-left" ref={dropdownRef}>
@@ -47,14 +56,26 @@ const FormSelect = ({ label, value, onChange, options, placeholder = 'Select an 
                 </button>
 
                 {isOpen && (
-                    <div className="absolute top-full left-0 right-0 mt-2 bg-white border border-gray-100 rounded-2xl shadow-xl z-50 overflow-hidden animate-in fade-in slide-in-from-top-2 duration-200">
-                        <div className="max-h-60 overflow-y-auto p-1.5 custom-scrollbar">
-                            {options.length === 0 ? (
-                                <div className="p-4 text-center text-sm text-gray-400 italic">
-                                    No options available
+                    <div className="absolute top-full left-0 right-0 mt-2 bg-white border border-gray-100 rounded-2xl shadow-xl z-50 overflow-hidden animate-in fade-in slide-in-from-top-2 duration-200 flex flex-col">
+                        {searchable && (
+                            <div className="p-2 border-b border-gray-50 bg-gray-50/30">
+                                <Search size={14} className="absolute left-4 top-5 text-gray-400" />
+                                <input
+                                    className="w-full bg-white border border-gray-200 rounded-lg pl-8 pr-3 py-1.5 text-xs focus:outline-none focus:border-primary"
+                                    placeholder="Search..."
+                                    value={search}
+                                    onChange={(e) => setSearch(e.target.value)}
+                                    autoFocus
+                                />
+                            </div>
+                        )}
+                        <div className="max-h-52 overflow-y-auto p-1.5 custom-scrollbar">
+                            {filteredOptions.length === 0 ? (
+                                <div className="p-4 text-center text-xs text-gray-400 italic">
+                                    No options found
                                 </div>
                             ) : (
-                                options.map((option) => (
+                                filteredOptions.map((option) => (
                                     <button
                                         key={option.value}
                                         type="button"
@@ -82,6 +103,11 @@ const FormSelect = ({ label, value, onChange, options, placeholder = 'Select an 
                                 ))
                             )}
                         </div>
+                        {footer && (
+                            <div className="p-2 border-t border-gray-50 bg-gray-50/30">
+                                {footer}
+                            </div>
+                        )}
                     </div>
                 )}
             </div>

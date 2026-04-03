@@ -102,7 +102,7 @@ const Dashboard = () => {
                     title="Pending Tasks"
                     count={stats.pendingTasks}
                     icon={Clock}
-                    color="bg-orange-500"
+                    color="bg-red-500"
                     onClick={() => navigate('/tasks?status=pending', { state: { fromDashboard: true } })}
                 />
                 <StatCard
@@ -275,7 +275,7 @@ const Dashboard = () => {
                                             <span className={`px-2 py-0.5 rounded text-[10px] font-black uppercase tracking-widest border whitespace-nowrap ${
                                                 b.avgProgress === 100 ? 'bg-green-50 text-green-600 border-green-200'
                                                 : b.avgProgress > 0 ? 'bg-primary/5 text-primary border-primary/20'
-                                                : 'bg-gray-50 text-gray-400 border-gray-200'
+                                                : 'bg-red-50 text-red-600 border-red-200'
                                             }`}>
                                                 {b.avgProgress === 100 ? 'Done' : b.avgProgress > 0 ? 'Active' : 'Planning'}
                                             </span>

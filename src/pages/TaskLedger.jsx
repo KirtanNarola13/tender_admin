@@ -129,9 +129,26 @@ const TaskLedger = () => {
                     </div>
                     <div>
                         <h1 className="text-xl font-bold text-gray-900 leading-tight">{leaderName}</h1>
-                        <p className="text-sm text-gray-500">
-                            {loading ? 'Loading...' : `${filteredProjects.length} Project${filteredProjects.length !== 1 ? 's' : ''} • ${allTasks.length} Total Tasks`}
-                        </p>
+                        <div className="flex flex-col sm:flex-row sm:items-center gap-1 sm:gap-3 mt-1">
+                            <p className="text-sm text-gray-500 whitespace-nowrap">
+                                {loading ? 'Loading...' : `${filteredProjects.length} Project${filteredProjects.length !== 1 ? 's' : ''} • ${allTasks.length} Total Tasks`}
+                            </p>
+                            {!loading && allTasks.length > 0 && (
+                                <div className="flex items-center gap-2 mt-0.5 sm:mt-0">
+                                    <div className="w-24 sm:w-32 h-1.5 bg-gray-200 rounded-full overflow-hidden shrink-0">
+                                        <div 
+                                            className="h-full bg-green-500 transition-all duration-1000 ease-out rounded-full shadow-[0_0_8px_rgba(34,197,94,0.4)]"
+                                            style={{ 
+                                                width: `${Math.round((allTasks.filter(t => ['completed', 'verified'].includes(t.status)).length / allTasks.length) * 100)}%` 
+                                            }}
+                                        />
+                                    </div>
+                                    <span className="text-[11px] font-black text-green-600 bg-green-50 px-1.5 py-0.5 rounded border border-green-100 uppercase tracking-tighter">
+                                        {Math.round((allTasks.filter(t => ['completed', 'verified'].includes(t.status)).length / allTasks.length) * 100)}% Done
+                                    </span>
+                                </div>
+                            )}
+                        </div>
                     </div>
                 </div>
             </div>
@@ -217,12 +234,28 @@ const TaskLedger = () => {
                                     <h2 className="text-base font-bold text-gray-900 group-hover:text-primary transition-colors leading-tight">
                                         {project.name}
                                     </h2>
-                                    <p className="text-xs text-gray-500 mt-0.5">
+                                    <p className="text-xs text-gray-500 mt-0.5 leading-[1]">
                                         {project.taskCount} Task{project.taskCount !== 1 ? 's' : ''}
                                         {project.category ? ` • ${project.category}` : ''}
                                     </p>
+                                    
+                                    {/* Sleek, Compact Progress Bar */}
+                                    {project.taskCount > 0 && (
+                                        <div className="mt-1 flex items-center gap-2 max-w-[120px] sm:max-w-[150px]">
+                                            <div className="flex-1 h-0.5 bg-gray-100 rounded-full overflow-hidden">
+                                                <div 
+                                                    className="h-full bg-green-500 rounded-full"
+                                                    style={{ width: `${Math.round((project.doneCount/project.taskCount)*100)}%` }}
+                                                />
+                                            </div>
+                                            <span className="text-[10px] whitespace-nowrap font-bold text-green-600 tabular-nums leading-none">
+                                                {Math.round((project.doneCount/project.taskCount)*100)}%
+                                            </span>
+                                        </div>
+                                    )}
+
                                     {project.productNames.size > 0 && (
-                                        <p className="text-xs text-gray-400 mt-0.5">
+                                        <p className="text-[10px] text-gray-400 mt-1 uppercase tracking-tight truncate max-w-[300px]">
                                             {[...project.productNames].slice(0,3).join(', ')}
                                             {project.productNames.size > 3 ? ` +${project.productNames.size - 3} more` : ''}
                                         </p>

@@ -29,6 +29,7 @@ const ProductDetails = () => {
     const { activeBranch } = useBranch();
     const [product, setProduct] = useState(null);
     const [history, setHistory] = useState([]);
+    const [stockLogs, setStockLogs] = useState([]);
     const [loading, setLoading] = useState(true);
     const [warehouses, setWarehouses] = useState([]);
 
@@ -39,10 +40,11 @@ const ProductDetails = () => {
     const fetchData = async () => {
         setLoading(true);
         try {
-            const [prodRes, historyRes, wareRes] = await Promise.all([
+            const [prodRes, historyRes, wareRes, logsRes] = await Promise.all([
                 api.get(`/inventory/products`), // Product list (to find by id)
                 api.get(`/purchase-orders/product/${id}`),
-                api.get(`/inventory/warehouses`)
+                api.get(`/inventory/warehouses`),
+                api.get(`/inventory/logs?product=${id}`)
             ]);
             
             // Find specific product
@@ -50,6 +52,7 @@ const ProductDetails = () => {
             setProduct(foundProduct);
             setHistory(historyRes.data);
             setWarehouses(wareRes.data);
+            setStockLogs(logsRes.data || []);
         } catch (error) {
             console.error('Failed to fetch product details', error);
         } finally {
@@ -141,18 +144,30 @@ const ProductDetails = () => {
                     <TrendingUp className="absolute -right-4 -top-4 w-32 h-32 text-white/5 group-hover:rotate-12 transition-transform duration-700" />
                     <div>
                         <p className="text-primary-light/80 text-xs font-black uppercase tracking-[0.2em] mb-2">
-                            {activeBranch === 'all' ? 'Live Availability (Global)' : `Live Availability (${activeBranch})`}
+                            Global Availability (System)
                         </p>
-                        <h2 className="text-7xl font-black">
-                            {activeBranch === 'all' 
-                                ? product.totalStock 
-                                : (product.stock?.filter(s => {
-                                    const w = warehouses.find(wh => wh._id === s.warehouse);
-                                    return w?.branch === activeBranch;
-                                }).reduce((acc, curr) => acc + curr.quantity, 0) || 0)
-                            }
+                        <h2 className="text-7xl font-black tracking-tighter">
+                            {product.stock?.reduce((acc, s) => acc + s.quantity, 0) || 0}
                         </h2>
-                        <p className="text-primary-light font-bold mt-2">UNITS IN STOCK</p>
+                        <div className="flex flex-col gap-2 mt-2">
+                            <p className="text-primary-light font-bold uppercase tracking-wide opacity-80">Units in Total System</p>
+                            
+                            {activeBranch !== 'all' && (
+                                <div className="mt-4 pt-4 border-t border-white/10">
+                                    <div className="flex justify-between items-center text-sm">
+                                        <span className="text-primary-light/70 font-medium">Stock in {activeBranch}</span>
+                                        <span className="font-black bg-white/20 px-2 py-0.5 rounded-md text-xs">
+                                            {(() => {
+                                                return product.stock?.filter(s => {
+                                                    const w = s.warehouse?._id ? s.warehouse : warehouses.find(wh => wh._id === s.warehouse);
+                                                    return w?.branch?.toLowerCase() === activeBranch?.toLowerCase();
+                                                }).reduce((acc, curr) => acc + curr.quantity, 0) || 0;
+                                            })()} UNITS
+                                        </span>
+                                    </div>
+                                </div>
+                            )}
+                        </div>
                     </div>
                     <div className="mt-8 pt-6 border-t border-white/10">
                         <div className="flex justify-between items-center text-sm">
@@ -179,20 +194,27 @@ const ProductDetails = () => {
                     </h3>
                     <div className="space-y-4">
                         {product.stock && product.stock.length > 0 ? product.stock
-                            .filter(s => {
-                                const w = warehouses.find(wh => wh._id === s.warehouse);
-                                return activeBranch === 'all' || w?.branch === activeBranch;
-                            })
                             .map(s => {
-                                const warehouseObj = warehouses.find(w => w._id === s.warehouse);
+                                // Prefer the populated object, fallback to warehouses list lookup
+                                const warehouseObj = s.warehouse?._id ? s.warehouse : warehouses.find(w => w._id === s.warehouse);
+                                const isCurrentBranch = warehouseObj?.branch?.toLowerCase() === activeBranch?.toLowerCase();
                             return (
-                                <div key={s.warehouse} className="flex items-center justify-between p-4 bg-gray-50 rounded-2xl hover:bg-white hover:shadow-md hover:border-gray-100 transition-all border border-transparent">
+                                <div key={s.warehouse?._id || s.warehouse} className={clsx(
+                                    "flex items-center justify-between p-4 rounded-2xl transition-all border",
+                                    isCurrentBranch ? "bg-primary/5 border-primary/20 shadow-sm" : "bg-gray-50 border-transparent opacity-70 hover:opacity-100 hover:bg-white hover:shadow-md"
+                                )}>
                                     <div className="flex items-center gap-4">
-                                        <div className="w-10 h-10 rounded-xl bg-white border border-gray-100 flex items-center justify-center shadow-sm">
-                                            <Home size={18} className="text-gray-400" />
+                                        <div className={clsx(
+                                            "w-10 h-10 rounded-xl border flex items-center justify-center shadow-sm",
+                                            isCurrentBranch ? "bg-white border-primary/20 text-primary" : "bg-white border-gray-100 text-gray-400"
+                                        )}>
+                                            <Home size={18} />
                                         </div>
                                         <div>
-                                            <p className="font-black text-gray-900 text-sm uppercase tracking-tight">{warehouseObj?.name || 'Local Store'}</p>
+                                            <div className="flex items-center gap-2">
+                                                <p className="font-black text-gray-900 text-sm uppercase tracking-tight">{warehouseObj?.name || 'Local Store'}</p>
+                                                {isCurrentBranch && <span className="px-1.5 py-0.5 bg-primary text-white text-[8px] font-black rounded uppercase tracking-widest">Active Branch</span>}
+                                            </div>
                                             <p className="text-[10px] text-gray-400 font-bold">{warehouseObj?.location || 'Central Facility'}</p>
                                         </div>
                                     </div>
@@ -220,53 +242,63 @@ const ProductDetails = () => {
                     </div>
                     
                     <div className="flex-1 space-y-4 overflow-y-auto max-h-[500px] custom-scrollbar pr-2">
-                        {history.map(po => (
-                            <div key={po._id} className="p-4 bg-gray-50 rounded-2xl border border-transparent hover:border-primary/20 hover:bg-white hover:shadow-lg transition-all group">
+                        {stockLogs.map(log => (
+                            <div key={log._id} className="p-4 bg-gray-50 rounded-2xl border border-transparent hover:border-primary/20 hover:bg-white hover:shadow-lg transition-all group">
                                 <div className="flex justify-between items-start mb-3">
                                     <div className="flex items-center gap-3">
                                         <div className={clsx(
                                             "w-10 h-10 rounded-xl flex items-center justify-center shadow-sm",
-                                            po.deliveryStatus === 'DELIVERED' ? "bg-emerald-50 text-emerald-500" : "bg-amber-50 text-amber-500"
+                                            log.action === 'IN' || (log.action === 'ADJUSTMENT' && log.quantity > 0) ? "bg-emerald-50 text-emerald-500" : 
+                                            log.action === 'TRANSFER' ? "bg-blue-50 text-blue-500" : "bg-amber-50 text-amber-500"
                                         )}>
-                                            {po.deliveryStatus === 'DELIVERED' ? <Package size={18} /> : <Clock size={18} />}
+                                            {log.action === 'IN' ? <Package size={18} /> : 
+                                             log.action === 'TRANSFER' ? <Truck size={18} /> : <History size={18} />}
                                         </div>
                                         <div>
-                                            <p className="font-black text-gray-900 text-sm">{po.poNumber}</p>
+                                            <p className="font-black text-gray-900 text-sm uppercase tracking-tight">
+                                                {log.action} {log.action === 'TRANSFER' ? (log.quantity < 0 ? 'OUT' : 'IN') : ''}
+                                            </p>
                                             <p className="text-[10px] text-gray-400 flex items-center gap-1">
-                                                <Calendar size={10} /> {new Date(po.date).toLocaleDateString()}
+                                                <Calendar size={10} /> {new Date(log.createdAt).toLocaleString()}
                                             </p>
                                         </div>
                                     </div>
-                                    <button 
-                                        onClick={() => generatePOPDF(po)}
-                                        className="p-2 text-gray-300 hover:text-primary transition-colors opacity-0 group-hover:opacity-100"
-                                        title="Download PO PDF"
-                                    >
-                                        <Download size={18} />
-                                    </button>
+                                    <div className="text-right">
+                                        <p className={clsx(
+                                            "text-sm font-black",
+                                            log.quantity > 0 ? "text-emerald-600" : "text-amber-600"
+                                        )}>
+                                            {log.quantity > 0 ? '+' : ''}{log.quantity} PCS
+                                        </p>
+                                        <p className="text-[9px] text-gray-400 font-bold uppercase">Quantity</p>
+                                    </div>
                                 </div>
                                 
-                                <div className="flex items-center justify-between pl-13">
-                                    <div className="space-y-1">
-                                        <p className="text-[10px] font-black uppercase text-gray-400 flex items-center gap-1">
-                                            <ArrowUpRight size={10} /> Party: <span className="text-gray-900">{po.party.name}</span>
+                                <div className="space-y-1.5 pl-13">
+                                    <p className="text-[10px] font-bold text-gray-500 flex items-center gap-1">
+                                        <Warehouse size={10} className="text-gray-400" /> 
+                                        Warehouse: <span className="text-gray-900 font-black">{log.warehouse?.name || 'Local Store'}</span>
+                                    </p>
+                                    {log.referenceWorkOrder && (
+                                        <p className="text-[10px] font-bold text-primary flex items-center gap-1">
+                                            <Tag size={10} className="text-primary/50" /> 
+                                            Work Order: <span className="font-black uppercase">{log.referenceWorkOrder.workOrderNumber}</span>
                                         </p>
-                                        <div className="flex items-center gap-2">
-                                            <StatusBadge status={po.deliveryStatus} />
-                                        </div>
-                                    </div>
-                                    <div className="text-right">
-                                        <p className="text-sm font-black text-gray-900">
-                                            {po.items.find(i => (i.product?._id || i.product) === id)?.quantity || 0} PCS
-                                        </p>
-                                        <p className="text-[9px] text-gray-400 font-bold uppercase">Ordered Quantity</p>
-                                    </div>
+                                    )}
+                                    <p className="text-[10px] font-bold text-gray-500 flex items-center gap-1">
+                                        <Clock size={10} className="text-gray-400" /> 
+                                        Reason: <span className="text-gray-600 italic font-medium">{log.reason || 'Manual update'}</span>
+                                    </p>
+                                    <p className="text-[10px] font-bold text-gray-400 flex items-center gap-1 pt-1 mt-1 border-t border-gray-100">
+                                        Performer: <span className="text-gray-600">{log.performedBy?.name || 'Admin User'}</span>
+                                    </p>
                                 </div>
                             </div>
                         ))}
-                        {history.length === 0 && (
-                            <div className="py-12 text-center text-gray-400 italic">
-                                No history available for this product.
+                        {stockLogs.length === 0 && (
+                            <div className="py-12 text-center text-gray-400 italic bg-gray-50 rounded-2xl border border-dashed border-gray-200">
+                                <History size={32} className="mx-auto mb-2 opacity-20" />
+                                No stock transaction records available.
                             </div>
                         )}
                     </div>

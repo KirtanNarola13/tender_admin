@@ -3,7 +3,7 @@ import { useLocation, useNavigate } from 'react-router-dom';
 import api from '../services/api';
 import { useAuth } from '../context/AuthContext';
 import { useBranch } from '../context/BranchContext';
-import { Plus, Search, Users as UsersIcon, Shield, UserCheck, User, Eye, ArrowLeft, Pencil, Trash2, X, Loader2 } from 'lucide-react';
+import { Plus, Search, Users as UsersIcon, Shield, UserCheck, User, Eye, ArrowLeft, Pencil, Trash2, X, Loader2, Lock, Unlock } from 'lucide-react';
 
 const ROLE_COLORS = {
     admin: 'bg-primary/10 text-primary border-primary/20',
@@ -89,14 +89,16 @@ const Users = () => {
         }
     };
 
-    const handleDelete = async (user) => {
-        if (!window.confirm(`Delete "${user.name}"? This cannot be undone.`)) return;
+    const handleToggleBlock = async (user) => {
+        const action = user.isBlocked ? 'unblock' : 'block';
+        if (!window.confirm(`Are you sure you want to ${action} "${user.name}"? ${user.isBlocked ? 'They will regain access to their account.' : 'They will be immediately logged out and lose access.'}`)) return;
+        
         setDeletingId(user._id);
         try {
-            await api.delete(`/users/${user._id}`);
+            await api.delete(`/users/${user._id}`); // This route now toggles block
             fetchUsers();
         } catch (error) {
-            alert(error.response?.data?.message || 'Failed to delete user');
+            alert(error.response?.data?.message || `Failed to ${action} user`);
         } finally {
             setDeletingId(null);
         }
@@ -225,17 +227,31 @@ const Users = () => {
                         <tbody className="divide-y divide-gray-100">
                             {filtered.length > 0 ? (
                                 filtered.map((user, idx) => (
-                                    <tr key={user._id} className="hover:bg-gray-50 transition-colors">
+                                    <tr key={user._id} className={clsx(
+                                        "hover:bg-gray-50 transition-colors",
+                                        user.isBlocked && "bg-gray-50/80 grayscale-[0.5] opacity-70 italic"
+                                    )}>
                                         <td className="p-3 text-xs text-gray-400 font-mono">{idx + 1}</td>
                                         <td className="p-3">
                                             <div className="flex items-center gap-2">
-                                                <div className="w-7 h-7 rounded-full bg-primary/10 flex items-center justify-center text-primary font-black text-xs flex-shrink-0 border border-primary/20">
+                                                <div className={clsx(
+                                                    "w-7 h-7 rounded-full flex items-center justify-center font-black text-xs flex-shrink-0 border",
+                                                    user.isBlocked ? "bg-gray-200 text-gray-400 border-gray-300" : "bg-primary/10 text-primary border-primary/20"
+                                                )}>
                                                     {user.name.charAt(0).toUpperCase()}
                                                 </div>
                                                 <div className="min-w-0">
-                                                    <div className="font-bold text-gray-800 text-sm truncate">{user.name}</div>
+                                                    <div className={clsx(
+                                                        "font-bold text-sm truncate",
+                                                        user.isBlocked ? "text-gray-400 line-through" : "text-gray-800"
+                                                    )}>{user.name}</div>
                                                     <div className="text-[10px] text-gray-400 truncate max-w-[110px] sm:max-w-none">{user.email}</div>
                                                 </div>
+                                                {user.isBlocked && (
+                                                    <span className="bg-red-100 text-red-600 text-[8px] font-black uppercase px-1 rounded flex items-center gap-0.5 ml-1">
+                                                        <Lock size={8} /> Blocked
+                                                    </span>
+                                                )}
                                             </div>
                                         </td>
                                         <td className="p-3 hidden sm:table-cell">
@@ -280,11 +296,16 @@ const Users = () => {
                                                             <Pencil size={12} /> <span className="hidden sm:inline">Edit</span>
                                                         </button>
                                                         <button
-                                                            onClick={() => handleDelete(user)}
+                                                            onClick={(e) => { e.stopPropagation(); handleToggleBlock(user); }}
                                                             disabled={deletingId === user._id}
-                                                            className="px-2.5 py-1.5 text-[10px] font-bold text-red-600 bg-red-50 hover:bg-red-100 border border-red-200 rounded-lg transition-colors disabled:opacity-50 flex items-center gap-1"
+                                                            className={clsx(
+                                                                "px-2.5 py-1.5 text-[10px] font-bold border rounded-lg transition-colors disabled:opacity-50 flex items-center gap-1",
+                                                                user.isBlocked ? "text-emerald-600 bg-emerald-50 hover:bg-emerald-100 border-emerald-200" : "text-red-600 bg-red-50 hover:bg-red-100 border-red-200"
+                                                            )}
+                                                            title={user.isBlocked ? "Unblock User" : "Block User"}
                                                         >
-                                                            {deletingId === user._id ? <Loader2 size={12} className="animate-spin" /> : <Trash2 size={12} />}
+                                                            {deletingId === user._id ? <Loader2 size={12} className="animate-spin" /> : (user.isBlocked ? <Unlock size={12} /> : <Lock size={12} />)}
+                                                            <span className="hidden sm:inline">{user.isBlocked ? 'Unblock' : 'Block'}</span>
                                                         </button>
                                                     </>
                                                 ) : (
@@ -313,7 +334,7 @@ const Users = () => {
 
             {/* View User Modal — shows hidden columns on mobile */}
             {viewingUser && (
-                <div className="fixed inset-0 bg-black/50 flex items-end sm:items-center justify-center p-4 z-50 backdrop-blur-sm" onClick={() => setViewingUser(null)}>
+                <div className="fixed inset-0 bg-black/50 flex items-end sm:items-center justify-center p-4 z-[100] backdrop-blur-sm" onClick={() => setViewingUser(null)}>
                     <div className="bg-white w-full max-w-sm rounded-2xl shadow-xl overflow-hidden" onClick={e => e.stopPropagation()}>
                         <div className="p-4 border-b flex items-center justify-between">
                             <div className="flex items-center gap-3">
@@ -360,10 +381,14 @@ const Users = () => {
                                     <Pencil size={13} /> Edit
                                 </button>
                                 <button
-                                    onClick={() => { setViewingUser(null); handleDelete(viewingUser); }}
-                                    className="flex-1 py-2 text-xs font-bold text-red-600 bg-red-50 hover:bg-red-100 border border-red-200 rounded-xl transition-colors flex items-center justify-center gap-1.5"
+                                    onClick={(e) => { e.stopPropagation(); setViewingUser(null); handleToggleBlock(viewingUser); }}
+                                    className={clsx(
+                                        "flex-1 py-2 text-xs font-bold border rounded-xl transition-colors flex items-center justify-center gap-1.5",
+                                        viewingUser.isBlocked ? "text-emerald-600 bg-emerald-50 hover:bg-emerald-100 border-emerald-200" : "text-red-600 bg-red-50 hover:bg-red-100 border-red-200"
+                                    )}
                                 >
-                                    <Trash2 size={13} /> Delete
+                                    {viewingUser.isBlocked ? <Unlock size={13} /> : <Lock size={13} />}
+                                    {viewingUser.isBlocked ? 'Unblock' : 'Block'}
                                 </button>
                             </div>
                         )}
@@ -374,7 +399,7 @@ const Users = () => {
 
             {/* Create / Edit Modal */}
             {isModalOpen && (
-                <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50 backdrop-blur-sm">
+                <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-[100] backdrop-blur-sm">
                     <div className="bg-white p-6 rounded-xl w-full max-w-md shadow-xl">
                         <h2 className="text-xl font-bold mb-5 text-gray-800 flex items-center gap-2">
                             {editingUser ? <Pencil size={18} /> : <Plus size={18} />}

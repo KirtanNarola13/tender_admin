@@ -100,11 +100,6 @@ const BranchTabs = () => {
                 )}
             </div>
 
-            {/* Hint tag */}
-            <div className="hidden md:flex items-center gap-2 px-3 py-1 bg-primary/5 border border-primary/10 rounded-full">
-                <div className="w-1.5 h-1.5 rounded-full bg-primary animate-pulse" />
-                <span className="text-[10px] font-bold text-primary uppercase tracking-wider">Live Context Filtering</span>
-            </div>
         </div>
     );
 };

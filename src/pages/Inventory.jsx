@@ -3,8 +3,9 @@ import { Link } from 'react-router-dom';
 import api, { getImageUrl } from '../services/api';
 import { useAuth } from '../context/AuthContext';
 import { useBranch } from '../context/BranchContext';
-import { Plus, Package, Trash2, Upload, Download, CheckCircle, Loader2, Search, Warehouse, ShoppingCart, Pencil, AlertTriangle, Eye } from 'lucide-react';
+import { Plus, Package, Trash2, X, Upload, Download, CheckCircle, Loader2, Search, Warehouse, ShoppingCart, Pencil, AlertTriangle, Eye } from 'lucide-react';
 import PageLoader from '../components/PageLoader';
+import FormSelect from '../components/FormSelect';
 
 const Inventory = () => {
     const { user: currentUser } = useAuth();
@@ -21,10 +22,10 @@ const Inventory = () => {
     const [showWarehouseStockModal, setShowWarehouseStockModal] = useState(false);
     const [selectedWarehouse, setSelectedWarehouse] = useState(null);
 
-    const [newProduct, setNewProduct] = useState({ 
-        name: '', 
-        sku: '', 
-        category: '', 
+    const [newProduct, setNewProduct] = useState({
+        name: '',
+        sku: '',
+        category: '',
         description: '',
         images: [],
         initialStock: { warehouseId: '', quantity: '' }
@@ -76,7 +77,7 @@ const Inventory = () => {
                 headers: { 'Content-Type': 'multipart/form-data' }
             });
             const imageUrl = res.data.url;
-            
+
             if (type === 'new') {
                 setNewProduct(prev => ({ ...prev, images: [...(prev.images || []), imageUrl] }));
             } else {
@@ -92,13 +93,16 @@ const Inventory = () => {
 
 
 
+    const resetTransferForm = () => setTransferData({ productId: '', fromWarehouseId: '', toWarehouseId: '', quantity: '' });
+
     const handleTransferStock = async () => {
         try {
             await api.post('/inventory/stock/transfer', transferData);
-            setShowTransferStockModal(false);
+            alert('Stock transferred successfully!');
             fetchData();
-            alert('Stock transferred successfully');
-        } catch (e) { alert('Error transferring stock'); }
+            setShowTransferStockModal(false);
+            resetTransferForm();
+        } catch (error) { alert('Error transferring stock'); }
     };
 
     const createWarehouse = async () => {
@@ -650,15 +654,15 @@ const Inventory = () => {
                                     <p className="text-gray-500">{w.location}</p>
                                 </div>
                             </div>
-                                <button
-                                    onClick={() => {
-                                        setSelectedWarehouse(w);
-                                        setShowWarehouseStockModal(true);
-                                    }}
-                                    className="mt-2 w-full py-2.5 bg-primary/10 text-primary font-black uppercase tracking-wider rounded-lg hover:bg-primary/20 border border-primary/30 transition-all text-[10px]"
-                                >
-                                    View Stock
-                                </button>
+                            <button
+                                onClick={() => {
+                                    setSelectedWarehouse(w);
+                                    setShowWarehouseStockModal(true);
+                                }}
+                                className="mt-2 w-full py-2.5 bg-primary/10 text-primary font-black uppercase tracking-wider rounded-lg hover:bg-primary/20 border border-primary/30 transition-all text-[10px]"
+                            >
+                                View Stock
+                            </button>
                         </div>
                     ))}
                 </div>
@@ -691,7 +695,14 @@ const Inventory = () => {
                                         <td className="p-3 font-medium">{log.product?.name || 'Unknown'}</td>
                                         <td className={`p-3 font-bold ${log.action === 'IN' ? 'text-green-600' : 'text-red-600'}`}>{log.action}</td>
                                         <td className="p-3 text-gray-500">{log.warehouse?.name || '-'}</td>
-                                        <td className="p-3">{log.quantity}</td>
+                                        <td className="p-3">
+                                            {log.quantity}
+                                            {log.referenceWorkOrder && (
+                                                <div className="text-[10px] text-primary font-bold mt-0.5">
+                                                    #{log.referenceWorkOrder.workOrderNumber}
+                                                </div>
+                                            )}
+                                        </td>
                                         <td className="p-3 text-gray-600">{log.reason}</td>
                                         <td className="p-3 text-gray-500">{log.performedBy?.name || 'Admin'}</td>
                                     </tr>
@@ -707,212 +718,221 @@ const Inventory = () => {
 
             {/* Product Modal */}
             {showProductModal && (
-                <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center p-4 overflow-y-auto">
-                    <div className="bg-white p-6 rounded-xl shadow-xl w-full max-w-lg my-8">
-                        <h3 className="text-xl font-bold mb-4">Add Product</h3>
-                        <div className="grid grid-cols-2 gap-4">
-                            <input className="border p-2 mb-2 rounded" placeholder="Name" onChange={e => setNewProduct({ ...newProduct, name: e.target.value })} />
-                            <input className="border p-2 mb-2 rounded" placeholder="SKU" onChange={e => setNewProduct({ ...newProduct, sku: e.target.value })} />
+                <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center p-4 z-[100]">
+                    <div className="bg-white rounded-xl shadow-xl w-full max-w-lg max-h-[90vh] flex flex-col overflow-hidden">
+                        {/* Fixed Header */}
+                        <div className="p-6 border-b shrink-0">
+                            <h3 className="text-xl font-bold">Add Product</h3>
                         </div>
-                        <input className="w-full border p-2 mb-2 rounded" placeholder="Category" onChange={e => setNewProduct({ ...newProduct, category: e.target.value })} />
-                        <textarea className="w-full border p-2 mb-2 rounded" placeholder="Description" onChange={e => setNewProduct({ ...newProduct, description: e.target.value })} />
 
-                        {/* Image Upload / URL Section */}
-                        <div className="mt-4 border-t pt-4">
-                            <label className="block text-sm font-bold mb-2 uppercase text-gray-500 tracking-wider text-[10px]">Product Gallery</label>
-                            
-                            <div className="flex flex-col gap-4">
-                                {/* Preview Gallery */}
-                                <div className="w-full min-h-[120px] bg-gray-50 rounded-xl border border-dashed border-gray-200 p-4 flex flex-wrap gap-3 overflow-y-auto max-h-60">
-                                    {(newProduct.images || []).map((url, idx) => (
-                                        <div key={idx} className="relative w-24 h-24 rounded-lg overflow-hidden border border-gray-200 bg-white group shadow-sm">
-                                            <img 
-                                                src={getImageUrl(url)} 
-                                                alt={`Preview ${idx}`} 
-                                                className="w-full h-full object-cover" 
-                                                onError={(e) => { e.target.onerror = null; e.target.src = 'https://placehold.co/100x100?text=Error'; }}
+                        {/* Scrollable Body */}
+                        <div className="flex-1 overflow-y-auto p-6 custom-scrollbar">
+                            <div className="grid grid-cols-2 gap-4">
+                                <input className="border p-2 mb-2 rounded text-sm" placeholder="Name" onChange={e => setNewProduct({ ...newProduct, name: e.target.value })} />
+                                <input className="border p-2 mb-2 rounded text-sm" placeholder="SKU" onChange={e => setNewProduct({ ...newProduct, sku: e.target.value })} />
+                            </div>
+                            <input className="w-full border p-2 mb-2 rounded text-sm" placeholder="Category" onChange={e => setNewProduct({ ...newProduct, category: e.target.value })} />
+                            <textarea className="w-full border p-2 mb-2 rounded text-sm" placeholder="Description" onChange={e => setNewProduct({ ...newProduct, description: e.target.value })} />
+
+                            {/* Image Upload / URL Section */}
+                            <div className="mt-4 border-t pt-4">
+                                <label className="block text-sm font-bold mb-2 uppercase text-gray-500 tracking-wider text-[10px]">Product Gallery</label>
+
+                                <div className="flex flex-col gap-4">
+                                    {/* Preview Gallery */}
+                                    <div className="w-full min-h-[120px] bg-gray-50 rounded-xl border border-dashed border-gray-200 p-4 flex flex-wrap gap-3 overflow-y-auto max-h-60">
+                                        {(newProduct.images || []).map((url, idx) => (
+                                            <div key={idx} className="relative w-24 h-24 rounded-lg overflow-hidden border border-gray-200 bg-white group shadow-sm">
+                                                <img
+                                                    src={getImageUrl(url)}
+                                                    alt={`Preview ${idx}`}
+                                                    className="w-full h-full object-cover"
+                                                    onError={(e) => { e.target.onerror = null; e.target.src = 'https://placehold.co/100x100?text=Error'; }}
+                                                />
+                                                <button
+                                                    type="button"
+                                                    onClick={() => {
+                                                        const images = newProduct.images.filter((_, i) => i !== idx);
+                                                        setNewProduct({ ...newProduct, images });
+                                                    }}
+                                                    className="absolute top-1 right-1 p-1 bg-red-500 text-white rounded-md opacity-0 group-hover:opacity-100 transition-opacity shadow-md"
+                                                >
+                                                    <Trash2 size={12} />
+                                                </button>
+                                            </div>
+                                        ))}
+                                        {(!newProduct.images || newProduct.images.length === 0) && (
+                                            <div className="w-full h-full flex flex-col items-center justify-center gap-2 text-gray-400 min-h-[100px]">
+                                                {isUploadingImage ? <Loader2 size={24} className="animate-spin text-primary" /> : <Package size={32} />}
+                                                <span className="text-[10px] font-bold uppercase tracking-widest">{isUploadingImage ? 'Uploading...' : 'No images added'}</span>
+                                            </div>
+                                        )}
+                                    </div>
+
+                                    <div className="flex gap-2">
+                                        <div className="flex-1">
+                                            <input
+                                                type="file"
+                                                id="product-image-new"
+                                                className="hidden"
+                                                accept="image/*"
+                                                onChange={(e) => handleImageUpload(e.target.files[0], 'new')}
                                             />
-                                            <button 
-                                                type="button"
-                                                onClick={() => {
-                                                    const images = newProduct.images.filter((_, i) => i !== idx);
-                                                    setNewProduct({ ...newProduct, images });
-                                                }}
-                                                className="absolute top-1 right-1 p-1 bg-red-500 text-white rounded-md opacity-0 group-hover:opacity-100 transition-opacity shadow-md"
+                                            <label
+                                                htmlFor="product-image-new"
+                                                className="w-full flex items-center justify-center gap-2 px-4 py-2.5 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-xl text-xs font-black uppercase tracking-widest transition-all cursor-pointer border border-gray-200"
                                             >
-                                                <Trash2 size={12} />
+                                                <Upload size={14} /> Upload File
+                                            </label>
+                                        </div>
+                                        <div className="flex-[2] relative">
+                                            <input
+                                                className="w-full border border-gray-200 p-2.5 rounded-xl text-xs focus:ring-2 focus:ring-primary/10 focus:border-primary outline-none transition-all pl-8"
+                                                placeholder="Paste Image URL and press Enter"
+                                                onKeyDown={e => {
+                                                    if (e.key === 'Enter' && e.target.value.trim()) {
+                                                        e.preventDefault();
+                                                        setNewProduct({ ...newProduct, images: [...(newProduct.images || []), e.target.value.trim()] });
+                                                        e.target.value = '';
+                                                    }
+                                                }}
+                                            />
+                                            <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400">🔗</span>
+                                        </div>
+                                    </div>
+                                    <p className="text-[9px] text-gray-400 italic font-medium px-1">* Uploaded files and pasted URLs will be added to the gallery.</p>
+                                </div>
+                            </div>
+
+                            {/* Initial Stock Section */}
+                            <div className="mt-4 border-t pt-4">
+                                <label className="block text-sm font-bold mb-2">Initial Stock (Optional)</label>
+                                <div className="grid grid-cols-2 gap-4">
+                                    <select
+                                        className="border p-2 rounded text-sm bg-white"
+                                        value={newProduct.initialStock.warehouseId}
+                                        onChange={e => setNewProduct({
+                                            ...newProduct,
+                                            initialStock: { ...newProduct.initialStock, warehouseId: e.target.value }
+                                        })}
+                                    >
+                                        <option value="">Select Warehouse</option>
+                                        {warehouses.map(w => <option key={w._id} value={w._id}>{w.name}</option>)}
+                                    </select>
+                                    <input
+                                        type="number"
+                                        className="border p-2 rounded text-sm"
+                                        placeholder="Initial Quantity"
+                                        value={newProduct.initialStock.quantity}
+                                        onChange={e => setNewProduct({
+                                            ...newProduct,
+                                            initialStock: { ...newProduct.initialStock, quantity: e.target.value }
+                                        })}
+                                    />
+                                </div>
+                            </div>
+
+                            <div className="mt-4 border-t pt-4">
+                                <label className="block text-sm font-bold mb-2">Process Steps (Tasks)</label>
+                                <p className="text-xs text-gray-500 mb-2">Define the lifecycle tasks for this product (e.g. Manufacture, Deliver, Install)</p>
+
+                                {(newProduct.steps || []).map((step, idx) => (
+                                    <div key={idx} className="bg-gray-50 p-3 rounded mb-2 border">
+                                        <div className="flex justify-between mb-2">
+                                            <span className="font-bold text-sm">Step {idx + 1}</span>
+                                            <button
+                                                onClick={() => {
+                                                    const steps = newProduct.steps.filter((_, i) => i !== idx);
+                                                    setNewProduct({ ...newProduct, steps });
+                                                }}
+                                                className="text-red-500"
+                                            >
+                                                <Trash2 size={16} />
                                             </button>
                                         </div>
-                                    ))}
-                                    {(!newProduct.images || newProduct.images.length === 0) && (
-                                        <div className="w-full h-full flex flex-col items-center justify-center gap-2 text-gray-400 min-h-[100px]">
-                                            {isUploadingImage ? <Loader2 size={24} className="animate-spin text-primary" /> : <Package size={32} />}
-                                            <span className="text-[10px] font-bold uppercase tracking-widest">{isUploadingImage ? 'Uploading...' : 'No images added'}</span>
-                                        </div>
-                                    )}
-                                </div>
-
-                                <div className="flex gap-2">
-                                    <div className="flex-1">
-                                        <input 
-                                            type="file" 
-                                            id="product-image-new"
-                                            className="hidden" 
-                                            accept="image/*"
-                                            onChange={(e) => handleImageUpload(e.target.files[0], 'new')}
-                                        />
-                                        <label 
-                                            htmlFor="product-image-new"
-                                            className="w-full flex items-center justify-center gap-2 px-4 py-2.5 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-xl text-xs font-black uppercase tracking-widest transition-all cursor-pointer border border-gray-200"
-                                        >
-                                            <Upload size={14} /> Upload File
-                                        </label>
-                                    </div>
-                                    <div className="flex-[2] relative">
                                         <input
-                                            className="w-full border border-gray-200 p-2.5 rounded-xl text-xs focus:ring-2 focus:ring-primary/10 focus:border-primary outline-none transition-all pl-8"
-                                            placeholder="Paste Image URL and press Enter"
-                                            onKeyDown={e => {
-                                                if (e.key === 'Enter' && e.target.value.trim()) {
-                                                    e.preventDefault();
-                                                    setNewProduct({ ...newProduct, images: [...(newProduct.images || []), e.target.value.trim()] });
-                                                    e.target.value = '';
-                                                }
-                                            }}
-                                        />
-                                        <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400">🔗</span>
-                                    </div>
-                                </div>
-                                <p className="text-[9px] text-gray-400 italic font-medium px-1">* Uploaded files and pasted URLs will be added to the gallery.</p>
-                            </div>
-                        </div>
-
-                        {/* Initial Stock Section */}
-                        <div className="mt-4 border-t pt-4">
-                            <label className="block text-sm font-bold mb-2">Initial Stock (Optional)</label>
-                            <div className="grid grid-cols-2 gap-4">
-                                <select 
-                                    className="border p-2 rounded text-sm" 
-                                    value={newProduct.initialStock.warehouseId}
-                                    onChange={e => setNewProduct({ 
-                                        ...newProduct, 
-                                        initialStock: { ...newProduct.initialStock, warehouseId: e.target.value } 
-                                    })}
-                                >
-                                    <option value="">Select Warehouse</option>
-                                    {warehouses.map(w => <option key={w._id} value={w._id}>{w.name}</option>)}
-                                </select>
-                                <input 
-                                    type="number" 
-                                    className="border p-2 rounded text-sm" 
-                                    placeholder="Initial Quantity" 
-                                    value={newProduct.initialStock.quantity}
-                                    onChange={e => setNewProduct({ 
-                                        ...newProduct, 
-                                        initialStock: { ...newProduct.initialStock, quantity: e.target.value } 
-                                    })}
-                                />
-                            </div>
-                        </div>
-
-                        <div className="mt-4 border-t pt-4">
-                            <label className="block text-sm font-bold mb-2">Process Steps (Tasks)</label>
-                            <p className="text-xs text-gray-500 mb-2">Define the lifecycle tasks for this product (e.g. Manufacture, Deliver, Install)</p>
-
-                            {(newProduct.steps || []).map((step, idx) => (
-                                <div key={idx} className="bg-gray-50 p-3 rounded mb-2 border">
-                                    <div className="flex justify-between mb-2">
-                                        <span className="font-bold text-sm">Step {idx + 1}</span>
-                                        <button
-                                            onClick={() => {
-                                                const steps = newProduct.steps.filter((_, i) => i !== idx);
+                                            className="w-full border p-2 rounded mb-1 text-sm"
+                                            placeholder="Task Title (e.g. Install Benches)"
+                                            value={step.title}
+                                            onChange={e => {
+                                                const steps = [...(newProduct.steps || [])];
+                                                steps[idx].title = e.target.value;
                                                 setNewProduct({ ...newProduct, steps });
                                             }}
-                                            className="text-red-500"
-                                        >
-                                            <Trash2 size={16} />
-                                        </button>
+                                        />
+                                        <input
+                                            className="w-full border p-2 rounded mb-1 text-sm"
+                                            placeholder="Description / Instructions"
+                                            value={step.description}
+                                            onChange={e => {
+                                                const steps = [...(newProduct.steps || [])];
+                                                steps[idx].description = e.target.value;
+                                                setNewProduct({ ...newProduct, steps });
+                                            }}
+                                        />
+                                        <div className="flex gap-2 items-center mt-1">
+                                            <label className="text-xs font-bold">Req. Photos:</label>
+                                            <label className="flex items-center gap-1 text-xs">
+                                                <input
+                                                    type="checkbox"
+                                                    checked={step.requiredPhotos?.includes('before')}
+                                                    onChange={e => {
+                                                        const steps = [...newProduct.steps];
+                                                        let photos = steps[idx].requiredPhotos || [];
+                                                        if (e.target.checked) photos = [...photos, 'before'];
+                                                        else photos = photos.filter(p => p !== 'before');
+                                                        steps[idx].requiredPhotos = photos;
+                                                        setNewProduct({ ...newProduct, steps });
+                                                    }}
+                                                /> Before
+                                            </label>
+                                            <label className="flex items-center gap-1 text-xs">
+                                                <input
+                                                    type="checkbox"
+                                                    checked={step.requiredPhotos?.includes('after')}
+                                                    onChange={e => {
+                                                        const steps = [...newProduct.steps];
+                                                        let photos = steps[idx].requiredPhotos || [];
+                                                        if (e.target.checked) photos = [...photos, 'after'];
+                                                        else photos = photos.filter(p => p !== 'after');
+                                                        steps[idx].requiredPhotos = photos;
+                                                        setNewProduct({ ...newProduct, steps });
+                                                    }}
+                                                /> After
+                                            </label>
+                                        </div>
                                     </div>
-                                    <input
-                                        className="w-full border p-2 rounded mb-1 text-sm"
-                                        placeholder="Task Title (e.g. Install Benches)"
-                                        value={step.title}
-                                        onChange={e => {
-                                            const steps = [...(newProduct.steps || [])];
-                                            steps[idx].title = e.target.value;
-                                            setNewProduct({ ...newProduct, steps });
-                                        }}
-                                    />
-                                    <input
-                                        className="w-full border p-2 rounded mb-1 text-sm"
-                                        placeholder="Description / Instructions"
-                                        value={step.description}
-                                        onChange={e => {
-                                            const steps = [...(newProduct.steps || [])];
-                                            steps[idx].description = e.target.value;
-                                            setNewProduct({ ...newProduct, steps });
-                                        }}
-                                    />
-                                    <div className="flex gap-2 items-center mt-1">
-                                        <label className="text-xs font-bold">Req. Photos:</label>
-                                        <label className="flex items-center gap-1 text-xs">
-                                            <input
-                                                type="checkbox"
-                                                checked={step.requiredPhotos?.includes('before')}
-                                                onChange={e => {
-                                                    const steps = [...newProduct.steps];
-                                                    let photos = steps[idx].requiredPhotos || [];
-                                                    if (e.target.checked) photos = [...photos, 'before'];
-                                                    else photos = photos.filter(p => p !== 'before');
-                                                    steps[idx].requiredPhotos = photos;
-                                                    setNewProduct({ ...newProduct, steps });
-                                                }}
-                                            /> Before
-                                        </label>
-                                        <label className="flex items-center gap-1 text-xs">
-                                            <input
-                                                type="checkbox"
-                                                checked={step.requiredPhotos?.includes('after')}
-                                                onChange={e => {
-                                                    const steps = [...newProduct.steps];
-                                                    let photos = steps[idx].requiredPhotos || [];
-                                                    if (e.target.checked) photos = [...photos, 'after'];
-                                                    else photos = photos.filter(p => p !== 'after');
-                                                    steps[idx].requiredPhotos = photos;
-                                                    setNewProduct({ ...newProduct, steps });
-                                                }}
-                                            /> After
-                                        </label>
-                                    </div>
-                                </div>
-                            ))}
-                            <button
-                                onClick={() => setNewProduct({
-                                    ...newProduct,
-                                    steps: [...(newProduct.steps || []), {
-                                        title: '',
-                                        description: '',
-                                        sequence: (newProduct.steps?.length || 0) + 1,
-                                        requiredPhotos: ['after']
-                                    }]
-                                })}
-                                className="text-sm text-primary flex items-center gap-1 mt-2"
-                            >
-                                <Plus size={16} /> Add Process Step
-                            </button>
+                                ))}
+                                <button
+                                    onClick={() => setNewProduct({
+                                        ...newProduct,
+                                        steps: [...(newProduct.steps || []), {
+                                            title: '',
+                                            description: '',
+                                            sequence: (newProduct.steps?.length || 0) + 1,
+                                            requiredPhotos: ['after']
+                                        }]
+                                    })}
+                                    className="text-sm text-primary flex items-center gap-1 mt-2 font-bold"
+                                >
+                                    <Plus size={16} /> Add Process Step
+                                </button>
+                            </div>
                         </div>
 
-                        <div className="flex justify-end gap-2 mt-6">
-                            <button onClick={() => setShowProductModal(false)} className="px-4 py-2 border rounded">Cancel</button>
-                            <button onClick={createProduct} className="px-4 py-2 bg-primary text-white rounded">Save Product</button>
+                        {/* Fixed Footer */}
+                        <div className="p-6 border-t shrink-0 flex justify-end gap-2 bg-gray-50/50">
+                            <button onClick={() => setShowProductModal(false)} className="px-6 py-2 border rounded font-bold hover:bg-gray-100 transition-colors">Cancel</button>
+                            <button onClick={createProduct} className="px-6 py-2 bg-primary text-white rounded font-bold shadow-lg shadow-primary/20 hover:bg-opacity-90 transition-all">Save Product</button>
                         </div>
                     </div>
                 </div>
             )}
 
+
             {/* Warehouse Modal */}
             {showWarehouseModal && (
-                <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center p-4">
+                <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center p-4 z-[100]">
                     <div className="bg-white p-6 rounded-xl shadow-xl w-full max-w-md">
                         <h3 className="text-xl font-bold mb-4">Add Warehouse</h3>
                         <input className="w-full border p-2 mb-2 rounded" placeholder="Name" onChange={e => setNewWarehouse({ ...newWarehouse, name: e.target.value })} />
@@ -927,25 +947,129 @@ const Inventory = () => {
 
 
             {showTransferStockModal && (
-                <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center p-4 z-50">
-                    <div className="bg-white p-6 rounded-xl shadow-xl w-full max-w-md">
-                        <h3 className="text-xl font-bold mb-4">Transfer Stock</h3>
-                        <select className="w-full border p-2 mb-2 rounded" onChange={e => setTransferData({ ...transferData, productId: e.target.value })}>
-                            <option value="">Select Product</option>
-                            {products.map(p => <option key={p._id} value={p._id}>{p.name}</option>)}
-                        </select>
-                        <select className="w-full border p-2 mb-2 rounded" onChange={e => setTransferData({ ...transferData, fromWarehouseId: e.target.value })}>
-                            <option value="">From Warehouse</option>
-                            {warehouses.map(w => <option key={w._id} value={w._id}>{w.name}</option>)}
-                        </select>
-                        <select className="w-full border p-2 mb-2 rounded" onChange={e => setTransferData({ ...transferData, toWarehouseId: e.target.value })}>
-                            <option value="">To Warehouse</option>
-                            {warehouses.map(w => <option key={w._id} value={w._id}>{w.name}</option>)}
-                        </select>
-                        <input type="number" className="w-full border p-2 mb-2 rounded" placeholder="Quantity" onChange={e => setTransferData({ ...transferData, quantity: e.target.value })} />
-                        <div className="flex justify-end gap-2 mt-4">
-                            <button onClick={() => setShowTransferStockModal(false)} className="px-4 py-2 border rounded">Cancel</button>
-                            <button onClick={handleTransferStock} className="px-6 py-2.5 bg-primary hover:bg-opacity-90 text-white font-bold rounded-lg shadow-lg shadow-primary/20 transition-all">Transfer</button>
+                <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center p-4 z-[100] overflow-y-auto">
+                    <div className="bg-white p-6 rounded-2xl shadow-xl w-full max-w-md animate-in zoom-in-95 duration-200">
+                        <div className="flex items-center gap-3 mb-6">
+                            <div className="p-2.5 bg-primary/10 text-primary rounded-xl">
+                                <Package size={24} />
+                            </div>
+                            <div>
+                                <h3 className="text-xl font-bold text-gray-900">Transfer Stock</h3>
+                                <p className="text-xs text-gray-400">Move inventory between warehouses.</p>
+                            </div>
+                        </div>
+
+                        <div className="space-y-4">
+                            <FormSelect
+                                label="Select Product"
+                                placeholder="Choose product to transfer"
+                                icon={Package}
+                                value={transferData.productId}
+                                onChange={(val) => setTransferData({ ...transferData, productId: val })}
+                                options={products.map(p => ({
+                                    value: p._id,
+                                    label: p.name,
+                                    sublabel: `SKU: ${p.sku || '—'} | Global: ${p.totalStock}`
+                                }))}
+                            />
+
+                            <div className="grid grid-cols-2 gap-4">
+                                <FormSelect
+                                    label="From Warehouse"
+                                    placeholder="Source"
+                                    icon={Warehouse}
+                                    value={transferData.fromWarehouseId}
+                                    onChange={(val) => setTransferData({ ...transferData, fromWarehouseId: val })}
+                                    options={warehouses.map(w => {
+                                        const productInWh = products.find(p => p._id === transferData.productId);
+                                        const qty = productInWh?.stock?.find(s => (s.warehouse?._id || s.warehouse) === w._id)?.quantity || 0;
+                                        return {
+                                            value: w._id,
+                                            label: w.name,
+                                            sublabel: `Current Stock: ${qty} | ${w.location}`
+                                        };
+                                    })}
+                                />
+                                <FormSelect
+                                    label="To Warehouse"
+                                    placeholder="Destination"
+                                    icon={Warehouse}
+                                    value={transferData.toWarehouseId}
+                                    onChange={(val) => setTransferData({ ...transferData, toWarehouseId: val })}
+                                    options={warehouses.map(w => {
+                                        const productInWh = products.find(p => p._id === transferData.productId);
+                                        const qty = productInWh?.stock?.find(s => (s.warehouse?._id || s.warehouse) === w._id)?.quantity || 0;
+                                        return {
+                                            value: w._id,
+                                            label: w.name,
+                                            sublabel: `Current Stock: ${qty} | ${w.location}`,
+                                            disabled: w._id === transferData.fromWarehouseId
+                                        };
+                                    })}
+                                />
+                            </div>
+
+                            {/* Stock Availability Info */}
+                            {transferData.productId && transferData.fromWarehouseId && (() => {
+                                const sourceStock = products.find(p => p._id === transferData.productId)?.stock?.find(s => (s.warehouse?._id || s.warehouse) === transferData.fromWarehouseId)?.quantity || 0;
+                                const isOverLimit = Number(transferData.quantity) > sourceStock;
+
+                                return (
+                                    <>
+                                        <div className={`border rounded-xl p-3 flex items-center justify-between transition-colors ${sourceStock === 0 ? 'bg-red-50 border-red-100' : 'bg-primary/5 border-primary/10'}`}>
+                                            <div className="flex items-center gap-2">
+                                                <div className={`w-2 h-2 rounded-full ${sourceStock === 0 ? 'bg-red-500' : 'bg-primary animate-pulse'}`} />
+                                                <span className={`text-xs font-bold uppercase tracking-wider ${sourceStock === 0 ? 'text-red-500' : 'text-primary'}`}>
+                                                    Available in Source
+                                                </span>
+                                            </div>
+                                            <span className={`text-lg font-black ${sourceStock === 0 ? 'text-red-600' : 'text-primary'}`}>
+                                                {sourceStock}
+                                            </span>
+                                        </div>
+
+                                        <div>
+                                            <label className="block text-xs font-semibold text-gray-600 uppercase tracking-wide ml-1 mb-1.5">
+                                                Transfer Quantity
+                                            </label>
+                                            <div className="relative">
+                                                <input
+                                                    type="number"
+                                                    className={`w-full border p-3 pl-10 rounded-xl text-sm outline-none transition-all ${isOverLimit ? 'border-red-300 ring-2 ring-red-100' : 'border-gray-200 focus:ring-2 focus:ring-primary/20 focus:border-primary'}`}
+                                                    placeholder="Enter amount to move"
+                                                    value={transferData.quantity}
+                                                    onChange={e => setTransferData({ ...transferData, quantity: e.target.value })}
+                                                />
+                                                <Plus className={`absolute left-3 top-1/2 -translate-y-1/2 ${isOverLimit ? 'text-red-400' : 'text-gray-400'}`} size={18} />
+                                            </div>
+                                            {isOverLimit && (
+                                                <p className="text-[10px] text-red-500 font-bold uppercase tracking-wider mt-1.5 ml-1 animate-pulse">
+                                                    ⚠️ Insufficient stock for this transfer
+                                                </p>
+                                            )}
+                                        </div>
+                                    </>
+                                );
+                            })()}
+                        </div>
+
+                        <div className="flex justify-end gap-3 mt-8">
+                            <button
+                                onClick={() => { setShowTransferStockModal(false); resetTransferForm(); }}
+                                className="flex-1 py-3 text-sm font-bold text-gray-500 hover:bg-gray-50 rounded-xl transition-colors"
+                            >
+                                Cancel
+                            </button>
+                            <button
+                                onClick={handleTransferStock}
+                                disabled={(() => {
+                                    const sourceStock = products.find(p => p._id === transferData.productId)?.stock?.find(s => (s.warehouse?._id || s.warehouse) === transferData.fromWarehouseId)?.quantity || 0;
+                                    return !transferData.productId || !transferData.fromWarehouseId || !transferData.toWarehouseId || !transferData.quantity || Number(transferData.quantity) > sourceStock || Number(transferData.quantity) <= 0;
+                                })()}
+                                className="flex-[2] py-3 bg-primary text-white font-bold rounded-xl shadow-lg shadow-primary/20 hover:scale-[1.02] active:scale-[0.98] transition-all disabled:opacity-50 disabled:grayscale disabled:scale-100"
+                            >
+                                Confirm Transfer
+                            </button>
                         </div>
                     </div>
                 </div>
@@ -953,7 +1077,7 @@ const Inventory = () => {
 
             {/* Warehouse Stock Modal */}
             {showWarehouseStockModal && selectedWarehouse && (
-                <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center p-4 z-50">
+                <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center p-4 z-[100]">
                     <div className="bg-white p-6 rounded-xl shadow-xl w-full max-w-3xl h-[80vh] flex flex-col">
                         <div className="flex justify-between items-center mb-4">
                             <div>
@@ -976,9 +1100,9 @@ const Inventory = () => {
                                         </tr>
                                     </thead>
                                     <tbody>
-                                        {products.filter(p => p.stock.some(s => s.warehouse === selectedWarehouse._id && s.quantity > 0))
+                                        {products.filter(p => p.stock.some(s => (s.warehouse?._id || s.warehouse) === selectedWarehouse._id && s.quantity > 0))
                                             .map(p => {
-                                                const stockEntry = p.stock.find(s => s.warehouse === selectedWarehouse._id);
+                                                const stockEntry = p.stock.find(s => (s.warehouse?._id || s.warehouse) === selectedWarehouse._id);
                                                 return (
                                                     <tr key={p._id} className="border-b hover:bg-gray-50">
                                                         <td className="p-3 font-medium">{p.name}</td>
@@ -1010,7 +1134,7 @@ const Inventory = () => {
                 const succeeded = uploadReport.results.filter(r => r.status === 'success').length;
                 const failed = uploadReport.results.filter(r => r.status === 'failed').length;
                 return (
-                    <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center p-4 z-50">
+                    <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center p-4 z-[100]">
                         <div className="bg-white p-6 rounded-xl shadow-xl w-full max-w-2xl max-h-[85vh] flex flex-col">
                             <h3 className="text-xl font-bold mb-1">📊 Upload Report</h3>
                             <p className="text-sm text-gray-500 mb-4">
@@ -1069,184 +1193,231 @@ const Inventory = () => {
             })()}
             {/* Edit Product Modal */}
             {showEditModal && editProduct && (
-                <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center p-4 z-50 overflow-y-auto">
-                    <div className="bg-white p-6 rounded-xl shadow-xl w-full max-w-2xl my-8">
-                        <h3 className="text-xl font-bold mb-4">✏️ Edit Product</h3>
-
-                        {/* Basic Details */}
-                        <div className="grid grid-cols-2 gap-3 mb-3">
-                            <div>
-                                <label className="text-xs font-bold text-gray-500 uppercase">Name *</label>
-                                <input
-                                    className="w-full border p-2 mt-1 rounded"
-                                    value={editProduct.name}
-                                    onChange={e => setEditProduct({ ...editProduct, name: e.target.value })}
-                                />
-                            </div>
-                            <div>
-                                <label className="text-xs font-bold text-gray-500 uppercase">SKU</label>
-                                <input
-                                    className="w-full border p-2 mt-1 rounded"
-                                    value={editProduct.sku}
-                                    onChange={e => setEditProduct({ ...editProduct, sku: e.target.value })}
-                                />
-                            </div>
-                        </div>
-                        <div className="mb-3">
-                            <label className="text-xs font-bold text-gray-500 uppercase">Category</label>
-                            <input
-                                className="w-full border p-2 mt-1 rounded"
-                                value={editProduct.category}
-                                onChange={e => setEditProduct({ ...editProduct, category: e.target.value })}
-                            />
-                        </div>
-                        <div className="mb-4">
-                            <label className="text-xs font-bold text-gray-500 uppercase">Description</label>
-                            <textarea
-                                className="w-full border p-2 mt-1 rounded"
-                                rows={2}
-                                value={editProduct.description}
-                                onChange={e => setEditProduct({ ...editProduct, description: e.target.value })}
-                            />
+                <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center p-4 z-[100]">
+                    <div className="bg-white rounded-xl shadow-xl w-full max-w-lg max-h-[90vh] flex flex-col overflow-hidden">
+                        {/* Fixed Header */}
+                        <div className="p-6 border-b shrink-0">
+                            <h3 className="text-xl font-bold">✏️ Edit Product</h3>
                         </div>
 
-                        {/* Image Upload / URL Section (Edit) */}
-                        <div className="mb-6 border-t pt-4">
-                            <label className="block text-sm font-bold mb-2 uppercase text-gray-500 tracking-wider text-[10px]">Product Gallery</label>
-                            
-                            <div className="flex flex-col gap-4">
-                                {/* Preview Gallery */}
-                                <div className="w-full min-h-[120px] bg-gray-50 rounded-xl border border-dashed border-gray-200 p-4 flex flex-wrap gap-3 overflow-y-auto max-h-60">
-                                    {(editProduct.images || []).map((url, idx) => (
-                                        <div key={idx} className="relative w-24 h-24 rounded-lg overflow-hidden border border-gray-200 bg-white group shadow-sm">
-                                            <img 
-                                                src={getImageUrl(url)} 
-                                                alt={`Preview ${idx}`} 
-                                                className="w-full h-full object-cover" 
-                                                onError={(e) => { e.target.onerror = null; e.target.src = 'https://placehold.co/100x100?text=Error'; }}
+                        {/* Scrollable Body */}
+                        <div className="flex-1 overflow-y-auto p-6 custom-scrollbar">
+                            {/* Basic Details */}
+                            <div className="grid grid-cols-2 gap-3 mb-3">
+                                <div>
+                                    <label className="text-xs font-bold text-gray-500 uppercase">Name *</label>
+                                    <input
+                                        className="w-full border p-2 mt-1 rounded text-sm"
+                                        value={editProduct.name}
+                                        onChange={e => setEditProduct({ ...editProduct, name: e.target.value })}
+                                    />
+                                </div>
+                                <div>
+                                    <label className="text-xs font-bold text-gray-500 uppercase">SKU</label>
+                                    <input
+                                        className="w-full border p-2 mt-1 rounded text-sm"
+                                        value={editProduct.sku}
+                                        onChange={e => setEditProduct({ ...editProduct, sku: e.target.value })}
+                                    />
+                                </div>
+                            </div>
+                            <div className="mb-3">
+                                <label className="text-xs font-bold text-gray-500 uppercase">Category</label>
+                                <input
+                                    className="w-full border p-2 mt-1 rounded text-sm"
+                                    value={editProduct.category}
+                                    onChange={e => setEditProduct({ ...editProduct, category: e.target.value })}
+                                />
+                            </div>
+                            <div className="mb-4">
+                                <label className="text-xs font-bold text-gray-500 uppercase">Description</label>
+                                <textarea
+                                    className="w-full border p-2 mt-1 rounded text-sm"
+                                    rows={2}
+                                    value={editProduct.description}
+                                    onChange={e => setEditProduct({ ...editProduct, description: e.target.value })}
+                                />
+                            </div>
+
+                            {/* Image Upload / URL Section (Edit) */}
+                            <div className="mb-6 border-t pt-4">
+                                <label className="block text-sm font-bold mb-2 uppercase text-gray-500 tracking-wider text-[10px]">Product Gallery</label>
+
+                                <div className="flex flex-col gap-4">
+                                    {/* Preview Gallery */}
+                                    <div className="w-full min-h-[120px] bg-gray-50 rounded-xl border border-dashed border-gray-200 p-4 flex flex-wrap gap-3 overflow-y-auto max-h-60">
+                                        {(editProduct.images || []).map((url, idx) => (
+                                            <div key={idx} className="relative w-24 h-24 rounded-lg overflow-hidden border border-gray-200 bg-white group shadow-sm">
+                                                <img
+                                                    src={getImageUrl(url)}
+                                                    alt={`Preview ${idx}`}
+                                                    className="w-full h-full object-cover"
+                                                    onError={(e) => { e.target.onerror = null; e.target.src = 'https://placehold.co/100x100?text=Error'; }}
+                                                />
+                                                <button
+                                                    type="button"
+                                                    onClick={() => {
+                                                        const images = editProduct.images.filter((_, i) => i !== idx);
+                                                        setEditProduct({ ...editProduct, images });
+                                                    }}
+                                                    className="absolute top-1 right-1 p-1 bg-red-500 text-white rounded-md opacity-0 group-hover:opacity-100 transition-opacity shadow-md"
+                                                >
+                                                    <Trash2 size={12} />
+                                                </button>
+                                            </div>
+                                        ))}
+                                        {(!editProduct.images || editProduct.images.length === 0) && (
+                                            <div className="w-full h-full flex flex-col items-center justify-center gap-2 text-gray-400 min-h-[100px]">
+                                                {isUploadingImage ? <Loader2 size={24} className="animate-spin text-primary" /> : <Package size={32} />}
+                                                <span className="text-[10px] font-bold uppercase tracking-widest">{isUploadingImage ? 'Uploading...' : 'No images added'}</span>
+                                            </div>
+                                        )}
+                                    </div>
+
+                                    <div className="flex gap-2">
+                                        <div className="flex-1">
+                                            <input
+                                                type="file"
+                                                id="product-image-edit"
+                                                className="hidden"
+                                                accept="image/*"
+                                                onChange={(e) => handleImageUpload(e.target.files[0], 'edit')}
                                             />
-                                            <button 
-                                                type="button"
-                                                onClick={() => {
-                                                    const images = editProduct.images.filter((_, i) => i !== idx);
-                                                    setEditProduct({ ...editProduct, images });
-                                                }}
-                                                className="absolute top-1 right-1 p-1 bg-red-500 text-white rounded-md opacity-0 group-hover:opacity-100 transition-opacity shadow-md"
+                                            <label
+                                                htmlFor="product-image-edit"
+                                                className="w-full flex items-center justify-center gap-2 px-4 py-2.5 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-xl text-xs font-black uppercase tracking-widest transition-all cursor-pointer border border-gray-200"
                                             >
-                                                <Trash2 size={12} />
-                                            </button>
+                                                <Upload size={14} /> Upload File
+                                            </label>
+                                        </div>
+                                        <div className="flex-[2] relative">
+                                            <input
+                                                className="w-full border border-gray-200 p-2.5 rounded-xl text-xs focus:ring-2 focus:ring-primary/10 focus:border-primary outline-none transition-all pl-8"
+                                                placeholder="Paste Image URL and press Enter"
+                                                onKeyDown={e => {
+                                                    if (e.key === 'Enter' && e.target.value.trim()) {
+                                                        e.preventDefault();
+                                                        setEditProduct({ ...editProduct, images: [...(editProduct.images || []), e.target.value.trim()] });
+                                                        e.target.value = '';
+                                                    }
+                                                }}
+                                            />
+                                            <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400">🔗</span>
+                                        </div>
+                                    </div>
+                                    <p className="text-[9px] text-gray-400 italic font-medium px-1">* Uploaded files and pasted URLs will be added to the gallery.</p>
+                                </div>
+                            </div>
+
+                            {/* Steps */}
+                            <div className="border-t pt-4">
+                                <div className="flex justify-between items-center mb-3">
+                                    <div>
+                                        <label className="block text-sm font-bold">Process Steps (Tasks)</label>
+                                        <p className="text-xs text-gray-500">Define lifecycle tasks for this product</p>
+                                    </div>
+                                    <button
+                                        onClick={addEditStep}
+                                        className="flex items-center gap-1 text-sm text-primary font-black uppercase tracking-wider hover:text-primary/70 transition-colors"
+                                    >
+                                        <Plus size={15} /> Add Step
+                                    </button>
+                                </div>
+
+                                <div className="space-y-3 pr-1">
+                                    {editProduct.steps.length === 0 && (
+                                        <p className="text-sm text-gray-400 text-center py-4">No steps yet. Click "Add Step" to add one.</p>
+                                    )}
+                                    {editProduct.steps.map((step, idx) => (
+                                        <div key={idx} className="bg-gray-50 p-3 rounded border">
+                                            <div className="flex justify-between mb-2">
+                                                <span className="text-xs font-bold text-gray-600">Step {idx + 1}</span>
+                                                <button onClick={() => removeEditStep(idx)} className="text-red-400 hover:text-red-600">
+                                                    <Trash2 size={14} />
+                                                </button>
+                                            </div>
+                                            <input
+                                                className="w-full border p-2 rounded mb-1 text-sm"
+                                                placeholder="Task Title (e.g. Install Benches)"
+                                                value={step.title}
+                                                onChange={e => updateEditStep(idx, 'title', e.target.value)}
+                                            />
+                                            <input
+                                                className="w-full border p-2 rounded mb-2 text-sm"
+                                                placeholder="Description / Instructions"
+                                                value={step.description}
+                                                onChange={e => updateEditStep(idx, 'description', e.target.value)}
+                                            />
+                                            <div className="flex gap-3 items-center">
+                                                <label className="text-xs font-bold text-gray-500">Req. Photos:</label>
+                                                {['before', 'after'].map(photo => (
+                                                    <label key={photo} className="flex items-center gap-1 text-xs capitalize cursor-pointer">
+                                                        <input
+                                                            type="checkbox"
+                                                            checked={(step.requiredPhotos || []).includes(photo)}
+                                                            onChange={() => toggleEditStepPhoto(idx, photo)}
+                                                        />
+                                                        {photo}
+                                                    </label>
+                                                ))}
+                                            </div>
                                         </div>
                                     ))}
-                                    {(!editProduct.images || editProduct.images.length === 0) && (
-                                        <div className="w-full h-full flex flex-col items-center justify-center gap-2 text-gray-400 min-h-[100px]">
-                                            {isUploadingImage ? <Loader2 size={24} className="animate-spin text-primary" /> : <Package size={32} />}
-                                            <span className="text-[10px] font-bold uppercase tracking-widest">{isUploadingImage ? 'Uploading...' : 'No images added'}</span>
-                                        </div>
-                                    )}
                                 </div>
+                            </div>
 
-                                <div className="flex gap-2">
-                                    <div className="flex-1">
-                                        <input 
-                                            type="file" 
-                                            id="product-image-edit"
-                                            className="hidden" 
-                                            accept="image/*"
-                                            onChange={(e) => handleImageUpload(e.target.files[0], 'edit')}
-                                        />
-                                        <label 
-                                            htmlFor="product-image-edit"
-                                            className="w-full flex items-center justify-center gap-2 px-4 py-2.5 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-xl text-xs font-black uppercase tracking-widest transition-all cursor-pointer border border-gray-200"
-                                        >
-                                            <Upload size={14} /> Upload File
-                                        </label>
-                                    </div>
-                                    <div className="flex-[2] relative">
-                                        <input
-                                            className="w-full border border-gray-200 p-2.5 rounded-xl text-xs focus:ring-2 focus:ring-primary/10 focus:border-primary outline-none transition-all pl-8"
-                                            placeholder="Paste Image URL and press Enter"
-                                            onKeyDown={e => {
-                                                if (e.key === 'Enter' && e.target.value.trim()) {
-                                                    e.preventDefault();
-                                                    setEditProduct({ ...editProduct, images: [...(editProduct.images || []), e.target.value.trim()] });
-                                                    e.target.value = '';
-                                                }
-                                            }}
-                                        />
-                                        <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400">🔗</span>
-                                    </div>
+                            {/* Quick Stock Adjustment Section */}
+                            <div className="mt-6 pt-4 border-t">
+                                <label className="block text-xs font-black text-primary uppercase tracking-widest mb-3">⚡ Quick Stock Adjustment</label>
+                                <div className="grid grid-cols-2 gap-3">
+                                    <select
+                                        className="w-full border border-gray-200 p-2 rounded text-sm bg-white focus:ring-2 focus:ring-primary/10 outline-none"
+                                        value={editProduct.stockUpdate?.warehouseId || ''}
+                                        onChange={e => setEditProduct({ 
+                                            ...editProduct, 
+                                            stockUpdate: { ...(editProduct.stockUpdate || {}), warehouseId: e.target.value } 
+                                        })}
+                                    >
+                                        <option value="">Select Warehouse</option>
+                                        {warehouses.map(w => <option key={w._id} value={w._id}>{w.name}</option>)}
+                                    </select>
+                                    <input
+                                        type="number"
+                                        className="w-full border border-gray-200 p-2 rounded text-sm focus:ring-2 focus:ring-primary/10 outline-none"
+                                        placeholder="Qty to add (e.g. 500)"
+                                        value={editProduct.stockUpdate?.quantity || ''}
+                                        onChange={e => setEditProduct({ 
+                                            ...editProduct, 
+                                            stockUpdate: { ...(editProduct.stockUpdate || {}), quantity: e.target.value } 
+                                        })}
+                                    />
                                 </div>
-                                <p className="text-[9px] text-gray-400 italic font-medium px-1">* Uploaded files and pasted URLs will be added to the gallery.</p>
+                                <input
+                                    className="w-full border border-gray-200 p-2 mt-2 rounded text-xs focus:ring-2 focus:ring-primary/10 outline-none"
+                                    placeholder="Reason for adjustment (e.g. Audit correction)"
+                                    value={editProduct.stockUpdate?.reason || ''}
+                                    onChange={e => setEditProduct({ 
+                                        ...editProduct, 
+                                        stockUpdate: { ...(editProduct.stockUpdate || {}), reason: e.target.value } 
+                                    })}
+                                />
+                                <p className="text-[9px] text-gray-400 mt-2 font-medium">
+                                    * Use negative numbers to reduce stock (e.g. -50). Adjustments are logged instantly upon saving.
+                                </p>
                             </div>
                         </div>
 
-                        {/* Steps */}
-                        <div className="border-t pt-4">
-                            <div className="flex justify-between items-center mb-3">
-                                <div>
-                                    <label className="block text-sm font-bold">Process Steps (Tasks)</label>
-                                    <p className="text-xs text-gray-500">Define lifecycle tasks for this product</p>
-                                </div>
-                                <button
-                                    onClick={addEditStep}
-                                    className="flex items-center gap-1 text-sm text-primary font-black uppercase tracking-wider hover:text-primary/70 transition-colors"
-                                >
-                                    <Plus size={15} /> Add Step
-                                </button>
-                            </div>
-
-                            <div className="space-y-3 max-h-64 overflow-y-auto pr-1">
-                                {editProduct.steps.length === 0 && (
-                                    <p className="text-sm text-gray-400 text-center py-4">No steps yet. Click "Add Step" to add one.</p>
-                                )}
-                                {editProduct.steps.map((step, idx) => (
-                                    <div key={idx} className="bg-gray-50 p-3 rounded border">
-                                        <div className="flex justify-between mb-2">
-                                            <span className="text-xs font-bold text-gray-600">Step {idx + 1}</span>
-                                            <button onClick={() => removeEditStep(idx)} className="text-red-400 hover:text-red-600">
-                                                <Trash2 size={14} />
-                                            </button>
-                                        </div>
-                                        <input
-                                            className="w-full border p-2 rounded mb-1 text-sm"
-                                            placeholder="Task Title (e.g. Install Benches)"
-                                            value={step.title}
-                                            onChange={e => updateEditStep(idx, 'title', e.target.value)}
-                                        />
-                                        <input
-                                            className="w-full border p-2 rounded mb-2 text-sm"
-                                            placeholder="Description / Instructions"
-                                            value={step.description}
-                                            onChange={e => updateEditStep(idx, 'description', e.target.value)}
-                                        />
-                                        <div className="flex gap-3 items-center">
-                                            <label className="text-xs font-bold text-gray-500">Req. Photos:</label>
-                                            {['before', 'after'].map(photo => (
-                                                <label key={photo} className="flex items-center gap-1 text-xs capitalize cursor-pointer">
-                                                    <input
-                                                        type="checkbox"
-                                                        checked={(step.requiredPhotos || []).includes(photo)}
-                                                        onChange={() => toggleEditStepPhoto(idx, photo)}
-                                                    />
-                                                    {photo}
-                                                </label>
-                                            ))}
-                                        </div>
-                                    </div>
-                                ))}
-                            </div>
-                        </div>
-
-                        <div className="flex justify-end gap-2 mt-6 pt-4 border-t">
+                        {/* Fixed Footer */}
+                        <div className="p-6 border-t shrink-0 flex justify-end gap-2 bg-gray-50/50">
                             <button
                                 onClick={() => { setShowEditModal(false); setEditProduct(null); }}
-                                className="px-4 py-2 border rounded text-gray-600 hover:bg-gray-50 transition-colors"
+                                className="px-6 py-2 border rounded font-bold hover:bg-gray-100 transition-colors"
                             >
                                 Cancel
                             </button>
                             <button
                                 onClick={saveEditProduct}
-                                className="px-6 py-2 bg-primary hover:bg-opacity-90 text-white font-bold rounded shadow-lg shadow-primary/20 transition-all"
+                                className="px-6 py-2 bg-primary text-white rounded font-bold shadow-lg shadow-primary/20 hover:bg-opacity-90 transition-all"
                             >
                                 Save Changes
                             </button>
@@ -1254,6 +1425,7 @@ const Inventory = () => {
                     </div>
                 </div>
             )}
+
         </div>
     );
 };

@@ -5,7 +5,7 @@ import { useAuth } from '../context/AuthContext';
 import { useBranch } from '../context/BranchContext';
 import {
     ArrowLeft, Search, Filter, Briefcase, Users, ChevronRight,
-    Trash2, SlidersHorizontal, Layout, X, Calendar
+    Trash2, SlidersHorizontal, Layout, X, Calendar, MapPin
 } from 'lucide-react';
 import DeleteConfirmModal from '../components/DeleteConfirmModal';
 
@@ -266,7 +266,7 @@ const CategoryProjects = () => {
                                     ? 'bg-green-50 text-green-700 border border-green-200'
                                     : project.status === 'completed'
                                         ? 'bg-primary/10 text-primary border border-primary/20'
-                                        : 'bg-orange-50 text-orange-700 border border-orange-200'
+                                        : 'bg-red-50 text-red-700 border border-red-200'
                                     }`}>
                                     <span className="w-1.5 h-1.5 rounded-full mr-1.5 inline-block bg-current opacity-70" />
                                     {project.status || 'Pending'}
@@ -290,9 +290,56 @@ const CategoryProjects = () => {
                                 {project.name}
                             </h3>
 
-                            <p className="text-sm text-gray-500 mb-6 line-clamp-2 flex-grow">
+                            <p className="text-xs text-gray-500 mb-4 line-clamp-2">
                                 {project.description || 'No detailed description available.'}
                             </p>
+
+                            {/* Important Details Grid */}
+                            <div className="grid grid-cols-2 gap-y-3 gap-x-2 mb-6">
+                                <div className="flex items-center gap-2 min-w-0">
+                                    <div className="p-1.5 rounded-lg bg-gray-50 text-gray-400 shrink-0">
+                                        <Briefcase size={14} />
+                                    </div>
+                                    <div className="min-w-0">
+                                        <p className="text-[9px] font-bold text-gray-400 uppercase tracking-tight leading-none mb-0.5">Client</p>
+                                        <p className="text-xs font-semibold text-gray-700 truncate">{project.client || '—'}</p>
+                                    </div>
+                                </div>
+
+                                <div className="flex items-center gap-2 min-w-0">
+                                    <div className="p-1.5 rounded-lg bg-gray-50 text-gray-400 shrink-0">
+                                        <MapPin size={14} />
+                                    </div>
+                                    <div className="min-w-0">
+                                        <p className="text-[9px] font-bold text-gray-400 uppercase tracking-tight leading-none mb-0.5">Location</p>
+                                        <p className="text-xs font-semibold text-gray-700 truncate">{project.location || '—'}</p>
+                                    </div>
+                                </div>
+
+                                <div className="flex items-center gap-2 min-w-0">
+                                    <div className="p-1.5 rounded-lg bg-gray-50 text-gray-400 shrink-0">
+                                        <Calendar size={14} />
+                                    </div>
+                                    <div className="min-w-0">
+                                        <p className="text-[9px] font-bold text-gray-400 uppercase tracking-tight leading-none mb-0.5">Timeline</p>
+                                        <p className="text-xs font-semibold text-gray-700 truncate">
+                                            {project.startDate ? new Date(project.startDate).toLocaleDateString('en-IN', { day: 'numeric', month: 'short' }) : '—'}
+                                            {" → "}
+                                            {project.deadline ? new Date(project.deadline).toLocaleDateString('en-IN', { day: 'numeric', month: 'short' }) : '—'}
+                                        </p>
+                                    </div>
+                                </div>
+
+                                <div className="flex items-center gap-2 min-w-0">
+                                    <div className="p-1.5 rounded-lg bg-gray-50 text-gray-400 shrink-0">
+                                        <Layout size={14} />
+                                    </div>
+                                    <div className="min-w-0">
+                                        <p className="text-[9px] font-bold text-gray-400 uppercase tracking-tight leading-none mb-0.5">Branch</p>
+                                        <p className="text-xs font-semibold text-gray-700 truncate">{project.branch || 'Global'}</p>
+                                    </div>
+                                </div>
+                            </div>
 
                             {/* Footer */}
                             <div className="flex items-center justify-between pt-4 border-t border-gray-100">

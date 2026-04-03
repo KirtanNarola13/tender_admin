@@ -48,7 +48,7 @@ const Reports = () => {
                             <Tooltip contentStyle={{ borderRadius: '8px', border: 'none', boxShadow: '0 4px 6px -1px rgba(0,0,0,0.1)' }} />
                             <Legend />
                             <Bar dataKey="completed" name="Completed" fill="#10B981" radius={[4, 4, 0, 0]} barSize={32} />
-                            <Bar dataKey="pending" name="Pending" fill="#F59E0B" radius={[4, 4, 0, 0]} barSize={32} />
+                            <Bar dataKey="pending" name="Pending" fill="#EF4444" radius={[4, 4, 0, 0]} barSize={32} />
                         </BarChart>
                     </ResponsiveContainer>
                 </div>
@@ -125,7 +125,7 @@ const Reports = () => {
             {/* View modal — shows hidden columns on mobile */}
             {viewingEmp && (
                 <div
-                    className="fixed inset-0 bg-black/50 flex items-end sm:items-center justify-center p-4 z-50 backdrop-blur-sm"
+                    className="fixed inset-0 bg-black/50 flex items-end sm:items-center justify-center p-4 z-[100] backdrop-blur-sm"
                     onClick={() => setViewingEmp(null)}
                 >
                     <div
@@ -160,7 +160,7 @@ const Reports = () => {
                             </div>
                             <div className="flex items-center justify-between">
                                 <span className="text-xs font-bold text-gray-400 uppercase tracking-wider">Pending</span>
-                                <span className="text-sm font-semibold text-amber-600">{viewingEmp.pending}</span>
+                                <span className="text-sm font-semibold text-red-600">{viewingEmp.pending}</span>
                             </div>
                         </div>
                     </div>

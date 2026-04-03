@@ -3,7 +3,7 @@ import { useNavigate, useParams } from 'react-router-dom';
 import api from '../services/api';
 import { useAuth } from '../context/AuthContext';
 import { useBranch } from '../context/BranchContext';
-import { ChevronRight, ChevronLeft, Trash2, Box, ArrowLeft, CheckCircle, Loader, Calendar, MapPin, User, Tag, Activity } from 'lucide-react';
+import { ChevronRight, ChevronLeft, Trash2, Box, ArrowLeft, CheckCircle, Loader, Calendar, MapPin, User, Tag, Activity, Plus, Search } from 'lucide-react';
 import FormSelect from '../components/FormSelect';
 import FormDatePicker from '../components/FormDatePicker';
 
@@ -31,11 +31,18 @@ const EditProjectWizard = () => {
         description: '',
         status: 'active',
         assignedLeader: '',
-        branch: ''
+        branch: '',
+        workOrder: '',
+        workOrderCategory: ''
     });
 
     const [availableProducts, setAvailableProducts] = useState([]);
     const [teamLeaders, setTeamLeaders] = useState([]);
+    const [workOrders, setWorkOrders] = useState([]);
+    const [newWON, setNewWON] = useState('');
+    const [newWONCategory, setNewWONCategory] = useState('');
+    const [isCreatingWON, setIsCreatingWON] = useState(false);
+    const [isCreatingCat, setIsCreatingCat] = useState(false);
 
     // Selected products: [{ product: {_id, name, ...}, plannedQuantity: N }]
     const [selectedProducts, setSelectedProducts] = useState([]);
@@ -58,6 +65,42 @@ const EditProjectWizard = () => {
         }
     }, [projectData.branch, filteredLeaders, loading]);
 
+    const handleCreateWON = async () => {
+        if (!newWON.trim()) return;
+        setIsCreatingWON(true);
+        try {
+            const res = await api.post('/workorders', {
+                workOrderNumber: newWON,
+                categories: [{ name: 'Primary' }]
+            });
+            setWorkOrders([...workOrders, res.data]);
+            setProjectData({ ...projectData, workOrder: res.data._id, workOrderCategory: 'Primary' });
+            setNewWON('');
+        } catch (e) {
+            alert('Failed to create Work Order');
+        } finally {
+            setIsCreatingWON(false);
+        }
+    };
+
+    const handleCreateWONCategory = async () => {
+        if (!newWONCategory.trim() || !projectData.workOrder) return;
+        setIsCreatingCat(true);
+        try {
+            const selectedWO = workOrders.find(wo => wo._id === projectData.workOrder);
+            if (!selectedWO) return;
+            const updatedCategories = [...selectedWO.categories, { name: newWONCategory, projects: [] }];
+            const res = await api.put(`/workorders/${projectData.workOrder}`, { categories: updatedCategories });
+            setWorkOrders(workOrders.map(wo => wo._id === res.data._id ? res.data : wo));
+            setProjectData({ ...projectData, workOrderCategory: newWONCategory, category: newWONCategory });
+            setNewWONCategory('');
+        } catch (e) {
+            alert('Failed to add Category');
+        } finally {
+            setIsCreatingCat(false);
+        }
+    };
+
     // ── Load existing project + master data ─────────────────────────
     useEffect(() => {
         if (currentUser?.role === 'admin_viewer') {
@@ -66,19 +109,21 @@ const EditProjectWizard = () => {
         }
         const load = async () => {
             try {
-                const [projRes, prodRes, usersRes, projectsRes] = await Promise.all([
+                const [projRes, prodRes, usersRes, woRes] = await Promise.all([
                     api.get(`/projects/${id}`),
                     api.get('/inventory/products'),
                     api.get('/users?role=team_leader'),
-                    api.get('/projects')
+                    api.get('/workorders')
                 ]);
 
                 const proj = projRes.data;
                 const products = prodRes.data;
                 const leaders = usersRes.data.filter(u => u.role === 'team_leader');
+                const wos = woRes.data;
 
                 setAvailableProducts(products);
                 setTeamLeaders(leaders);
+                setWorkOrders(wos);
 
                 // Pre-fill project fields
                 setProjectData({
@@ -91,7 +136,9 @@ const EditProjectWizard = () => {
                     description: proj.description || '',
                     status: proj.status || 'active',
                     assignedLeader: proj.assignedLeader?._id || proj.assignedLeader || '',
-                    branch: proj.branch || ''
+                    branch: proj.branch || '',
+                    workOrder: proj.workOrder?._id || proj.workOrder || '',
+                    workOrderCategory: proj.workOrderCategory || ''
                 });
 
                 // Pre-fill selected products (populate from availableProducts)
@@ -209,12 +256,66 @@ const EditProjectWizard = () => {
                 </div>
 
                 <FormSelect
-                    label="Category / Type"
-                    value={projectData.category}
-                    onChange={val => setProjectData({ ...projectData, category: val })}
-                    options={CATEGORIES.map(cat => ({ label: cat, value: cat }))}
+                    label="Work Order Number *"
+                    value={projectData.workOrder}
+                    onChange={val => {
+                        const wo = workOrders.find(w => w._id === val);
+                        setProjectData({ ...projectData, workOrder: val, workOrderCategory: wo?.categories?.[0]?.name || '' });
+                    }}
+                    options={workOrders.map(wo => ({ label: wo.workOrderNumber, value: wo._id }))}
+                    placeholder="— Select WON —"
                     icon={Tag}
+                    searchable
+                    footer={
+                        <div className="flex gap-2 p-1" onClick={e => e.stopPropagation()}>
+                            <input
+                                className="flex-1 border border-gray-200 rounded-lg p-1.5 text-xs outline-none focus:border-primary px-3"
+                                placeholder="New WON (eg: WON-001)"
+                                value={newWON}
+                                onChange={e => setNewWON(e.target.value)}
+                            />
+                            <button
+                                onClick={handleCreateWON}
+                                disabled={!newWON || isCreatingWON}
+                                className="bg-primary text-white p-1.5 rounded-lg hover:bg-opacity-90 disabled:opacity-50 transition-all shrink-0"
+                            >
+                                <Plus size={14} />
+                            </button>
+                        </div>
+                    }
                 />
+
+                <FormSelect
+                    label="Category *"
+                    value={projectData.workOrderCategory}
+                    onChange={val => setProjectData({ ...projectData, workOrderCategory: val, category: val })}
+                    options={
+                        (workOrders.find(w => w._id === projectData.workOrder)?.categories || []).map(c => ({ label: c.name, value: c.name }))
+                    }
+                    placeholder={projectData.workOrder ? "— Select Category —" : "Select WON First"}
+                    icon={Tag}
+                    disabled={!projectData.workOrder}
+                    searchable
+                    footer={
+                        <div className="flex gap-2 p-1" onClick={e => e.stopPropagation()}>
+                            <input
+                                className="flex-1 border border-gray-200 rounded-lg p-1.5 text-xs outline-none focus:border-primary disabled:bg-gray-100 px-3"
+                                placeholder="New Category (e.g. Civil)"
+                                value={newWONCategory}
+                                onChange={e => setNewWONCategory(e.target.value)}
+                                disabled={!projectData.workOrder}
+                            />
+                            <button
+                                onClick={handleCreateWONCategory}
+                                disabled={!newWONCategory || isCreatingCat || !projectData.workOrder}
+                                className="bg-primary text-white p-1.5 rounded-lg hover:bg-opacity-90 disabled:opacity-50 transition-all shrink-0"
+                            >
+                                <Plus size={14} />
+                            </button>
+                        </div>
+                    }
+                />
+
                 <div>
                     <label className="block text-xs font-semibold text-gray-600 mb-1.5 uppercase tracking-wide ml-1">Location / City</label>
                     <input

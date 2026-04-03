@@ -6,13 +6,16 @@ import clsx from 'clsx';
 const CreatePOModal = ({ isOpen, onClose, onSuccess, editData }) => {
     const [warehouses, setWarehouses] = useState([]);
     const [products, setProducts] = useState([]);
+    const [projects, setProjects] = useState([]);
     const [loading, setLoading] = useState(false);
     const [submitting, setSubmitting] = useState(false);
     const [errors, setErrors] = useState({});
 
     const [formData, setFormData] = useState({
+        poNumber: '',
         party: { name: '', phone: '', address: '', email: '' },
         warehouse: '',
+        project: '',
         items: [{ product: '', quantity: '', unitPrice: '' }],
         date: new Date().toISOString().split('T')[0]
     });
@@ -52,12 +55,14 @@ const CreatePOModal = ({ isOpen, onClose, onSuccess, editData }) => {
     const fetchInitialData = async () => {
         setLoading(true);
         try {
-            const [wareRes, prodRes] = await Promise.all([
+            const [wareRes, prodRes, projRes] = await Promise.all([
                 api.get('/inventory/warehouses'),
-                api.get('/inventory/products')
+                api.get('/inventory/products'),
+                api.get('/projects')
             ]);
             setWarehouses(wareRes.data);
             setProducts(prodRes.data);
+            setProjects(projRes.data);
         } catch (error) {
             console.error('Failed to fetch modal data', error);
         } finally {
@@ -137,7 +142,7 @@ const CreatePOModal = ({ isOpen, onClose, onSuccess, editData }) => {
     if (!isOpen) return null;
 
     return (
-        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4 overflow-y-auto">
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-[100] flex items-center justify-center p-4 overflow-y-auto">
             <div className="bg-white rounded-2xl shadow-2xl w-full max-w-4xl my-8 overflow-hidden transform transition-all animate-in fade-in zoom-in duration-200">
                 {/* Header */}
                 <div className="bg-primary p-6 text-white flex justify-between items-center bg-gradient-to-r from-primary to-primary/90">
@@ -211,6 +216,35 @@ const CreatePOModal = ({ isOpen, onClose, onSuccess, editData }) => {
                                     <Home size={16} /> Logistic Details
                                 </h4>
                                 <div className="space-y-3">
+                                    <div>
+                                        <label className="text-[10px] font-black uppercase text-gray-400 mb-1 block ml-1">Site / Project (Optional)</label>
+                                        <select 
+                                            className="w-full border border-gray-200 p-3 rounded-xl focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition-all text-sm bg-white"
+                                            value={formData.project}
+                                            onChange={e => {
+                                                const projId = e.target.value;
+                                                const proj = projects.find(p => p._id === projId);
+                                                setFormData({ 
+                                                    ...formData, 
+                                                    project: projId,
+                                                    // Auto-fill PO Number if it's currently empty or previously auto-filled
+                                                    poNumber: (proj?.workOrder?.workOrderNumber || proj?.name || formData.poNumber) 
+                                                });
+                                            }}
+                                        >
+                                            <option value="">Select Project...</option>
+                                            {projects.map(p => <option key={p._id} value={p._id}>{p.name} ({p.workOrder?.workOrderNumber || 'No WON'})</option>)}
+                                        </select>
+                                    </div>
+                                    <div>
+                                        <label className="text-[10px] font-black uppercase text-gray-400 mb-1 block ml-1">PO Number (Auto-gen if empty)</label>
+                                        <input 
+                                            className="w-full border border-gray-200 p-3 rounded-xl focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition-all text-sm" 
+                                            placeholder="e.g. WON-2024-001" 
+                                            value={formData.poNumber}
+                                            onChange={e => setFormData({ ...formData, poNumber: e.target.value })}
+                                        />
+                                    </div>
                                     <div className="grid grid-cols-2 gap-3">
                                         <div>
                                             <label className="text-[10px] font-black uppercase text-gray-400 mb-1 block ml-1">PO Date</label>
@@ -272,8 +306,33 @@ const CreatePOModal = ({ isOpen, onClose, onSuccess, editData }) => {
                                             onChange={e => updateItem(idx, 'product', e.target.value)}
                                         >
                                             <option value="">Select Product...</option>
-                                            {products.map(p => <option key={p._id} value={p._id}>{p.name} ({p.sku || 'N/A'})</option>)}
+                                            {products.map(p => {
+                                                // Find stock in selected warehouse
+                                                const whStock = p.stock?.find(s => (s.warehouse?._id || s.warehouse) === formData.warehouse)?.quantity || 0;
+                                                return (
+                                                    <option key={p._id} value={p._id}>
+                                                        {p.name} (Wh Stock: {whStock})
+                                                    </option>
+                                                );
+                                            })}
                                         </select>
+
+                                        {item.product && formData.warehouse && (() => {
+                                            const pObj = products.find(p => p._id === item.product);
+                                            const whName = warehouses.find(w => w._id === formData.warehouse)?.name;
+                                            const whStock = pObj?.stock?.find(s => (s.warehouse?._id || s.warehouse) === formData.warehouse)?.quantity || 0;
+                                            return (
+                                                <div className="flex items-center justify-between px-2 py-1.5 bg-gray-50 rounded-lg border border-gray-100">
+                                                    <span className="text-[10px] font-bold text-gray-400 uppercase tracking-tighter">Current in {whName || 'Warehouse'}</span>
+                                                    <span className={clsx(
+                                                        "text-xs font-black",
+                                                        whStock === 0 ? "text-amber-500" : "text-primary"
+                                                    )}>
+                                                        {whStock} PCS
+                                                    </span>
+                                                </div>
+                                            );
+                                        })()}
 
                                         <div className="grid grid-cols-2 gap-3">
                                             <div className="relative">
