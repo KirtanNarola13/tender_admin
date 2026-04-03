@@ -5,6 +5,13 @@ import { useAuth } from '../context/AuthContext';
 import { Plus, Search, Building2, MapPin, Pencil, Trash2, ArrowLeft, Loader2, UserCheck } from 'lucide-react';
 import { useBranch } from '../context/BranchContext';
 
+import FormSelect from '../components/FormSelect';
+
+const BRANCH_STATUS_OPTIONS = [
+    { value: 'active', label: '🟢 Active' },
+    { value: 'inactive', label: '🔴 Inactive' },
+];
+
 const Branches = () => {
     const { user: currentUser } = useAuth();
     const navigate = useNavigate();
@@ -110,7 +117,7 @@ const Branches = () => {
                     {currentUser?.role === 'admin' && (
                         <button
                             onClick={() => handleOpenModal()}
-                            className="flex items-center gap-1.5 bg-primary text-white px-3 py-2 rounded-xl font-bold text-xs shadow-md shadow-primary/20 hover:scale-[1.02] active:scale-[0.98] transition-all shrink-0"
+                            className="flex items-center gap-1.5 bg-primary text-white px-3 py-3 rounded-md font-bold text-xs shadow-md shadow-primary/20 hover:scale-[1.02] active:scale-[0.98] transition-all shrink-0"
                         >
                             <Plus size={15} />
                             <span className="hidden sm:inline">Add Branch</span>
@@ -125,7 +132,7 @@ const Branches = () => {
                     <input
                         type="text"
                         placeholder="Search branches..."
-                        className="w-full pl-9 pr-4 py-2 border border-gray-200 rounded-xl bg-white focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition-all text-sm shadow-sm"
+                        className="w-full pl-9 pr-4 py-3 border border-gray-200 rounded-lg bg-white focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition-all text-sm shadow-sm"
                         value={searchTerm}
                         onChange={(e) => setSearchTerm(e.target.value)}
                     />
@@ -195,9 +202,9 @@ const Branches = () => {
 
             {/* Modal */}
             {isModalOpen && (
-                <div className="fixed inset-0 z-[60] flex items-center justify-center p-4">
-                    <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={() => setIsModalOpen(false)} />
-                    <div className="bg-white rounded-3xl w-full max-w-lg relative z-10 shadow-2xl overflow-hidden animate-in fade-in zoom-in duration-200">
+                <div className="fixed inset-0 bg-black/20 bg-opacity-50 flex items-center justify-center p-4 z-[100] backdrop-blur-sm">
+                    
+                    <div className="bg-white rounded-2xl w-full max-w-lg relative z-10 shadow-2xl overflow-hidden animate-in fade-in zoom-in duration-200">
                         <div className="p-6 border-b border-gray-100 flex items-center justify-between bg-gray-50/50">
                             <div>
                                 <h2 className="text-xl font-bold text-gray-900">{editingBranch ? 'Edit Branch' : 'Register New Branch'}</h2>
@@ -242,15 +249,12 @@ const Branches = () => {
 
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                 <div>
-                                    <label className="block text-xs font-bold text-gray-400 uppercase tracking-wider mb-1.5 text-gray-400">Operational Status</label>
-                                    <select
-                                        className="w-full border border-gray-200 p-3 rounded-xl focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none bg-white text-sm transition-all shadow-sm"
+                                    <label className="block text-xs font-bold text-gray-400 uppercase tracking-wider mb-1.5">Operational Status</label>
+                                    <FormSelect
                                         value={formData.status}
-                                        onChange={e => setFormData({ ...formData, status: e.target.value })}
-                                    >
-                                        <option value="active">🟢 Active</option>
-                                        <option value="inactive">🔴 Inactive</option>
-                                    </select>
+                                        onChange={(val) => setFormData({ ...formData, status: val })}
+                                        options={BRANCH_STATUS_OPTIONS}
+                                    />
                                 </div>
                             </div>
                         </div>
@@ -258,14 +262,14 @@ const Branches = () => {
                         <div className="p-6 border-t border-gray-100 flex justify-end gap-3 bg-gray-50/30">
                             <button
                                 onClick={() => setIsModalOpen(false)}
-                                className="px-5 py-2.5 border border-gray-200 text-gray-600 rounded-xl hover:bg-gray-100 transition-colors text-sm font-bold"
+                                className="px-5 py-3 border border-gray-200 text-gray-600 rounded-md hover:bg-gray-100 transition-colors text-sm font-bold"
                             >
                                 Cancel
                             </button>
                             <button
                                 onClick={handleSubmit}
                                 disabled={isSubmitting}
-                                className="flex items-center justify-center gap-2 bg-primary text-white px-8 py-2.5 rounded-xl font-bold text-sm shadow-lg shadow-primary/20 hover:scale-[1.02] active:scale-[0.98] transition-all disabled:opacity-50 disabled:scale-100"
+                                className="flex items-center justify-center gap-2 bg-primary text-white px-8 py-3 rounded-md font-bold text-sm shadow-lg shadow-primary/20 hover:scale-[1.02] active:scale-[0.98] transition-all disabled:opacity-50 disabled:scale-100"
                             >
                                 {isSubmitting ? (
                                     <>

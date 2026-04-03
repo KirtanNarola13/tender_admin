@@ -30,8 +30,8 @@ const Reports = () => {
     if (loading) return <PageLoader text="Loading reports..." />;
 
     return (
-        <div className="space-y-4">
-            <div>
+        <div className="flex flex-col gap-4">
+            <div className="shrink-0">
                 <h1 className="text-lg font-bold text-gray-900 leading-tight">Employee Performance Reports</h1>
                 <p className="text-gray-400 text-xs mt-0.5">Task completion and rankings across all employees.</p>
             </div>
@@ -60,7 +60,7 @@ const Reports = () => {
                     <Trophy className="text-yellow-500" size={18} />
                     <h3 className="text-sm font-semibold text-gray-800">Rankings & Details</h3>
                 </div>
-                <div className="overflow-auto max-h-[60vh]">
+                <div className="overflow-auto" style={{ maxHeight: 'calc(100dvh - 380px)' }}>
                     <table className="w-full text-left">
                         <thead className="bg-gray-50 text-gray-500 text-xs uppercase">
                             <tr>

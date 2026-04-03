@@ -43,6 +43,8 @@ const EditProjectWizard = () => {
     const [newWONCategory, setNewWONCategory] = useState('');
     const [isCreatingWON, setIsCreatingWON] = useState(false);
     const [isCreatingCat, setIsCreatingCat] = useState(false);
+    const [existingClients, setExistingClients] = useState([]);
+    const [newClientName, setNewClientName] = useState('');
 
     // Selected products: [{ product: {_id, name, ...}, plannedQuantity: N }]
     const [selectedProducts, setSelectedProducts] = useState([]);
@@ -109,11 +111,12 @@ const EditProjectWizard = () => {
         }
         const load = async () => {
             try {
-                const [projRes, prodRes, usersRes, woRes] = await Promise.all([
+                const [projRes, prodRes, usersRes, woRes, projectsRes] = await Promise.all([
                     api.get(`/projects/${id}`),
                     api.get('/inventory/products'),
                     api.get('/users?role=team_leader'),
-                    api.get('/workorders')
+                    api.get('/workorders'),
+                    api.get('/projects')
                 ]);
 
                 const proj = projRes.data;
@@ -124,6 +127,10 @@ const EditProjectWizard = () => {
                 setAvailableProducts(products);
                 setTeamLeaders(leaders);
                 setWorkOrders(wos);
+                
+                // Extract unique clients
+                const clients = [...new Set(projectsRes.data.map(p => p.client).filter(Boolean))];
+                setExistingClients(clients.sort());
 
                 // Pre-fill project fields
                 setProjectData({
@@ -245,15 +252,38 @@ const EditProjectWizard = () => {
                         onChange={e => setProjectData({ ...projectData, name: e.target.value })}
                     />
                 </div>
-                <div>
-                    <label className="block text-xs font-semibold text-gray-600 mb-1.5 uppercase tracking-wide ml-1">Client Name</label>
-                    <input
-                        className="w-full border border-gray-200 p-3 rounded-xl text-sm transition-all focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary bg-white"
-                        placeholder="Enter Client Name"
-                        value={projectData.client}
-                        onChange={e => setProjectData({ ...projectData, client: e.target.value })}
-                    />
-                </div>
+                <FormSelect
+                    label="Client Name"
+                    value={projectData.client}
+                    onChange={val => setProjectData({ ...projectData, client: val })}
+                    options={existingClients.map(c => ({ label: c, value: c }))}
+                    placeholder="— Select Client —"
+                    icon={User}
+                    searchable
+                    footer={
+                        <div className="flex gap-2 p-1" onClick={e => e.stopPropagation()}>
+                            <input
+                                className="flex-1 border border-gray-200 rounded-lg p-1.5 text-xs outline-none focus:border-primary px-3"
+                                placeholder="Add New Client..."
+                                value={newClientName}
+                                onChange={e => setNewClientName(e.target.value)}
+                            />
+                            <button
+                                onClick={() => {
+                                    if (!newClientName.trim()) return;
+                                    if (!existingClients.includes(newClientName.trim())) {
+                                        setExistingClients(prev => [...prev, newClientName.trim()].sort());
+                                    }
+                                    setProjectData({ ...projectData, client: newClientName.trim() });
+                                    setNewClientName('');
+                                }}
+                                className="bg-primary text-white p-1.5 rounded-lg hover:bg-opacity-90 transition-all shrink-0"
+                            >
+                                <Plus size={14} />
+                            </button>
+                        </div>
+                    }
+                />
 
                 <FormSelect
                     label="Work Order Number *"

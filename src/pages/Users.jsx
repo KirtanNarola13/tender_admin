@@ -1,9 +1,27 @@
 import { useState, useEffect } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
+import clsx from 'clsx';
 import api from '../services/api';
 import { useAuth } from '../context/AuthContext';
 import { useBranch } from '../context/BranchContext';
 import { Plus, Search, Users as UsersIcon, Shield, UserCheck, User, Eye, ArrowLeft, Pencil, Trash2, X, Loader2, Lock, Unlock } from 'lucide-react';
+import CustomSelect from '../components/CustomSelect';
+import FormSelect from '../components/FormSelect';
+
+const ROLE_TAB_OPTIONS = [
+    { value: 'all', label: 'All Users' },
+    { value: 'admin', label: 'Admins' },
+    { value: 'team_leader', label: 'Team Leaders' },
+    { value: 'employee', label: 'Employees' },
+    { value: 'admin_viewer', label: 'Viewers' },
+];
+
+const ROLE_FORM_OPTIONS = [
+    { value: 'employee', label: 'Employee' },
+    { value: 'team_leader', label: 'Team Leader' },
+    { value: 'admin', label: 'Admin' },
+    { value: 'admin_viewer', label: 'Admin Viewer' },
+];
 
 const ROLE_COLORS = {
     admin: 'bg-primary/10 text-primary border-primary/20',
@@ -153,7 +171,7 @@ const Users = () => {
                     {currentUser?.role !== 'admin_viewer' && (
                         <button
                             onClick={() => handleOpenModal()}
-                            className="flex items-center gap-1.5 bg-primary text-white px-3 py-2 rounded-xl font-bold text-xs shadow-md shadow-primary/20 hover:scale-[1.02] active:scale-[0.98] transition-all shrink-0"
+                            className="flex items-center gap-1.5 bg-primary text-white px-3 py-3 rounded-md font-bold text-xs shadow-md shadow-primary/20 hover:scale-[1.02] active:scale-[0.98] transition-all shrink-0"
                         >
                             <Plus size={15} />
                             <span className="hidden sm:inline">Create User</span>
@@ -169,23 +187,18 @@ const Users = () => {
                         <input
                             type="text"
                             placeholder="Search by name or email..."
-                            className="w-full pl-9 pr-4 py-2 border border-gray-200 rounded-xl bg-white focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none text-sm shadow-sm"
+                            className="w-full pl-9 pr-4 py-2.5 border border-gray-200 rounded-md bg-white focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none text-sm shadow-sm"
                             value={searchTerm}
                             onChange={(e) => setSearchTerm(e.target.value)}
                         />
                     </div>
                     {/* Dropdown — mobile only */}
-                    <select
-                        className="sm:hidden border border-gray-200 rounded-xl bg-white px-2 py-2 text-xs font-bold text-gray-600 outline-none shadow-sm focus:ring-2 focus:ring-primary/20 focus:border-primary shrink-0"
+                    <CustomSelect
                         value={roleTab}
-                        onChange={e => setRoleTab(e.target.value)}
-                    >
-                        {tabs.map(tab => (
-                            <option key={tab.key} value={tab.key}>
-                                {tab.label} ({counts[tab.key]})
-                            </option>
-                        ))}
-                    </select>
+                        onChange={setRoleTab}
+                        options={ROLE_TAB_OPTIONS}
+                        className="sm:hidden"
+                    />
                 </div>
 
                 {/* Tab pills — desktop only */}
@@ -212,7 +225,7 @@ const Users = () => {
 
             {/* Table */}
             <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
-                <div className="overflow-auto max-h-[60vh]">
+                <div className="overflow-auto" style={{ maxHeight: 'calc(100dvh - 260px)' }}>
                     <table className="w-full">
                         <thead>
                             <tr className="bg-gray-50 border-b border-gray-100">
@@ -291,7 +304,7 @@ const Users = () => {
                                                     <>
                                                         <button
                                                             onClick={() => handleOpenModal(user)}
-                                                            className="px-2.5 py-1.5 text-[10px] font-black uppercase tracking-wider text-primary bg-primary/10 hover:bg-primary/20 border border-primary/30 rounded-lg transition-all flex items-center gap-1"
+                                                            className="px-2.5 py-1.5 text-[10px] font-black uppercase tracking-wider text-primary bg-primary/10 hover:bg-primary/20 border border-primary/30 rounded-md transition-all flex items-center gap-1"
                                                         >
                                                             <Pencil size={12} /> <span className="hidden sm:inline">Edit</span>
                                                         </button>
@@ -299,7 +312,7 @@ const Users = () => {
                                                             onClick={(e) => { e.stopPropagation(); handleToggleBlock(user); }}
                                                             disabled={deletingId === user._id}
                                                             className={clsx(
-                                                                "px-2.5 py-1.5 text-[10px] font-bold border rounded-lg transition-colors disabled:opacity-50 flex items-center gap-1",
+                                                                "px-2.5 py-1.5 text-[10px] font-bold border rounded-md transition-colors disabled:opacity-50 flex items-center gap-1",
                                                                 user.isBlocked ? "text-emerald-600 bg-emerald-50 hover:bg-emerald-100 border-emerald-200" : "text-red-600 bg-red-50 hover:bg-red-100 border-red-200"
                                                             )}
                                                             title={user.isBlocked ? "Unblock User" : "Block User"}
@@ -376,7 +389,7 @@ const Users = () => {
                             <div className="p-4 border-t flex gap-2">
                                 <button
                                     onClick={() => { setViewingUser(null); handleOpenModal(viewingUser); }}
-                                    className="flex-1 py-2 text-xs font-black uppercase tracking-wider text-primary bg-primary/10 hover:bg-primary/20 border border-primary/30 rounded-xl transition-all flex items-center justify-center gap-1.5"
+                                    className="flex-1 py-3 text-xs font-black uppercase tracking-wider text-primary bg-primary/10 hover:bg-primary/20 border border-primary/30 rounded-md transition-all flex items-center justify-center gap-1.5"
                                 >
                                     <Pencil size={13} /> Edit
                                 </button>
@@ -400,7 +413,7 @@ const Users = () => {
             {/* Create / Edit Modal */}
             {isModalOpen && (
                 <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-[100] backdrop-blur-sm">
-                    <div className="bg-white p-6 rounded-xl w-full max-w-md shadow-xl">
+                    <div className="bg-white p-6 rounded-2xl w-full max-w-md shadow-xl">
                         <h2 className="text-xl font-bold mb-5 text-gray-800 flex items-center gap-2">
                             {editingUser ? <Pencil size={18} /> : <Plus size={18} />}
                             {editingUser ? 'Edit User' : 'Create New User'}
@@ -409,7 +422,7 @@ const Users = () => {
                             <div>
                                 <label className="block text-sm font-semibold text-gray-700 mb-1">Full Name *</label>
                                 <input
-                                    className="w-full border border-gray-300 p-2.5 rounded-lg focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none text-sm"
+                                    className="w-full border border-gray-300 p-2.5 rounded-xl focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none text-sm"
                                     placeholder="e.g. Rahul Sharma"
                                     value={formData.name}
                                     onChange={e => setFormData({ ...formData, name: e.target.value })}
@@ -418,7 +431,7 @@ const Users = () => {
                             <div>
                                 <label className="block text-sm font-semibold text-gray-700 mb-1">Email Address *</label>
                                 <input
-                                    className="w-full border border-gray-300 p-2.5 rounded-lg focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none text-sm"
+                                    className="w-full border border-gray-300 p-2.5 rounded-xl focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none text-sm"
                                     placeholder="e.g. rahul@example.com"
                                     type="email"
                                     value={formData.email}
@@ -430,7 +443,7 @@ const Users = () => {
                                     Password {editingUser && <span className="text-gray-400 font-normal text-xs">(leave blank to keep current)</span>}
                                 </label>
                                 <input
-                                    className="w-full border border-gray-300 p-2.5 rounded-lg focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none text-sm"
+                                    className="w-full border border-gray-300 p-2.5 rounded-xl focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none text-sm"
                                     placeholder={editingUser ? 'Leave blank to keep current' : 'Set a secure password'}
                                     type="password"
                                     value={formData.password}
@@ -440,20 +453,16 @@ const Users = () => {
                             <div className="grid grid-cols-2 gap-4">
                                 <div>
                                     <label className="block text-sm font-semibold text-gray-700 mb-1">Role *</label>
-                                    <select
-                                        className="w-full border border-gray-300 p-2.5 rounded-lg focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none bg-white text-sm"
+                                    <FormSelect
                                         value={formData.role}
-                                        onChange={e => setFormData({ ...formData, role: e.target.value, assignedManager: '' })}
-                                    >
-                                        <option value="employee">Employee</option>
-                                        <option value="team_leader">Team Leader</option>
-                                        <option value="admin">Admin</option>
-                                        <option value="admin_viewer">Admin Viewer</option>
-                                    </select>
+                                        onChange={(val) => setFormData({ ...formData, role: val, assignedManager: '' })}
+                                        options={ROLE_FORM_OPTIONS}
+                                        placeholder="Select role"
+                                    />
                                 </div>
                                 <div>
                                     <label className="block text-sm font-semibold text-gray-700 mb-1">Authorized Branches</label>
-                                    <div className="flex flex-wrap gap-1.5 p-2 border border-gray-300 rounded-lg min-h-[42px] bg-gray-50/30 font-medium">
+                                    <div className="flex flex-wrap gap-1.5 p-2 border border-gray-300 rounded-xl min-h-[42px] bg-gray-50/30 font-medium">
                                         {globalBranches.length === 0 ? (
                                             <span className="text-[10px] text-gray-400 italic">No branches defined</span>
                                         ) : globalBranches.map(b => (
@@ -482,17 +491,16 @@ const Users = () => {
                             {/* Assigned Manager — only for Employee */}
                             {formData.role === 'employee' && (
                                 <div>
-                                    <label className="block text-sm font-semibold text-gray-700 mb-1">Assigned Manager (Team Leader)</label>
-                                    <select
-                                        className="w-full border border-gray-300 p-2.5 rounded-lg focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none bg-white text-sm"
+                                <label className="block text-sm font-semibold text-gray-700 mb-1">Assigned Manager (Team Leader)</label>
+                                    <FormSelect
                                         value={formData.assignedManager}
-                                        onChange={e => setFormData({ ...formData, assignedManager: e.target.value })}
-                                    >
-                                        <option value="">— No manager assigned —</option>
-                                        {teamLeaders.map(tl => (
-                                            <option key={tl._id} value={tl._id}>{tl.name}</option>
-                                        ))}
-                                    </select>
+                                        onChange={(val) => setFormData({ ...formData, assignedManager: val })}
+                                        options={[
+                                            { value: '', label: '— No manager assigned —' },
+                                            ...teamLeaders.map(tl => ({ value: tl._id, label: tl.name }))
+                                        ]}
+                                        placeholder="— No manager assigned —"
+                                    />
                                 </div>
                             )}
                         </div>
@@ -500,14 +508,14 @@ const Users = () => {
                         <div className="flex justify-end gap-3 mt-6">
                             <button
                                 onClick={() => setIsModalOpen(false)}
-                                className="px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors text-sm"
+                                className="px-4 py-3 border border-gray-300 text-gray-700 rounded-md hover:bg-gray-50 transition-colors text-sm"
                             >
                                 Cancel
                             </button>
                             <button
                                 onClick={handleSubmit}
                                 disabled={isSubmitting || !formData.name || !formData.email}
-                                className="px-6 py-2.5 bg-primary text-white rounded-lg hover:bg-opacity-90 shadow-lg shadow-primary/20 transition-all text-sm font-bold disabled:opacity-60"
+                                className="px-6 py-3 bg-primary text-white rounded-md hover:bg-opacity-90 shadow-lg shadow-primary/20 transition-all text-sm font-bold disabled:opacity-60"
                             >
                                 {isSubmitting ? 'Saving...' : editingUser ? 'Save Changes' : 'Create User'}
                             </button>

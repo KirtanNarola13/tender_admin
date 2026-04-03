@@ -6,6 +6,18 @@ import {
 } from 'lucide-react';
 import { useBranch } from '../context/BranchContext';
 
+import CustomSelect from '../components/CustomSelect';
+
+const STATUS_OPTIONS = [
+    { value: 'all', label: 'All Statuses' },
+    { value: 'pending', label: 'Pending' },
+    { value: 'locked', label: 'Locked' },
+    { value: 'in-progress', label: 'In Progress' },
+    { value: 'submitted', label: 'Submitted' },
+    { value: 'completed', label: 'Completed' },
+    { value: 'verified', label: 'Verified' },
+];
+
 // ── Status colour helper (shared) ─────────────────────────────────────────────
 export const getStatusColors = (status) => {
     switch (status) {
@@ -174,28 +186,16 @@ const TaskLedger = () => {
                 </div>
 
                 <div className="flex items-center gap-2">
-                    <select
-                        className="w-full sm:w-48 px-3 py-2.5 border border-gray-300 rounded-lg text-sm bg-gray-50/50 focus:outline-none focus:ring-2 focus:ring-primary/20"
+                    <CustomSelect
                         value={statusFilter}
-                        onChange={(e) => {
-                            const val = e.target.value;
+                        onChange={(val) => {
                             setStatusFilter(val);
-                            if (val === 'all') {
-                                searchParams.delete('status');
-                            } else {
-                                searchParams.set('status', val);
-                            }
+                            if (val === 'all') searchParams.delete('status');
+                            else searchParams.set('status', val);
                             setSearchParams(searchParams);
                         }}
-                    >
-                        <option value="all">All Statuses</option>
-                        <option value="pending">🔴 Pending</option>
-                        <option value="locked">🔴 Locked</option>
-                        <option value="in-progress">🟡 In Progress</option>
-                        <option value="submitted">🟡 Submitted</option>
-                        <option value="completed">🟢 Completed</option>
-                        <option value="verified">🟢 Verified</option>
-                    </select>
+                        options={STATUS_OPTIONS}
+                    />
                 </div>
             </div>
 

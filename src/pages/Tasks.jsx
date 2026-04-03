@@ -14,7 +14,17 @@ import api from '../services/api';
 import { useBranch } from '../context/BranchContext';
 import PageLoader from '../components/PageLoader';
 
-// ── Status colour helper ─────────────────────────────────
+import CustomSelect from '../components/CustomSelect';
+
+const STATUS_OPTIONS = [
+    { value: 'all', label: 'All Statuses' },
+    { value: 'pending', label: 'Pending' },
+    { value: 'locked', label: 'Locked' },
+    { value: 'in-progress', label: 'In Progress' },
+    { value: 'submitted', label: 'Submitted' },
+    { value: 'completed', label: 'Completed' },
+    { value: 'verified', label: 'Verified' },
+];
 const getStatusColors = (status) => {
     switch (status) {
         case 'verified':
@@ -144,30 +154,21 @@ const Tasks = () => {
                         <input
                             type="text"
                             placeholder="Search by leader, project, or task..."
-                            className="w-full pl-8 pr-3 py-2 border border-gray-200 rounded-xl bg-white text-xs focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none shadow-sm"
+                            className="w-full pl-8 pr-3 py-3 border border-gray-200 rounded-md bg-white text-xs focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none shadow-sm"
                             value={searchQuery}
                             onChange={(e) => setSearchQuery(e.target.value)}
                         />
                     </div>
-                    <select
-                        className="border border-gray-200 rounded-xl bg-white px-2 py-2 text-xs font-medium text-gray-600 outline-none shadow-sm focus:ring-2 focus:ring-primary/20 shrink-0"
+                    <CustomSelect
                         value={statusFilter}
-                        onChange={(e) => {
-                            const val = e.target.value;
+                        onChange={(val) => {
                             setStatusFilter(val);
                             if (val === 'all') searchParams.delete('status');
                             else searchParams.set('status', val);
                             setSearchParams(searchParams);
                         }}
-                    >
-                        <option value="all">All Statuses</option>
-                        <option value="pending">Pending</option>
-                        <option value="locked">Locked</option>
-                        <option value="in-progress">In Progress</option>
-                        <option value="submitted">Submitted</option>
-                        <option value="completed">Completed</option>
-                        <option value="verified">Verified</option>
-                    </select>
+                        options={STATUS_OPTIONS}
+                    />
                 </div>
             </div>
 

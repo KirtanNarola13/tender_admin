@@ -59,9 +59,9 @@ const FormSelect = ({ label, value, onChange, options, placeholder = 'Select an 
                     <div className="absolute top-full left-0 right-0 mt-2 bg-white border border-gray-100 rounded-2xl shadow-xl z-50 overflow-hidden animate-in fade-in slide-in-from-top-2 duration-200 flex flex-col">
                         {searchable && (
                             <div className="p-2 border-b border-gray-50 bg-gray-50/30">
-                                <Search size={14} className="absolute left-4 top-5 text-gray-400" />
+                                <Search size={14} className="absolute left-5 top-5 text-gray-400" />
                                 <input
-                                    className="w-full bg-white border border-gray-200 rounded-lg pl-8 pr-3 py-1.5 text-xs focus:outline-none focus:border-primary"
+                                    className="w-full bg-white border border-gray-200 rounded-md pl-8 pr-3 py-2.5 text-xs focus:outline-none focus:border-primary"
                                     placeholder="Search..."
                                     value={search}
                                     onChange={(e) => setSearch(e.target.value)}

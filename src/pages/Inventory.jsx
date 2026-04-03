@@ -6,6 +6,7 @@ import { useBranch } from '../context/BranchContext';
 import { Plus, Package, Trash2, X, Upload, Download, CheckCircle, Loader2, Search, Warehouse, ShoppingCart, Pencil, AlertTriangle, Eye } from 'lucide-react';
 import PageLoader from '../components/PageLoader';
 import FormSelect from '../components/FormSelect';
+import CustomSelect from '../components/CustomSelect';
 
 const Inventory = () => {
     const { user: currentUser } = useAuth();
@@ -350,7 +351,7 @@ const Inventory = () => {
     if (pageLoading) return <PageLoader text="Loading inventory..." />;
 
     return (
-        <div className="space-y-3">
+        <div className="flex flex-col gap-3">
             {/* Sticky header */}
             <div className="sticky top-0 z-10 bg-gray-50 pb-2 space-y-2">
                 {/* Title row */}
@@ -364,31 +365,31 @@ const Inventory = () => {
                         <div className="flex flex-wrap gap-1.5">
                             <button
                                 onClick={() => { setActiveTab('products'); setShowProductModal(true); }}
-                                className="flex items-center gap-1.5 bg-primary text-white px-3 py-2 rounded-xl font-bold text-xs shadow-md shadow-primary/20 hover:scale-[1.02] active:scale-[0.98] transition-all"
+                                className="flex items-center gap-1.5 bg-primary text-white px-3 py-3 rounded-md font-bold text-xs shadow-md shadow-primary/20 hover:scale-[1.02] active:scale-[0.98] transition-all"
                             >
                                 <Plus size={13} /> New Product
                             </button>
                             <Link
                                 to="/purchase-orders"
-                                className="flex items-center gap-1.5 bg-emerald-600 hover:bg-emerald-700 text-white px-3 py-2 rounded-xl font-bold text-xs shadow-md shadow-emerald-200 transition-all"
+                                className="flex items-center gap-1.5 bg-emerald-600 hover:bg-emerald-700 text-white px-3 py-3 rounded-md font-bold text-xs shadow-md shadow-emerald-200 transition-all"
                             >
                                 <ShoppingCart size={13} /> Create PO
                             </Link>
                             <button
                                 onClick={() => setShowTransferStockModal(true)}
-                                className="flex items-center gap-1.5 bg-white border border-gray-200 text-gray-700 hover:bg-gray-50 px-3 py-2 rounded-xl font-bold text-xs shadow-sm transition-all"
+                                className="flex items-center gap-1.5 bg-white border border-gray-200 text-gray-700 hover:bg-gray-50 px-3 py-3 rounded-md font-bold text-xs shadow-sm transition-all"
                             >
                                 <Package size={13} /> Transfer
                             </button>
                             <button
                                 onClick={() => { setActiveTab('warehouses'); setShowWarehouseModal(true); }}
-                                className="flex items-center gap-1.5 bg-white border border-gray-200 text-gray-700 hover:bg-gray-50 px-3 py-2 rounded-xl font-bold text-xs shadow-sm transition-all"
+                                className="flex items-center gap-1.5 bg-white border border-gray-200 text-gray-700 hover:bg-gray-50 px-3 py-3 rounded-md font-bold text-xs shadow-sm transition-all"
                             >
                                 <Plus size={13} /> Warehouse
                             </button>
                             <button
                                 onClick={downloadTemplate}
-                                className="flex items-center gap-1.5 bg-white border border-gray-200 text-gray-500 hover:bg-gray-50 px-3 py-2 rounded-xl text-xs shadow-sm transition-all"
+                                className="flex items-center gap-1.5 bg-white border border-gray-200 text-gray-500 hover:bg-gray-50 px-3 py-3 rounded-md text-xs shadow-sm transition-all"
                                 title="Download CSV Template"
                             >
                                 <Download size={13} /> CSV Template
@@ -396,7 +397,7 @@ const Inventory = () => {
                             <button
                                 onClick={() => csvInputRef.current?.click()}
                                 disabled={csvUploading}
-                                className="flex items-center gap-1.5 bg-white border border-gray-200 text-gray-500 hover:bg-gray-50 px-3 py-2 rounded-xl text-xs shadow-sm transition-all disabled:opacity-50"
+                                className="flex items-center gap-1.5 bg-white border border-gray-200 text-gray-500 hover:bg-gray-50 px-3 py-3 rounded-md text-xs shadow-sm transition-all disabled:opacity-50"
                                 title="Bulk Upload via CSV"
                             >
                                 {csvUploading
@@ -433,38 +434,38 @@ const Inventory = () => {
                             <input
                                 type="text"
                                 placeholder="Search name or SKU..."
-                                className="w-full pl-8 pr-3 py-2 border border-gray-200 rounded-xl bg-white focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none text-xs shadow-sm"
+                                className="w-full pl-8 pr-3 py-3 border border-gray-200 rounded-md bg-white focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none text-xs shadow-sm"
                                 value={searchTerm}
                                 onChange={(e) => { setSearchTerm(e.target.value); resetPage(); }}
                             />
                         </div>
-                        <select
-                            className="border border-gray-200 rounded-xl bg-white px-2 py-2 text-xs font-medium text-gray-600 outline-none shadow-sm focus:ring-2 focus:ring-primary/20"
+                        <CustomSelect
                             value={categoryFilter}
-                            onChange={e => { setCategoryFilter(e.target.value); resetPage(); }}
-                        >
-                            <option value="all">All Categories</option>
-                            {uniqueCategories.map(c => <option key={c} value={c}>{c}</option>)}
-                        </select>
-                        <select
-                            className="border border-gray-200 rounded-xl bg-white px-2 py-2 text-xs font-medium text-gray-600 outline-none shadow-sm focus:ring-2 focus:ring-primary/20"
+                            onChange={(val) => { setCategoryFilter(val); resetPage(); }}
+                            options={[
+                                { value: 'all', label: 'All Categories' },
+                                ...uniqueCategories.map(c => ({ value: c, label: c }))
+                            ]}
+                        />
+                        <CustomSelect
                             value={stockFilter}
-                            onChange={e => { setStockFilter(e.target.value); resetPage(); }}
-                        >
-                            <option value="all">All Stock</option>
-                            <option value="in">In Stock</option>
-                            <option value="low">Low Stock</option>
-                        </select>
-                        <select
-                            className="border border-gray-200 rounded-xl bg-white px-2 py-2 text-xs font-medium text-gray-600 outline-none shadow-sm focus:ring-2 focus:ring-primary/20"
+                            onChange={(val) => { setStockFilter(val); resetPage(); }}
+                            options={[
+                                { value: 'all', label: 'All Stock' },
+                                { value: 'in', label: 'In Stock' },
+                                { value: 'low', label: 'Low Stock' },
+                            ]}
+                        />
+                        <CustomSelect
                             value={sortBy}
-                            onChange={e => { setSortBy(e.target.value); resetPage(); }}
-                        >
-                            <option value="name_asc">Name A→Z</option>
-                            <option value="name_desc">Name Z→A</option>
-                            <option value="stock_desc">Stock ↓</option>
-                            <option value="stock_asc">Stock ↑</option>
-                        </select>
+                            onChange={(val) => { setSortBy(val); resetPage(); }}
+                            options={[
+                                { value: 'name_asc', label: 'Name A→Z' },
+                                { value: 'name_desc', label: 'Name Z→A' },
+                                { value: 'stock_desc', label: 'Stock ↓' },
+                                { value: 'stock_asc', label: 'Stock ↑' },
+                            ]}
+                        />
                         <span className="text-xs text-gray-400 self-center whitespace-nowrap">{filteredProducts.length} results</span>
                     </div>
                 )}
@@ -472,7 +473,7 @@ const Inventory = () => {
 
             {activeTab === 'products' && (
                 <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
-                    <div className="overflow-auto max-h-[60vh]">
+                    <div className="overflow-auto" style={{ maxHeight: 'calc(100dvh - 280px)' }}>
                         <table className="w-full">
                             <thead>
                                 <tr className="text-left bg-gray-50 border-b">
@@ -669,8 +670,8 @@ const Inventory = () => {
             )}
 
             {activeTab === 'logs' && (
-                <div className="bg-white rounded shadow p-4">
-                    <div className="overflow-auto max-h-[60vh]">
+                <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden p-4">
+                    <div className="overflow-auto" style={{ maxHeight: 'calc(100dvh - 280px)' }}>
                         <table className="w-full text-sm">
                             <thead>
                                 <tr className="text-left bg-gray-50">
@@ -808,17 +809,15 @@ const Inventory = () => {
                             <div className="mt-4 border-t pt-4">
                                 <label className="block text-sm font-bold mb-2">Initial Stock (Optional)</label>
                                 <div className="grid grid-cols-2 gap-4">
-                                    <select
-                                        className="border p-2 rounded text-sm bg-white"
+                                    <FormSelect
                                         value={newProduct.initialStock.warehouseId}
-                                        onChange={e => setNewProduct({
+                                        onChange={(val) => setNewProduct({
                                             ...newProduct,
-                                            initialStock: { ...newProduct.initialStock, warehouseId: e.target.value }
+                                            initialStock: { ...newProduct.initialStock, warehouseId: val }
                                         })}
-                                    >
-                                        <option value="">Select Warehouse</option>
-                                        {warehouses.map(w => <option key={w._id} value={w._id}>{w.name}</option>)}
-                                    </select>
+                                        options={warehouses.map(w => ({ value: w._id, label: w.name }))}
+                                        placeholder="Select Warehouse"
+                                    />
                                     <input
                                         type="number"
                                         className="border p-2 rounded text-sm"
@@ -1370,17 +1369,15 @@ const Inventory = () => {
                             <div className="mt-6 pt-4 border-t">
                                 <label className="block text-xs font-black text-primary uppercase tracking-widest mb-3">⚡ Quick Stock Adjustment</label>
                                 <div className="grid grid-cols-2 gap-3">
-                                    <select
-                                        className="w-full border border-gray-200 p-2 rounded text-sm bg-white focus:ring-2 focus:ring-primary/10 outline-none"
+                                    <FormSelect
                                         value={editProduct.stockUpdate?.warehouseId || ''}
-                                        onChange={e => setEditProduct({ 
-                                            ...editProduct, 
-                                            stockUpdate: { ...(editProduct.stockUpdate || {}), warehouseId: e.target.value } 
+                                        onChange={(val) => setEditProduct({
+                                            ...editProduct,
+                                            stockUpdate: { ...(editProduct.stockUpdate || {}), warehouseId: val }
                                         })}
-                                    >
-                                        <option value="">Select Warehouse</option>
-                                        {warehouses.map(w => <option key={w._id} value={w._id}>{w.name}</option>)}
-                                    </select>
+                                        options={warehouses.map(w => ({ value: w._id, label: w.name }))}
+                                        placeholder="Select Warehouse"
+                                    />
                                     <input
                                         type="number"
                                         className="w-full border border-gray-200 p-2 rounded text-sm focus:ring-2 focus:ring-primary/10 outline-none"

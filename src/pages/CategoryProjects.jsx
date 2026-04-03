@@ -9,6 +9,14 @@ import {
 } from 'lucide-react';
 import DeleteConfirmModal from '../components/DeleteConfirmModal';
 
+import CustomSelect from '../components/CustomSelect';
+
+const SORT_OPTIONS = [
+    { value: 'updatedAt_desc', label: 'Recently Updated' },
+    { value: 'createdAt_desc', label: 'Recently Created' },
+    { value: 'name_asc', label: 'Name (A–Z)' },
+];
+
 const CATEGORY_ICONS = {
     'Primary': '🏫',
     'Upper Primary': '📚',
@@ -189,15 +197,12 @@ const CategoryProjects = () => {
                         {/* Sort */}
                         <div className="sm:w-52">
                             <label className="block text-xs font-semibold text-gray-500 uppercase mb-1.5">Sort By</label>
-                            <select
-                                className="w-full border border-gray-200 rounded-lg text-sm py-2 px-3 focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none bg-white"
+                            <CustomSelect
                                 value={sortBy}
-                                onChange={(e) => setSortBy(e.target.value)}
-                            >
-                                <option value="updatedAt_desc">Recently Updated</option>
-                                <option value="createdAt_desc">Recently Created</option>
-                                <option value="name_asc">Name (A–Z)</option>
-                            </select>
+                                onChange={setSortBy}
+                                options={SORT_OPTIONS}
+                                className="w-full justify-between"
+                            />
                         </div>
 
                         {/* Reset */}

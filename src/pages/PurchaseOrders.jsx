@@ -5,10 +5,20 @@ import { generatePOPDF } from '../utils/pdfGenerator';
 import {
     Plus, Download, Truck, CheckCircle, Clock, Search,
     Filter, Eye, Warehouse, Calendar, X, User, MapPin,
-    Mail, Phone, Receipt, Pencil
+    Mail, Phone, Receipt, Pencil, Tag
 } from 'lucide-react';
 import clsx from 'clsx';
 import PageLoader from '../components/PageLoader';
+
+import CustomSelect from '../components/CustomSelect';
+
+const PO_STATUS_OPTIONS = [
+    { value: 'all', label: 'All Status' },
+    { value: 'PENDING', label: 'Pending' },
+    { value: 'IN_TRANSIT', label: 'In Transit' },
+    { value: 'PARTIAL', label: 'Partial' },
+    { value: 'DELIVERED', label: 'Delivered' },
+];
 
 const RecordDeliveryModal = ({ order, onClose, onSuccess }) => {
     const [deliveryQuantities, setDeliveryQuantities] = useState({});
@@ -58,7 +68,7 @@ const RecordDeliveryModal = ({ order, onClose, onSuccess }) => {
 
     return (
         <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-[110] flex items-center justify-center p-4">
-            <div className="bg-white rounded-3xl shadow-2xl w-full max-w-lg overflow-hidden border border-gray-100 flex flex-col max-h-[90vh]">
+            <div className="bg-white rounded-2xl shadow-2xl w-full max-w-lg overflow-hidden border border-gray-100 flex flex-col max-h-[90vh]">
                 <div className="bg-emerald-600 p-6 text-white flex justify-between items-center">
                     <div className="flex items-center gap-3">
                         <Truck size={24} />
@@ -116,8 +126,8 @@ const RecordDeliveryModal = ({ order, onClose, onSuccess }) => {
                 </form>
 
                 <div className="p-6 bg-gray-50 border-t flex gap-3">
-                    <button type="button" onClick={onClose} className="flex-1 py-3 px-4 bg-white border border-gray-200 rounded-xl font-bold text-sm text-gray-600 hover:bg-gray-100 transition-all">Cancel</button>
-                    <button type="submit" onClick={handleSubmit} disabled={submitting} className="flex-2 py-3 px-8 bg-emerald-600 text-white rounded-xl font-black text-sm hover:bg-emerald-700 transition-all flex items-center justify-center gap-2 shadow-lg shadow-emerald-200 disabled:opacity-50">
+                    <button type="button" onClick={onClose} className="flex-1 py-3 px-4 bg-white border border-gray-200 rounded-md font-bold text-sm text-gray-600 hover:bg-gray-100 transition-all">Cancel</button>
+                    <button type="submit" onClick={handleSubmit} disabled={submitting} className="flex-2 py-3 px-8 bg-emerald-600 text-white rounded-md font-black text-sm hover:bg-emerald-700 transition-all flex items-center justify-center gap-2 shadow-lg shadow-emerald-200 disabled:opacity-50">
                         {submitting ? <Clock size={16} className="animate-spin" /> : <CheckCircle size={16} />} 
                         {submitting ? 'Recording...' : 'Record Delivery'}
                     </button>
@@ -131,12 +141,19 @@ const ViewPOModal = ({ order, onClose }) => {
     if (!order) return null;
     return (
         <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-[110] flex items-end sm:items-center justify-center p-0 sm:p-4">
-            <div className="bg-white rounded-t-3xl sm:rounded-3xl shadow-2xl w-full sm:max-w-3xl overflow-hidden flex flex-col max-h-[90vh]">
+            <div className="bg-white rounded-t-2xl sm:rounded-2xl shadow-2xl w-full sm:max-w-3xl overflow-hidden flex flex-col max-h-[90vh]">
                 <div className="bg-primary px-4 py-4 sm:p-6 text-white flex justify-between items-center bg-gradient-to-r from-primary to-primary-dark">
                     <div className="flex items-center gap-3">
                         <div className="p-2 bg-white/10 rounded-xl"><Receipt size={20} /></div>
                         <div>
-                            <h3 className="text-base sm:text-xl font-black">{order.poNumber}</h3>
+                            <div className="flex items-center gap-3">
+                                <h3 className="text-base sm:text-xl font-black">{order.poNumber}</h3>
+                                {order.project?.workOrder?.workOrderNumber && (
+                                    <span className="bg-white/20 px-2 py-0.5 rounded text-[10px] font-black uppercase tracking-wider backdrop-blur-sm">
+                                        WON: {order.project.workOrder.workOrderNumber}
+                                    </span>
+                                )}
+                            </div>
                             <p className="text-white/70 text-xs font-bold uppercase tracking-widest">
                                 {new Date(order.date).toLocaleDateString()}
                             </p>
@@ -203,7 +220,16 @@ const ViewPOModal = ({ order, onClose }) => {
                         <div className="space-y-4">
                             <div className="bg-primary/5 p-4 rounded-2xl border border-primary/10">
                                 <h4 className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2">Target Point</h4>
-                                <p className="flex items-center gap-2 text-sm font-black text-primary uppercase">{order.warehouse?.name || 'N/A'}</p>
+                                <p className="flex items-center gap-2 text-sm font-black text-primary uppercase mb-2">
+                                    <Warehouse size={14} className="shrink-0" />
+                                    {order.warehouse?.name || 'N/A'}
+                                </p>
+                                {order.project?.workOrder?.workOrderNumber && (
+                                    <div className="flex items-center gap-1.5 text-[10px] font-black text-primary/60 uppercase tracking-widest border-t border-primary/10 pt-2">
+                                        <Tag size={12} />
+                                        Linked WON: {order.project.workOrder.workOrderNumber}
+                                    </div>
+                                )}
                             </div>
                             <div>
                                 <h4 className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2 px-1">Order Progress</h4>
@@ -275,10 +301,10 @@ const ViewPOModal = ({ order, onClose }) => {
                     )}
                 </div>
                 <div className="p-4 sm:p-6 bg-gray-50 border-t flex justify-end gap-3 shrink-0">
-                    <button onClick={() => generatePOPDF(order)} className="flex items-center gap-2 px-4 sm:px-6 py-2.5 bg-white border border-gray-200 rounded-xl font-bold text-xs text-gray-600 hover:bg-gray-100 transition-all shadow-sm">
+                    <button onClick={() => generatePOPDF(order)} className="flex items-center gap-2 px-4 sm:px-6 py-3 bg-white border border-gray-200 rounded-md font-bold text-xs text-gray-600 hover:bg-gray-100 transition-all shadow-sm">
                         <Download size={14} /><span className="hidden sm:inline">Download Record</span><span className="sm:hidden">PDF</span>
                     </button>
-                    <button onClick={onClose} className="px-6 py-2.5 bg-primary text-white rounded-xl font-black text-xs hover:bg-opacity-90 transition-all shadow-md shadow-primary/20">
+                    <button onClick={onClose} className="px-6 py-3 bg-primary text-white rounded-md font-black text-xs hover:bg-opacity-90 transition-all shadow-md shadow-primary/20">
                         Close
                     </button>
                 </div>
@@ -366,7 +392,7 @@ const PurchaseOrders = () => {
                     </div>
                     <button
                         onClick={() => setShowModal(true)}
-                        className="flex items-center gap-1.5 bg-primary text-white px-3 py-2 rounded-xl font-bold text-xs shadow-md shadow-primary/20 hover:scale-[1.02] active:scale-[0.98] transition-all shrink-0"
+                        className="flex items-center gap-1.5 bg-primary text-white px-3 py-3 rounded-md font-bold text-xs shadow-md shadow-primary/20 hover:scale-[1.02] active:scale-[0.98] transition-all shrink-0"
                     >
                         <Plus size={15} />
                         <span className="hidden sm:inline">New Order</span>
@@ -379,31 +405,24 @@ const PurchaseOrders = () => {
                         <input
                             type="text"
                             placeholder="Search by PO# or party name..."
-                            className="w-full pl-9 pr-4 py-2 border border-gray-200 rounded-xl bg-white focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none text-sm shadow-sm"
+                            className="w-full pl-9 pr-4 py-2.5 border border-gray-200 rounded-md bg-white focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none text-sm shadow-sm"
                             value={searchTerm}
                             onChange={(e) => setSearchTerm(e.target.value)}
                         />
                     </div>
                     <div className="flex items-center gap-1.5 shrink-0">
-                        <Filter size={14} className="text-gray-400 hidden sm:block" />
-                        <select
-                            className="border border-gray-200 rounded-xl bg-white px-2 py-2 text-xs font-bold text-gray-600 outline-none shadow-sm focus:ring-2 focus:ring-primary/20 focus:border-primary"
+                        <CustomSelect
                             value={statusFilter}
-                            onChange={(e) => setStatusFilter(e.target.value)}
-                        >
-                            <option value="all">All Status</option>
-                            <option value="PENDING">Pending</option>
-                            <option value="IN_TRANSIT">In Transit</option>
-                            <option value="PARTIAL">Partial</option>
-                            <option value="DELIVERED">Delivered</option>
-                        </select>
+                            onChange={setStatusFilter}
+                            options={PO_STATUS_OPTIONS}
+                        />
                     </div>
                 </div>
             </div>
 
             {/* Table */}
             <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
-                <div className="overflow-auto max-h-[60vh]">
+                <div className="overflow-auto" style={{ maxHeight: 'calc(100dvh - 260px)' }}>
                     <table className="w-full">
                         <thead>
                             <tr className="bg-gray-50/50 text-left border-b border-gray-100">
@@ -426,11 +445,13 @@ const PurchaseOrders = () => {
                                     {/* Merged Order + Party cell */}
                                     <td className="px-3 py-3">
                                         <span className="font-black text-gray-900 text-sm group-hover:text-primary transition-colors block leading-tight">{po.poNumber}</span>
-                                        <div className="flex items-center gap-1 text-[10px] text-gray-400 mt-0.5">
-                                            <Calendar size={10} />
-                                            {new Date(po.date).toLocaleDateString()}
-                                        </div>
-                                        <div className="font-semibold text-gray-600 text-xs truncate max-w-[130px] mt-1">{po.party.name}</div>
+                                        {po.project?.workOrder?.workOrderNumber && (
+                                            <div className="flex items-center gap-1 text-[10px] text-primary mt-1 font-black uppercase">
+                                                <Tag size={10} />
+                                                WON: {po.project.workOrder.workOrderNumber}
+                                            </div>
+                                        )}
+                                        <div className="font-semibold text-gray-400 text-[10px] uppercase tracking-tighter mt-1">{po.party.name}</div>
                                     </td>
                                     <td className="px-3 py-3 hidden sm:table-cell">
                                         <div className="flex items-center gap-1.5 text-gray-600">

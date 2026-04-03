@@ -60,31 +60,28 @@ const Sidebar = ({ isOpen, setIsOpen }) => {
                 so Tailwind md: overrides work correctly (inline styles block Tailwind overrides)
             */}
             <aside className={clsx(
-                // shared
-                'flex flex-col bg-white shrink-0',
-                // mobile: fixed drawer
-                'fixed top-0 left-0 sidebar-height w-[280px] shadow-xl transition-transform duration-300 ease-in-out',
+                'flex flex-col bg-white shrink-0 border-r border-gray-100',
+                'fixed top-0 left-0 sidebar-height w-[260px] shadow-xl transition-transform duration-300 ease-in-out',
                 isOpen ? 'translate-x-0' : '-translate-x-full',
-                // desktop: static in flow
-                'md:static md:translate-x-0 md:w-64 md:shadow-none md:h-full',
+                'md:static md:translate-x-0 md:w-56 md:shadow-none md:h-full',
             )}
             style={{ zIndex: 70 }}
             >
-                <div className="p-5 border-b flex justify-between items-start shrink-0">
+                {/* Logo */}
+                <div className="px-5 py-5 flex justify-between items-center shrink-0">
                     <div>
-                        <h1 className="text-xl font-bold text-primary">KG INFRA Admin</h1>
-                        <p className="text-sm text-gray-500 mt-1 truncate max-w-[180px]">{user?.name}</p>
-                        <p className="text-xs text-gray-400 capitalize">{user?.role}</p>
+                        <h1 className="text-base font-extrabold tracking-tight text-gray-900">KG INFRA</h1>
+                        <p className="text-[11px] text-gray-400 mt-0.5 truncate max-w-[160px]">{user?.name}</p>
                     </div>
                     <button
                         onClick={() => setIsOpen(false)}
-                        className="md:hidden p-1 rounded-lg text-gray-500 hover:bg-gray-100"
+                        className="md:hidden p-1 rounded-lg text-gray-400 hover:bg-gray-100"
                     >
-                        <X size={20} />
+                        <X size={18} />
                     </button>
                 </div>
 
-                <nav className="flex-1 p-4 space-y-1 overflow-y-auto">
+                <nav className="flex-1 px-3 pb-4 space-y-0.5 overflow-y-auto">
                     {links.map((link) => {
                         const Icon = link.icon;
                         const isActive = location.pathname === link.path;
@@ -93,26 +90,26 @@ const Sidebar = ({ isOpen, setIsOpen }) => {
                                 key={link.path}
                                 to={link.path}
                                 className={clsx(
-                                    'flex items-center space-x-3 px-4 py-3 rounded-xl transition-all duration-200',
+                                    'flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm transition-all duration-150',
                                     isActive
-                                        ? 'bg-primary-light text-primary border border-primary/20 shadow-sm'
-                                        : 'text-gray-500 hover:bg-gray-50 hover:text-gray-900'
+                                        ? 'bg-primary/8 text-primary font-semibold'
+                                        : 'text-gray-500 hover:bg-gray-50 hover:text-gray-800 font-medium'
                                 )}
                             >
-                                <Icon size={20} />
-                                <span className="font-medium">{link.name}</span>
+                                <Icon size={17} strokeWidth={isActive ? 2.2 : 1.8} />
+                                <span>{link.name}</span>
                             </Link>
                         );
                     })}
                 </nav>
 
-                <div className="p-4 border-t shrink-0">
+                <div className="px-3 py-4 border-t border-gray-100 shrink-0">
                     <button
                         onClick={logout}
-                        className="flex items-center space-x-3 px-4 py-3 w-full text-red-500 hover:bg-red-50 rounded-lg transition"
+                        className="flex items-center gap-3 px-3 py-2.5 w-full text-sm text-gray-400 hover:text-red-500 hover:bg-red-50 rounded-xl transition-all duration-150 font-medium"
                     >
-                        <LogOut size={20} />
-                        <span className="font-medium">Logout</span>
+                        <LogOut size={17} strokeWidth={1.8} />
+                        <span>Logout</span>
                     </button>
                 </div>
             </aside>

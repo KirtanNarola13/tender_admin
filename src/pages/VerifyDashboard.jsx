@@ -96,13 +96,13 @@ const VerifyDashboard = () => {
                                 <div className="flex gap-2 w-full lg:w-auto">
                                     <button
                                         onClick={() => { setSelectedTask(task); setIsRejectModalOpen(true); }}
-                                        className="flex-1 lg:flex-none justify-center bg-red-50 text-red-600 px-4 py-2 rounded font-medium hover:bg-red-100 flex items-center gap-2"
+                                        className="flex-1 lg:flex-none justify-center bg-red-50 text-red-600 px-3 py-3 rounded-md font-medium hover:bg-red-100 flex items-center gap-2"
                                     >
                                         <XCircle size={18} /> Reject
                                     </button>
                                     <button
                                         onClick={() => handleApprove(task)}
-                                        className="flex-1 lg:flex-none justify-center bg-green-600 text-white px-4 py-2 rounded font-medium hover:bg-green-700 flex items-center gap-2"
+                                        className="flex-1 lg:flex-none justify-center bg-green-600 text-white px-3 py-3 rounded-md font-medium hover:bg-green-700 flex items-center gap-2"
                                     >
                                         <CheckCircle size={18} /> Approve
                                     </button>

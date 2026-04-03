@@ -3,6 +3,18 @@ import { useParams, useNavigate, useSearchParams } from 'react-router-dom';
 import api from '../services/api';
 import { ArrowLeft, Search, X, ChevronRight, Package } from 'lucide-react';
 
+import CustomSelect from '../components/CustomSelect';
+
+const STATUS_OPTIONS = [
+    { value: 'all', label: 'All Statuses' },
+    { value: 'pending', label: 'Pending' },
+    { value: 'locked', label: 'Locked' },
+    { value: 'in-progress', label: 'In Progress' },
+    { value: 'submitted', label: 'Submitted' },
+    { value: 'completed', label: 'Completed' },
+    { value: 'verified', label: 'Verified' },
+];
+
 const TaskProducts = () => {
     const { leaderId, projectId } = useParams();
     const navigate = useNavigate();
@@ -122,24 +134,11 @@ const TaskProducts = () => {
                 </div>
 
                 <div className="flex items-center gap-2">
-                    <select
-                        className="w-full sm:w-48 px-3 py-2.5 border border-gray-300 rounded-lg text-sm bg-gray-50/50 focus:outline-none focus:ring-2 focus:ring-primary/20"
+                    <CustomSelect
                         value={statusFilter}
-                        onChange={(e) => {
-                            const val = e.target.value;
-                            setStatusFilter(val);
-                            // We don't really need logic to SET searchParams here if we assume it comes from parent, 
-                            // but for consistency let's add it if status is changed on this screen
-                        }}
-                    >
-                        <option value="all">All Statuses</option>
-                        <option value="pending">🔴 Pending</option>
-                        <option value="locked">🔴 Locked</option>
-                        <option value="in-progress">🟡 In Progress</option>
-                        <option value="submitted">🟡 Submitted</option>
-                        <option value="completed">🟢 Completed</option>
-                        <option value="verified">🟢 Verified</option>
-                    </select>
+                        onChange={setStatusFilter}
+                        options={STATUS_OPTIONS}
+                    />
                 </div>
             </div>
 

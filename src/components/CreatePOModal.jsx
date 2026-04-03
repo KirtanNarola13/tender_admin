@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import api from '../services/api';
 import { X, Plus, Trash2, Loader2, Save, ShoppingCart, User, Home, Receipt } from 'lucide-react';
 import clsx from 'clsx';
+import FormSelect from './FormSelect';
 
 const CreatePOModal = ({ isOpen, onClose, onSuccess, editData }) => {
     const [warehouses, setWarehouses] = useState([]);
@@ -147,7 +148,7 @@ const CreatePOModal = ({ isOpen, onClose, onSuccess, editData }) => {
 
     return (
         <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-[100] flex items-center justify-center p-4 overflow-y-auto">
-            <div className="bg-white rounded-3xl shadow-2xl w-full max-w-3xl my-8 overflow-hidden transform transition-all animate-in fade-in zoom-in duration-200">
+            <div className="bg-white rounded-2xl shadow-2xl w-full max-w-3xl my-8 overflow-hidden transform transition-all animate-in fade-in zoom-in duration-200">
                 {/* Header */}
                 <div className="bg-primary p-5 text-white flex justify-between items-center bg-gradient-to-r from-primary to-primary-dark">
                     <div className="flex items-center gap-3">
@@ -240,27 +241,20 @@ const CreatePOModal = ({ isOpen, onClose, onSuccess, editData }) => {
 
                                 <div>
                                     <label className="text-[9px] font-black uppercase text-gray-400 mb-1 ml-1 block">Target Warehouse</label>
-                                    <select 
-                                        required
-                                        className="w-full border border-gray-200 p-3 rounded-xl focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition-all text-sm font-semibold bg-white"
+                                    <FormSelect
                                         value={formData.warehouse}
-                                        onChange={e => setFormData({ ...formData, warehouse: e.target.value })}
-                                    >
-                                        <option value="">Select Target...</option>
-                                        {warehouses.map(w => <option key={w._id} value={w._id}>{w.name}</option>)}
-                                    </select>
+                                        onChange={(val) => setFormData({ ...formData, warehouse: val })}
+                                        options={warehouses.map(w => ({ value: w._id, label: w.name }))}
+                                        placeholder="Select Target..."
+                                    />
                                 </div>
 
                                 <div className="md:col-span-2">
                                     <label className="text-[9px] font-black uppercase text-gray-400 mb-1 ml-1 block">Work Order Number (WON)</label>
-                                    <select 
-                                        required
-                                        className="w-full border border-gray-200 p-3 rounded-xl focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition-all text-sm font-semibold bg-white"
+                                    <FormSelect
                                         value={formData.project}
-                                        onChange={e => setFormData({ ...formData, project: e.target.value })}
-                                    >
-                                        <option value="">Select Work Order...</option>
-                                        {(() => {
+                                        onChange={(val) => setFormData({ ...formData, project: val })}
+                                        options={(() => {
                                             const seen = new Set();
                                             return projects
                                                 .filter(p => p.workOrder?.workOrderNumber)
@@ -270,13 +264,11 @@ const CreatePOModal = ({ isOpen, onClose, onSuccess, editData }) => {
                                                     seen.add(won);
                                                     return true;
                                                 })
-                                                .map(p => (
-                                                    <option key={p._id} value={p._id}>
-                                                        {p.workOrder.workOrderNumber}
-                                                    </option>
-                                                ));
+                                                .map(p => ({ value: p._id, label: p.workOrder.workOrderNumber }));
                                         })()}
-                                    </select>
+                                        placeholder="Select Work Order..."
+                                        searchable
+                                    />
                                 </div>
 
                                 {editData && (
@@ -318,18 +310,20 @@ const CreatePOModal = ({ isOpen, onClose, onSuccess, editData }) => {
                                         </button>
 
                                         <div className="flex-1 w-full">
-                                            <select 
-                                                required
-                                                className="w-full border border-gray-200 p-2.5 rounded-xl focus:ring-2 focus:ring-primary/20 outline-none text-sm font-semibold bg-white"
+                                            <FormSelect
                                                 value={item.product}
-                                                onChange={e => updateItem(idx, 'product', e.target.value)}
-                                            >
-                                                <option value="">Select Product...</option>
-                                                {products.map(p => {
+                                                onChange={(val) => updateItem(idx, 'product', val)}
+                                                options={products.map(p => {
                                                     const whStock = p.stock?.find(s => (s.warehouse?._id || s.warehouse) === formData.warehouse)?.quantity || 0;
-                                                    return <option key={p._id} value={p._id}>{p.name} {formData.warehouse ? `(${whStock} in stock)` : ''}</option>;
+                                                    return {
+                                                        value: p._id,
+                                                        label: p.name,
+                                                        sublabel: formData.warehouse ? `${whStock} in stock` : undefined
+                                                    };
                                                 })}
-                                            </select>
+                                                placeholder="Select Product..."
+                                                searchable
+                                            />
                                         </div>
 
                                         <div className="flex gap-2 w-full md:w-auto">
@@ -387,8 +381,7 @@ const CreatePOModal = ({ isOpen, onClose, onSuccess, editData }) => {
                         <button 
                             type="submit" 
                             disabled={submitting}
-                            className="w-full sm:w-auto px-12 py-4 rounded-2xl bg-primary text-white font-black shadow-xl shadow-primary/30 hover:bg-primary-dark transition-all active:scale-95 disabled:opacity-50 flex items-center justify-center gap-3 text-sm"
-                        >
+                            className="w-full sm:w-auto px-12 py-3 rounded-md bg-primary text-white font-black shadow-xl shadow-primary/30 hover:bg-primary-dark transition-all active:scale-95 disabled:opacity-50 flex items-center justify-center gap-3 text-sm"                        >
                             {submitting ? <Loader2 size={18} className="animate-spin" /> : <Save size={18} />}
                             {submitting ? 'Processing...' : (editData ? 'Update Order' : 'Create Order')}
                         </button>

@@ -19,7 +19,8 @@ import {
     Trash2,
     Calendar,
     ArrowUpRight,
-    Home
+    Home,
+    Receipt
 } from 'lucide-react';
 import clsx from 'clsx';
 
@@ -46,6 +47,9 @@ const ProductDetails = () => {
                 api.get(`/inventory/warehouses`),
                 api.get(`/inventory/logs?product=${id}`)
             ]);
+            
+            console.log('DEBUG: History Res:', historyRes.data);
+            console.log('DEBUG: Stock Logs Res:', logsRes.data);
             
             // Find specific product
             const foundProduct = prodRes.data.find(p => p._id === id);
@@ -108,7 +112,7 @@ const ProductDetails = () => {
             {/* Product Overview Card */}
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
                 {/* Product Profile */}
-                <div className="lg:col-span-2 bg-white rounded-3xl p-8 shadow-sm border border-gray-100 flex flex-col md:flex-row gap-8">
+                <div className="lg:col-span-2 bg-white rounded-2xl p-8 shadow-sm border border-gray-100 flex flex-col md:flex-row gap-8">
                     <div className="w-48 h-48 bg-gray-50 rounded-2xl flex items-center justify-center border border-dashed border-gray-200 group overflow-hidden relative">
                         {product.images?.[0] ? (
                             <img src={getImageUrl(product.images[0])} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500" />
@@ -140,7 +144,7 @@ const ProductDetails = () => {
                 </div>
 
                 {/* Stock Summary Stats */}
-                <div className="bg-primary rounded-3xl p-8 shadow-lg shadow-primary/20 text-white flex flex-col justify-between relative overflow-hidden group">
+                <div className="bg-primary rounded-2xl p-8 shadow-lg shadow-primary/20 text-white flex flex-col justify-between relative overflow-hidden group">
                     <TrendingUp className="absolute -right-4 -top-4 w-32 h-32 text-white/5 group-hover:rotate-12 transition-transform duration-700" />
                     <div>
                         <p className="text-primary-light/80 text-xs font-black uppercase tracking-[0.2em] mb-2">
@@ -169,26 +173,39 @@ const ProductDetails = () => {
                             )}
                         </div>
                     </div>
-                    <div className="mt-8 pt-6 border-t border-white/10">
-                        <div className="flex justify-between items-center text-sm">
-                            <span className="text-primary-light/70 font-medium">Pending Units</span>
-                            <span className="font-black">
+                        <div className="flex flex-col gap-2 mt-4 pt-4 border-t border-white/10">
+                            <p className="text-primary-light font-black uppercase tracking-widest text-[9px]">Incoming Shipments</p>
+                            <div className="space-y-2">
                                 {history
-                                    .filter(h => h.deliveryStatus === 'PENDING' || h.deliveryStatus === 'IN_TRANSIT')
-                                    .reduce((acc, po) => {
+                                    .filter(h => h.deliveryStatus === 'PENDING' || h.deliveryStatus === 'IN_TRANSIT' || h.deliveryStatus === 'PARTIAL')
+                                    .map(po => {
                                         const item = po.items.find(i => (i.product?._id || i.product) === id);
-                                        return acc + (item?.quantity || 0);
-                                    }, 0)} Incoming
-                            </span>
+                                        const pending = (item?.quantity || 0) - (item?.receivedQuantity || 0);
+                                        if (pending <= 0) return null;
+                                        return (
+                                            <div key={po._id} className="flex justify-between items-center bg-white/10 p-2 rounded-lg border border-white/5">
+                                                <div>
+                                                    <p className="text-[10px] font-black">{po.poNumber}</p>
+                                                    <p className="text-[8px] opacity-70 font-bold uppercase tracking-tighter">{po.party?.name || 'Stock Order'}</p>
+                                                </div>
+                                                <div className="text-right">
+                                                    <p className="text-xs font-black">{pending} PCS</p>
+                                                </div>
+                                            </div>
+                                        );
+                                    })}
+                                {history.filter(h => h.deliveryStatus === 'PENDING' || h.deliveryStatus === 'IN_TRANSIT' || h.deliveryStatus === 'PARTIAL').length === 0 && (
+                                    <p className="text-[10px] opacity-50 italic">No pending deliveries</p>
+                                )}
+                            </div>
                         </div>
-                    </div>
                 </div>
             </div>
 
             {/* Detailed Tabs / Section */}
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
                 {/* Warehouse Breakdown */}
-                <div className="bg-white rounded-3xl p-8 shadow-sm border border-gray-100 space-y-6">
+                <div className="bg-white rounded-2xl p-8 shadow-sm border border-gray-100 space-y-6">
                     <h3 className="text-xl font-black flex items-center gap-3">
                         <Warehouse size={24} className="text-primary" /> Warehouse Breakdown
                     </h3>
@@ -232,69 +249,98 @@ const ProductDetails = () => {
                     </div>
                 </div>
 
-                {/* Purchase Order History */}
-                <div className="bg-white rounded-3xl p-8 shadow-sm border border-gray-100 space-y-6 flex flex-col h-full">
+                <div className="bg-white rounded-2xl p-8 shadow-sm border border-gray-100 space-y-6 flex flex-col h-full">
                     <div className="flex items-center justify-between">
                         <h3 className="text-xl font-black flex items-center gap-3">
                             <History size={24} className="text-primary" /> Transaction History
                         </h3>
-                        <span className="text-[10px] font-black text-gray-300 uppercase tracking-widest">{history.length} RECORDS</span>
+                        <span className="text-[10px] font-black text-gray-300 uppercase tracking-widest">{stockLogs.length} RECORDS</span>
                     </div>
                     
                     <div className="flex-1 space-y-4 overflow-y-auto max-h-[500px] custom-scrollbar pr-2">
-                        {stockLogs.map(log => (
-                            <div key={log._id} className="p-4 bg-gray-50 rounded-2xl border border-transparent hover:border-primary/20 hover:bg-white hover:shadow-lg transition-all group">
-                                <div className="flex justify-between items-start mb-3">
-                                    <div className="flex items-center gap-3">
-                                        <div className={clsx(
-                                            "w-10 h-10 rounded-xl flex items-center justify-center shadow-sm",
-                                            log.action === 'IN' || (log.action === 'ADJUSTMENT' && log.quantity > 0) ? "bg-emerald-50 text-emerald-500" : 
-                                            log.action === 'TRANSFER' ? "bg-blue-50 text-blue-500" : "bg-amber-50 text-amber-500"
-                                        )}>
-                                            {log.action === 'IN' ? <Package size={18} /> : 
-                                             log.action === 'TRANSFER' ? <Truck size={18} /> : <History size={18} />}
+                        {stockLogs.map((log) => {
+                            // 1. Direct population check
+                            let displayWON = log.referenceWorkOrder?.workOrderNumber || 
+                                          log.purchaseOrder?.project?.workOrder?.workOrderNumber || 
+                                          log.referenceProject?.workOrder?.workOrderNumber;
+                            
+                            // 2. Extra robust fallback: Check the 'history' state we already have for this product
+                            if (!displayWON && log.purchaseOrder) {
+                                const poNum = log.purchaseOrder?.poNumber || (typeof log.purchaseOrder === 'string' ? log.purchaseOrder : log.purchaseOrder._id);
+                                const match = history.find(h => h.poNumber === poNum || h._id === poNum);
+                                displayWON = match?.project?.workOrder?.workOrderNumber;
+                            }
+
+                            return (
+                                <div key={log._id} className="p-4 bg-gray-50 rounded-2xl border border-transparent hover:border-primary/20 hover:bg-white hover:shadow-lg transition-all group">
+                                    <div className="flex justify-between items-start mb-3">
+                                        <div className="flex items-center gap-3">
+                                            <div className={clsx(
+                                                "w-10 h-10 rounded-xl flex items-center justify-center shadow-sm",
+                                                log.action === 'IN' || (log.action === 'ADJUSTMENT' && log.quantity > 0) ? "bg-emerald-50 text-emerald-500" : 
+                                                log.action === 'TRANSFER' ? "bg-blue-50 text-blue-500" : "bg-amber-50 text-amber-500"
+                                            )}>
+                                                {log.action === 'IN' ? <Package size={18} /> : 
+                                                log.action === 'TRANSFER' ? <Truck size={18} /> : <History size={18} />}
+                                            </div>
+                                            <div>
+                                                <p className="font-black text-gray-900 text-sm uppercase tracking-tight">
+                                                    {log.action}
+                                                </p>
+                                                <p className="text-[10px] text-gray-400 flex items-center gap-1">
+                                                    <Calendar size={10} /> {new Date(log.createdAt).toLocaleString()}
+                                                </p>
+                                            </div>
                                         </div>
-                                        <div>
-                                            <p className="font-black text-gray-900 text-sm uppercase tracking-tight">
-                                                {log.action} {log.action === 'TRANSFER' ? (log.quantity < 0 ? 'OUT' : 'IN') : ''}
-                                            </p>
-                                            <p className="text-[10px] text-gray-400 flex items-center gap-1">
-                                                <Calendar size={10} /> {new Date(log.createdAt).toLocaleString()}
-                                            </p>
+                                        <div className="text-right flex flex-col items-end gap-1">
+                                            <div className="flex items-center gap-2">
+                                                {displayWON && (
+                                                    <span className="px-2 py-0.5 bg-primary/10 text-primary border border-primary/20 rounded text-[9px] font-black uppercase tracking-widest flex items-center gap-1">
+                                                        <Tag size={9} />
+                                                        WON: {displayWON}
+                                                    </span>
+                                                )}
+                                                <p className={clsx(
+                                                    "text-sm font-black",
+                                                    log.quantity > 0 ? "text-emerald-600" : "text-amber-600"
+                                                )}>
+                                                    {log.quantity > 0 ? '+' : ''}{log.quantity} PCS
+                                                </p>
+                                            </div>
+                                            <p className="text-[9px] text-gray-400 font-bold uppercase">Quantity</p>
                                         </div>
                                     </div>
-                                    <div className="text-right">
-                                        <p className={clsx(
-                                            "text-sm font-black",
-                                            log.quantity > 0 ? "text-emerald-600" : "text-amber-600"
-                                        )}>
-                                            {log.quantity > 0 ? '+' : ''}{log.quantity} PCS
+                                    
+                                    <div className="space-y-1.5 md:pl-12">
+                                        <p className="text-[10px] font-bold text-gray-500 flex items-center gap-1">
+                                            <Warehouse size={10} className="text-gray-400" /> 
+                                            Warehouse: <span className="text-gray-900 font-black">{log.warehouse?.name || 'Local Store'}</span>
                                         </p>
-                                        <p className="text-[9px] text-gray-400 font-bold uppercase">Quantity</p>
+                                        {log.purchaseOrder && (
+                                            <div className="space-y-1 mt-1">
+                                                <p className="text-[10px] font-bold text-gray-400 flex items-center gap-1">
+                                                    <Receipt size={10} className="text-gray-300" /> 
+                                                    Reference PO: <span className="text-gray-700 font-black">{log.purchaseOrder.poNumber || log.purchaseOrder}</span>
+                                                </p>
+                                                {displayWON && (
+                                                    <div className="flex items-center gap-1.5 px-2 py-1 bg-primary/5 border border-primary/10 rounded-lg w-fit mt-1">
+                                                        <Tag size={10} className="text-primary" />
+                                                        <span className="text-[10px] font-black text-primary uppercase tracking-widest">WON: {displayWON}</span>
+                                                    </div>
+                                                )}
+                                            </div>
+                                        )}
+                                        <p className="text-[10px] font-bold text-gray-500 flex items-center gap-1">
+                                            <Clock size={10} className="text-gray-400" /> 
+                                            Reason: <span className="text-gray-600 italic font-medium">{log.reason || 'Manual update'}</span>
+                                        </p>
+                                        <p className="text-[10px] font-bold text-gray-400 flex items-center gap-1 pt-1 mt-1 border-t border-gray-100">
+                                            Performer: <span className="text-gray-600">{log.performedBy?.name || 'Admin User'}</span>
+                                        </p>
                                     </div>
                                 </div>
-                                
-                                <div className="space-y-1.5 pl-13">
-                                    <p className="text-[10px] font-bold text-gray-500 flex items-center gap-1">
-                                        <Warehouse size={10} className="text-gray-400" /> 
-                                        Warehouse: <span className="text-gray-900 font-black">{log.warehouse?.name || 'Local Store'}</span>
-                                    </p>
-                                    {log.referenceWorkOrder && (
-                                        <p className="text-[10px] font-bold text-primary flex items-center gap-1">
-                                            <Tag size={10} className="text-primary/50" /> 
-                                            Work Order: <span className="font-black uppercase">{log.referenceWorkOrder.workOrderNumber}</span>
-                                        </p>
-                                    )}
-                                    <p className="text-[10px] font-bold text-gray-500 flex items-center gap-1">
-                                        <Clock size={10} className="text-gray-400" /> 
-                                        Reason: <span className="text-gray-600 italic font-medium">{log.reason || 'Manual update'}</span>
-                                    </p>
-                                    <p className="text-[10px] font-bold text-gray-400 flex items-center gap-1 pt-1 mt-1 border-t border-gray-100">
-                                        Performer: <span className="text-gray-600">{log.performedBy?.name || 'Admin User'}</span>
-                                    </p>
-                                </div>
-                            </div>
-                        ))}
+                            );
+                        })}
                         {stockLogs.length === 0 && (
                             <div className="py-12 text-center text-gray-400 italic bg-gray-50 rounded-2xl border border-dashed border-gray-200">
                                 <History size={32} className="mx-auto mb-2 opacity-20" />

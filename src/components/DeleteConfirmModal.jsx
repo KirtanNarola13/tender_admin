@@ -42,7 +42,7 @@ const DeleteConfirmModal = ({ isOpen, onClose, onConfirm, title, message, itemNa
                 <div className="p-6 bg-gray-50 flex flex-col sm:flex-row gap-3 pt-0 sm:pt-6">
                     <button
                         onClick={onClose}
-                        className="flex-1 px-4 py-2.5 rounded-xl border border-gray-200 bg-white text-gray-700 font-semibold hover:bg-gray-100 transition-all text-sm shadow-sm"
+                        className="flex-1 px-4 py-3 rounded-md border border-gray-200 bg-white text-gray-700 font-semibold hover:bg-gray-100 transition-all text-sm shadow-sm"
                     >
                         Cancel
                     </button>
@@ -51,7 +51,7 @@ const DeleteConfirmModal = ({ isOpen, onClose, onConfirm, title, message, itemNa
                             onConfirm();
                             onClose();
                         }}
-                        className="flex-1 px-4 py-2.5 rounded-xl bg-red-600 text-white font-semibold hover:bg-red-700 transition-all text-sm shadow-md hover:shadow-lg active:scale-[0.98]"
+                        className="flex-1 px-4 py-3 rounded-md bg-red-600 text-white font-semibold hover:bg-red-700 transition-all text-sm shadow-md hover:shadow-lg active:scale-[0.98]"
                     >
                         Delete Project
                     </button>

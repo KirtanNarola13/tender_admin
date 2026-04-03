@@ -6,6 +6,18 @@ export default {
     ],
     theme: {
         extend: {
+            fontFamily: {
+                sans: ['Inter', 'ui-sans-serif', 'system-ui', 'sans-serif'],
+            },
+            borderRadius: {
+                'sm':   '6px',
+                DEFAULT:'8px',
+                'md':   '8px',
+                'lg':   '10px',   // badges, tags
+                'xl':   '12px',   // buttons, inputs, nav items
+                '2xl':  '16px',   // cards, modals, dropdowns
+                'full': '9999px',
+            },
             colors: {
                 primary: "#B8860B",
                 "primary-light": "#FEF9C3",

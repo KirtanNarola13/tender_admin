@@ -4,21 +4,58 @@
 
 @layer base {
   body {
-    @apply bg-gray-50 text-gray-900 font-sans antialiased;
+    @apply bg-[#F7F7F8] text-gray-900 antialiased;
+    font-family: 'Inter', ui-sans-serif, system-ui, sans-serif;
+    font-feature-settings: 'cv11', 'ss01';
+    -webkit-font-smoothing: antialiased;
+  }
+
+  h1, h2, h3, h4, h5, h6 {
+    @apply tracking-tight;
   }
 }
 
 @layer components {
-  .premium-gradient {
-    @apply bg-gradient-to-br from-[#3A6CF4] via-[#4F46E5] to-[#7C3AED];
+  /* Card — the base surface used everywhere */
+  .card {
+    @apply bg-white rounded-2xl border border-gray-100 shadow-none;
+  }
+
+  /* Stat number — big bold figures */
+  .stat-number {
+    @apply text-3xl font-extrabold tracking-tight text-gray-900;
+  }
+
+  /* Section label — small muted uppercase label above a stat */
+  .section-label {
+    @apply text-[11px] font-medium text-gray-400 uppercase tracking-widest;
+  }
+
+  /* Page title */
+  .page-title {
+    @apply text-xl font-bold tracking-tight text-gray-900;
+  }
+
+  /* Page subtitle */
+  .page-subtitle {
+    @apply text-sm text-gray-400 font-normal mt-0.5;
   }
 }
 
 @layer utilities {
-  /* Use dvh (dynamic viewport height) so mobile browser toolbars don't cause layout shift.
-     Falls back to 100vh for browsers that don't support dvh yet. */
   .sidebar-height {
     height: 100vh;
     height: 100dvh;
+  }
+
+  /* Thin custom scrollbar */
+  .custom-scrollbar::-webkit-scrollbar {
+    width: 4px;
+  }
+  .custom-scrollbar::-webkit-scrollbar-track {
+    background: transparent;
+  }
+  .custom-scrollbar::-webkit-scrollbar-thumb {
+    @apply bg-gray-200 rounded-full;
   }
 }

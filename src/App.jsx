@@ -68,7 +68,7 @@ const ProtectedRoute = ({ children }) => {
             location.pathname.startsWith('/tasks') || 
             location.pathname.startsWith('/users')) && 
            <BranchTabs />}
-          <div className="flex-1 p-4 md:p-8 overflow-y-auto min-h-0 w-full relative">
+          <div className="flex-1 p-4 md:p-6 overflow-y-auto min-h-0 w-full relative">
             {children}
           </div>
         </div>
