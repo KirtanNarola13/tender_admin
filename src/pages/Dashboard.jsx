@@ -16,7 +16,7 @@ import {
 } from 'lucide-react';
 import PageLoader from '../components/PageLoader';
 
-const COLORS_PIE = ['#F59E0B', '#10B981']; // Pending (Amber), Completed (Emerald)
+const COLORS_PIE = ['#ef4444', '#10B981']; // Pending (Amber), Completed (Emerald)
 
 const Dashboard = () => {
     const navigate = useNavigate();
@@ -104,9 +104,9 @@ const Dashboard = () => {
                     title="Pending Tasks"
                     count={stats.pendingTasks}
                     icon={Clock}
-                    color="text-amber-600"
-                    bg="bg-amber-50"
-                    border="border-amber-100"
+                    color="text-red-600"
+                    bg="bg-red-50"
+                    border="border-red-100"
                     onClick={() => navigate('/tasks?status=pending')}
                 />
                 <StatCard
@@ -161,11 +161,11 @@ const Dashboard = () => {
                                 </Pie>
                                 <Tooltip
                                     wrapperStyle={{ zIndex: 50 }}
-                                    contentStyle={{ 
-                                        borderRadius: '12px', 
-                                        border: 'none', 
-                                        boxShadow: '0 10px 25px -5px rgba(0,0,0,0.2)', 
-                                        fontSize: '11px', 
+                                    contentStyle={{
+                                        borderRadius: '12px',
+                                        border: 'none',
+                                        boxShadow: '0 10px 25px -5px rgba(0,0,0,0.2)',
+                                        fontSize: '11px',
                                         fontWeight: 'bold',
                                         backgroundColor: '#ffffff'
                                     }}
@@ -176,7 +176,7 @@ const Dashboard = () => {
 
                     <div className="grid grid-cols-2 gap-4 mt-4 pt-4 border-t border-gray-50">
                         <div className="flex items-start gap-2">
-                            <div className="w-2.5 h-2.5 rounded-full bg-amber-500 mt-1 shadow-sm shadow-amber-200" />
+                            <div className="w-2.5 h-2.5 rounded-full bg-[#ef4444] mt-1 shadow-sm shadow-amber-200" />
                             <div>
                                 <p className="text-[10px] font-bold text-gray-400 uppercase leading-none">Pending</p>
                                 <p className="text-base font-black text-gray-800 mt-1">{stats.pendingTasks}</p>
