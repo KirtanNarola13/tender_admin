@@ -299,8 +299,9 @@ const EditProjectWizard = () => {
                     footer={
                         <div className="flex gap-2 p-1" onClick={e => e.stopPropagation()}>
                             <input
+                                type="number"
                                 className="flex-1 border border-gray-200 rounded-lg p-1.5 text-xs outline-none focus:border-primary px-3"
-                                placeholder="New WON (eg: WON-001)"
+                                placeholder="New WON (e.g. 2024001)"
                                 value={newWON}
                                 onChange={e => setNewWON(e.target.value)}
                             />

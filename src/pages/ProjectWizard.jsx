@@ -7,7 +7,7 @@ import { ChevronRight, ChevronLeft, Trash2, Box, ArrowLeft, CheckCircle, Loader,
 import FormSelect from '../components/FormSelect';
 import FormDatePicker from '../components/FormDatePicker';
 
-const CATEGORIES = ['Primary', 'Upper Primary', 'Secondary', 'Higher Secondary', 'Residential'];
+const CATEGORIES = ['Primary'];
 
 const today = new Date().toISOString().split('T')[0];
 
@@ -250,8 +250,9 @@ const ProjectWizard = () => {
                     footer={
                         <div className="flex gap-2 p-1" onClick={e => e.stopPropagation()}>
                             <input
+                                type="number"
                                 className="flex-1 border border-gray-200 rounded-lg p-1.5 text-xs outline-none focus:border-primary"
-                                placeholder="New WON (eg: WON-001)"
+                                placeholder="New WON (eg: 2024001)"
                                 value={newWON}
                                 onChange={e => setNewWON(e.target.value)}
                             />

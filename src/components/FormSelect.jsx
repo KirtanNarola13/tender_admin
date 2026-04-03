@@ -87,15 +87,20 @@ const FormSelect = ({ label, value, onChange, options, placeholder = 'Select an 
                                         className={clsx(
                                             "w-full flex items-center justify-between px-3 py-2.5 rounded-xl text-sm transition-all group",
                                             value === option.value
-                                                ? "bg-primary/5 text-primary font-bold"
+                                                ? "bg-primary/5 text-primary font-bold shadow-[inset_2px_0_0_0_#d97706]"
                                                 : "text-gray-600 hover:bg-gray-50",
                                             option.disabled && "opacity-40 grayscale cursor-not-allowed"
                                         )}
                                     >
-                                        <div className="flex flex-col items-start truncate overflow-hidden">
-                                            <span className="truncate w-full">{option.label}</span>
+                                        <div className="flex items-center gap-3 w-full truncate pr-2">
+                                            <span className="truncate">{option.label}</span>
                                             {option.sublabel && (
-                                                <span className="text-[10px] text-gray-400 font-normal truncate w-full">{option.sublabel}</span>
+                                                <span className={clsx(
+                                                    "text-[10px] px-2 py-0.5 rounded-md font-semibold tracking-wide shrink-0 ml-auto",
+                                                    value === option.value ? "bg-primary/10 text-primary" : "bg-gray-100 text-gray-500"
+                                                )}>
+                                                    {option.sublabel}
+                                                </span>
                                             )}
                                         </div>
                                         {value === option.value && <Check size={16} strokeWidth={3} className="shrink-0" />}

@@ -90,7 +90,7 @@ const TaskLedger = () => {
     // Group tasks by project
     const projectMap = useMemo(() => {
         const map = {};
-        
+
         // --- Apply Status & Branch Filter BEFORE grouping ---
         const filtered = allTasks.filter(t => {
             const matchStatus = statusFilter === 'all' || t.status === statusFilter;
@@ -113,8 +113,8 @@ const TaskLedger = () => {
                 };
             }
             map[pid].taskCount++;
-            if (['pending','locked'].includes(t.status)) map[pid].pendingCount++;
-            else if (['in-progress','submitted'].includes(t.status)) map[pid].workingCount++;
+            if (['pending', 'locked'].includes(t.status)) map[pid].pendingCount++;
+            else if (['in-progress', 'submitted'].includes(t.status)) map[pid].workingCount++;
             else map[pid].doneCount++;
             if (t.product?.name) map[pid].productNames.add(t.product.name);
         });
@@ -129,8 +129,8 @@ const TaskLedger = () => {
         <div className="w-full max-w-7xl mx-auto pb-10">
             {/* Header */}
             <div className="flex items-center gap-4 mb-6">
-                <button 
-                    onClick={() => navigate(-1)} 
+                <button
+                    onClick={() => navigate(-1)}
                     className="w-10 h-10 rounded-xl bg-white border border-gray-200 shadow-sm hover:bg-gray-50 hover:shadow-md flex items-center justify-center text-gray-600 transition-all shrink-0"
                 >
                     <ArrowLeft size={20} />
@@ -148,10 +148,10 @@ const TaskLedger = () => {
                             {!loading && allTasks.length > 0 && (
                                 <div className="flex items-center gap-2 mt-0.5 sm:mt-0">
                                     <div className="w-24 sm:w-32 h-1.5 bg-gray-200 rounded-full overflow-hidden shrink-0">
-                                        <div 
+                                        <div
                                             className="h-full bg-green-500 transition-all duration-1000 ease-out rounded-full shadow-[0_0_8px_rgba(34,197,94,0.4)]"
-                                            style={{ 
-                                                width: `${Math.round((allTasks.filter(t => ['completed', 'verified'].includes(t.status)).length / allTasks.length) * 100)}%` 
+                                            style={{
+                                                width: `${Math.round((allTasks.filter(t => ['completed', 'verified'].includes(t.status)).length / allTasks.length) * 100)}%`
                                             }}
                                         />
                                     </div>
@@ -202,7 +202,7 @@ const TaskLedger = () => {
             {/* Project List */}
             {loading ? (
                 <div className="space-y-3">
-                    {[1,2,3].map(i => (
+                    {[1, 2, 3].map(i => (
                         <div key={i} className="bg-white border border-gray-100 rounded-xl p-5 animate-pulse flex gap-4 items-center">
                             <div className="w-12 h-12 bg-gray-100 rounded-xl" />
                             <div className="flex-1 space-y-2">
@@ -238,25 +238,25 @@ const TaskLedger = () => {
                                         {project.taskCount} Task{project.taskCount !== 1 ? 's' : ''}
                                         {project.category ? ` • ${project.category}` : ''}
                                     </p>
-                                    
+
                                     {/* Sleek, Compact Progress Bar */}
                                     {project.taskCount > 0 && (
                                         <div className="mt-1 flex items-center gap-2 max-w-[120px] sm:max-w-[150px]">
-                                            <div className="flex-1 h-0.5 bg-gray-100 rounded-full overflow-hidden">
-                                                <div 
-                                                    className="h-full bg-green-500 rounded-full"
-                                                    style={{ width: `${Math.round((project.doneCount/project.taskCount)*100)}%` }}
+                                            <div className="flex-1 h-1.5 bg-gray-100 rounded-full overflow-hidden">
+                                                <div
+                                                    className="h-full bg-[#b8860b] rounded-full"
+                                                    style={{ width: `${Math.round((project.doneCount / project.taskCount) * 100)}%` }}
                                                 />
                                             </div>
-                                            <span className="text-[10px] whitespace-nowrap font-bold text-green-600 tabular-nums leading-none">
-                                                {Math.round((project.doneCount/project.taskCount)*100)}%
+                                            <span className="text-[10px] whitespace-nowrap font-bold text-[#b8860b] tabular-nums leading-none">
+                                                {Math.round((project.doneCount / project.taskCount) * 100)}%
                                             </span>
                                         </div>
                                     )}
 
                                     {project.productNames.size > 0 && (
                                         <p className="text-[10px] text-gray-400 mt-1 uppercase tracking-tight truncate max-w-[300px]">
-                                            {[...project.productNames].slice(0,3).join(', ')}
+                                            {[...project.productNames].slice(0, 3).join(', ')}
                                             {project.productNames.size > 3 ? ` +${project.productNames.size - 3} more` : ''}
                                         </p>
                                     )}

@@ -563,14 +563,14 @@ const Inventory = () => {
                                                             >
                                                                 <Pencil size={14} />
                                                             </button>
-                                                            <button
+                                                            {/* <button
                                                                 onClick={() => handleDeleteProduct(p)}
                                                                 disabled={deletingId === p._id}
                                                                 className="p-1.5 text-red-600 bg-red-50 hover:bg-red-100 border border-red-200 rounded-lg transition-colors disabled:opacity-50"
                                                                 title="Delete"
                                                             >
                                                                 {deletingId === p._id ? <Loader2 size={14} className="animate-spin" /> : <Trash2 size={14} />}
-                                                            </button>
+                                                            </button> */}
                                                         </div>
                                                     ) : (
                                                         <div className="text-right text-gray-400 text-xs italic">View</div>
@@ -1383,9 +1383,9 @@ const Inventory = () => {
                                         className="w-full border border-gray-200 p-2 rounded text-sm focus:ring-2 focus:ring-primary/10 outline-none"
                                         placeholder="Qty to add (e.g. 500)"
                                         value={editProduct.stockUpdate?.quantity || ''}
-                                        onChange={e => setEditProduct({ 
-                                            ...editProduct, 
-                                            stockUpdate: { ...(editProduct.stockUpdate || {}), quantity: e.target.value } 
+                                        onChange={e => setEditProduct({
+                                            ...editProduct,
+                                            stockUpdate: { ...(editProduct.stockUpdate || {}), quantity: e.target.value }
                                         })}
                                     />
                                 </div>
@@ -1393,9 +1393,9 @@ const Inventory = () => {
                                     className="w-full border border-gray-200 p-2 mt-2 rounded text-xs focus:ring-2 focus:ring-primary/10 outline-none"
                                     placeholder="Reason for adjustment (e.g. Audit correction)"
                                     value={editProduct.stockUpdate?.reason || ''}
-                                    onChange={e => setEditProduct({ 
-                                        ...editProduct, 
-                                        stockUpdate: { ...(editProduct.stockUpdate || {}), reason: e.target.value } 
+                                    onChange={e => setEditProduct({
+                                        ...editProduct,
+                                        stockUpdate: { ...(editProduct.stockUpdate || {}), reason: e.target.value }
                                     })}
                                 />
                                 <p className="text-[9px] text-gray-400 mt-2 font-medium">

@@ -53,7 +53,7 @@ const DeleteConfirmModal = ({ isOpen, onClose, onConfirm, title, message, itemNa
                         }}
                         className="flex-1 px-4 py-3 rounded-md bg-red-600 text-white font-semibold hover:bg-red-700 transition-all text-sm shadow-md hover:shadow-lg active:scale-[0.98]"
                     >
-                        Delete Project
+                        Delete
                     </button>
                 </div>
             </div>

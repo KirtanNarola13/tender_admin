@@ -3,7 +3,7 @@ import { useLocation, Link, useNavigate, useSearchParams } from 'react-router-do
 import api from '../services/api';
 import { useAuth } from '../context/AuthContext';
 import { useBranch } from '../context/BranchContext';
-import { Plus, Briefcase, Layout, Search, ChevronRight, ArrowLeft, Trash2, Calendar, MapPin, Users } from 'lucide-react';
+import { Plus, Briefcase, Layout, Search, ChevronRight, ArrowLeft, Trash2, Calendar, MapPin, Users, Pencil } from 'lucide-react';
 import DeleteConfirmModal from '../components/DeleteConfirmModal';
 import PageLoader from '../components/PageLoader';
 
@@ -166,19 +166,112 @@ const Projects = () => {
         });
 
     const [isWOModalOpen, setIsWOModalOpen] = useState(false);
+    const [editingWO, setEditingWO] = useState(null);
     const [newWO, setNewWO] = useState({ workOrderNumber: '', description: '', categories: [{ name: '' }] });
+
+    const [showWODeleteModal, setShowWODeleteModal] = useState(false);
+    const [woToDelete, setWoToDelete] = useState(null);
+
+    const [isCatModalOpen, setIsCatModalOpen] = useState(false);
+    const [editingCatName, setEditingCatName] = useState(null);
+    const [newCatName, setNewCatName] = useState('');
+
+    const [showCatDeleteModal, setShowCatDeleteModal] = useState(false);
+    const [catToDelete, setCatToDelete] = useState(null);
 
     const handleCreateWO = async () => {
         if (!newWO.workOrderNumber || newWO.categories.some(c => !c.name)) {
             return alert('Please fill in WON and all category names');
         }
         try {
-            await api.post('/workorders', newWO);
+            if (editingWO) {
+                await api.put(`/workorders/${editingWO._id}`, newWO);
+            } else {
+                await api.post('/workorders', newWO);
+            }
             setIsWOModalOpen(false);
+            setEditingWO(null);
             setNewWO({ workOrderNumber: '', description: '', categories: [{ name: '' }] });
             fetchWorkOrders();
         } catch (error) {
-            alert('Failed to create Work Order');
+            alert('Failed to process Work Order: ' + (error.response?.data?.message || error.message));
+        }
+    };
+
+    const handleEditWO = (e, won) => {
+        e.stopPropagation();
+        setEditingWO(won);
+        setNewWO({
+            workOrderNumber: won.workOrderNumber,
+            description: won.description || '',
+            categories: won.categories?.map(c => ({ name: c.name })) || [{ name: '' }]
+        });
+        setIsWOModalOpen(true);
+    };
+
+    const handleDeleteWO = (e, won) => {
+        e.stopPropagation();
+        setWoToDelete(won);
+        setShowWODeleteModal(true);
+    };
+
+    const confirmDeleteWO = async () => {
+        if (!woToDelete) return;
+        try {
+            await api.delete(`/workorders/${woToDelete._id}`);
+            fetchWorkOrders();
+            setShowWODeleteModal(false);
+        } catch (error) {
+            alert('Failed to delete Work Order: ' + (error.response?.data?.message || error.message));
+        }
+    };
+
+    const handleEditCategory = (e, cat) => {
+        e.stopPropagation();
+        setEditingCatName(cat.name);
+        setNewCatName(cat.name);
+        setIsCatModalOpen(true);
+    };
+
+    const handleSaveCategory = async () => {
+        if (!newCatName.trim()) return alert('Category name cannot be empty');
+        
+        const updatedCategories = selectedWON.categories.map(c => 
+            c.name === editingCatName ? { ...c, name: newCatName } : c
+        );
+
+        try {
+            await api.put(`/workorders/${selectedWON._id}`, { categories: updatedCategories });
+            setIsCatModalOpen(false);
+            setEditingCatName(null);
+            setNewCatName('');
+            fetchWorkOrders();
+            // If the filtered category was exactly this one, we may optionally clear selection.
+            if (selectedCategory && selectedCategory.name === editingCatName) {
+                 setSelectedCategory(null); // Or update it to the new name in search params
+            }
+        } catch (error) {
+            alert('Failed to update category: ' + (error.response?.data?.message || error.message));
+        }
+    };
+
+    const handleDeleteCategoryBtn = (e, cat) => {
+        e.stopPropagation();
+        setCatToDelete(cat);
+        setShowCatDeleteModal(true);
+    };
+
+    const confirmDeleteCategory = async () => {
+        if (!catToDelete) return;
+        const updatedCategories = selectedWON.categories.filter(c => c.name !== catToDelete.name);
+
+        try {
+            await api.put(`/workorders/${selectedWON._id}`, { categories: updatedCategories });
+            setShowCatDeleteModal(false);
+            setCatToDelete(null);
+            fetchWorkOrders();
+        } catch (error) {
+             alert('Failed to delete category: ' + (error.response?.data?.message || error.message));
         }
     };
 
@@ -285,8 +378,28 @@ const Projects = () => {
                                         </p>
                                     </div>
                                 </div>
-                                <div className="w-7 h-7 rounded-full flex shrink-0 items-center justify-center text-gray-400 group-hover:bg-primary/10 group-hover:text-primary transition-colors">
-                                    <ChevronRight size={18} />
+                                <div className="flex items-center gap-2">
+                                    {currentUser?.role !== 'admin_viewer' && (
+                                        <div className="flex items-center gap-1.5 mr-2">
+                                            <button
+                                                onClick={(e) => handleEditWO(e, won)}
+                                                className="w-8 h-8 rounded-lg flex shrink-0 items-center justify-center bg-gray-50 text-primary border border-gray-100 hover:bg-primary/10 transition-all shadow-sm"
+                                                title="Edit WON"
+                                            >
+                                                <Pencil size={14} />
+                                            </button>
+                                            <button
+                                                onClick={(e) => handleDeleteWO(e, won)}
+                                                className="w-8 h-8 rounded-lg flex shrink-0 items-center justify-center bg-gray-50 text-red-500 border border-gray-100 hover:bg-red-50 transition-all shadow-sm"
+                                                title="Delete WON"
+                                            >
+                                                <Trash2 size={14} />
+                                            </button>
+                                        </div>
+                                    )}
+                                    <div className="w-7 h-7 rounded-full flex shrink-0 items-center justify-center text-gray-400 group-hover:bg-primary/10 group-hover:text-primary transition-colors">
+                                        <ChevronRight size={18} />
+                                    </div>
                                 </div>
                             </button>
                         ))
@@ -312,8 +425,28 @@ const Projects = () => {
                                         </p>
                                     </div>
                                 </div>
-                                <div className="w-7 h-7 rounded-full flex shrink-0 items-center justify-center text-gray-400 group-hover:bg-primary/10 group-hover:text-primary transition-colors">
-                                    <ChevronRight size={18} />
+                                <div className="flex items-center gap-2">
+                                    {currentUser?.role !== 'admin_viewer' && (
+                                        <div className="flex items-center gap-1.5 mr-2">
+                                            <button
+                                                onClick={(e) => handleEditCategory(e, cat)}
+                                                className="w-8 h-8 rounded-lg flex shrink-0 items-center justify-center bg-gray-50 text-primary border border-gray-100 hover:bg-primary/10 transition-all shadow-sm"
+                                                title="Edit Category"
+                                            >
+                                                <Pencil size={14} />
+                                            </button>
+                                            <button
+                                                onClick={(e) => handleDeleteCategoryBtn(e, cat)}
+                                                className="w-8 h-8 rounded-lg flex shrink-0 items-center justify-center bg-gray-50 text-red-500 border border-gray-100 hover:bg-red-50 transition-all shadow-sm"
+                                                title="Delete Category"
+                                            >
+                                                <Trash2 size={14} />
+                                            </button>
+                                        </div>
+                                    )}
+                                    <div className="w-7 h-7 rounded-full flex shrink-0 items-center justify-center text-gray-400 group-hover:bg-primary/10 group-hover:text-primary transition-colors">
+                                        <ChevronRight size={18} />
+                                    </div>
                                 </div>
                             </button>
                         ))
@@ -468,12 +601,13 @@ const Projects = () => {
             {isWOModalOpen && (
                 <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-[100] backdrop-blur-sm">
                     <div className="bg-white p-6 rounded-2xl shadow-xl w-full max-w-md">
-                        <h2 className="text-lg font-bold text-gray-900 mb-4">Create Work Order</h2>
+                        <h2 className="text-lg font-bold text-gray-900 mb-4">{editingWO ? 'Edit Work Order' : 'Create Work Order'}</h2>
 
                         <label className="block text-xs font-semibold text-gray-600 mb-1">Work Order Number *</label>
                         <input
+                            type="number"
                             className="w-full border border-gray-300 p-2.5 rounded-xl mb-4 text-sm focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none"
-                            placeholder="e.g. WON/2024/001"
+                            placeholder="e.g. 2024001"
                             value={newWO.workOrderNumber}
                             onChange={(e) => setNewWO({ ...newWO, workOrderNumber: e.target.value })}
                         />
@@ -496,8 +630,8 @@ const Projects = () => {
                                         onChange={(e) => updateWOCategory(idx, e.target.value)}
                                     />
                                     {newWO.categories.length > 1 && (
-                                        <button 
-                                            onClick={() => removeWOCategory(idx)} 
+                                        <button
+                                            onClick={() => removeWOCategory(idx)}
                                             className="text-gray-400 hover:text-red-500 p-1.5 transition-colors"
                                         >
                                             <Trash2 size={16} />
@@ -505,7 +639,7 @@ const Projects = () => {
                                     )}
                                 </div>
                             ))}
-                            <button 
+                            <button
                                 onClick={addWOCategory}
                                 className="text-xs font-bold text-primary flex items-center gap-1 hover:underline mt-1 ml-1"
                             >
@@ -514,8 +648,8 @@ const Projects = () => {
                         </div>
 
                         <div className="flex justify-end gap-3 mt-4">
-                            <button onClick={() => setIsWOModalOpen(false)} className="px-4 py-3 text-sm font-medium text-gray-700 hover:bg-gray-100 rounded-md">Cancel</button>
-                            <button onClick={handleCreateWO} className="px-6 py-3 text-sm font-bold bg-primary text-white hover:bg-opacity-90 rounded-md shadow-lg shadow-primary/20">Create WON</button>
+                            <button onClick={() => { setIsWOModalOpen(false); setEditingWO(null); setNewWO({ workOrderNumber: '', description: '', categories: [{ name: '' }] }); }} className="px-4 py-3 text-sm font-medium text-gray-700 hover:bg-gray-100 rounded-md">Cancel</button>
+                            <button onClick={handleCreateWO} className="px-6 py-3 text-sm font-bold bg-primary text-white hover:bg-opacity-90 rounded-md shadow-lg shadow-primary/20">{editingWO ? 'Update WON' : 'Create WON'}</button>
                         </div>
                     </div>
                 </div>
@@ -555,6 +689,43 @@ const Projects = () => {
                 onConfirm={confirmDelete}
                 itemName={projectToDelete?.name}
                 title="Delete Project?"
+            />
+
+            <DeleteConfirmModal
+                isOpen={showWODeleteModal}
+                onClose={() => setShowWODeleteModal(false)}
+                onConfirm={confirmDeleteWO}
+                itemName={woToDelete?.workOrderNumber}
+                title="Delete Work Order?"
+                message="This will permanently delete the Work Order and all its categories. Make sure no projects are attached to it."
+            />
+
+            {isCatModalOpen && (
+                <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-[100] backdrop-blur-sm">
+                    <div className="bg-white p-6 rounded-2xl shadow-xl w-full max-w-md">
+                        <h2 className="text-lg font-bold text-gray-900 mb-4">Edit Category</h2>
+                        <label className="block text-xs font-semibold text-gray-600 mb-1">Category Name *</label>
+                        <input
+                            className="w-full border border-gray-300 p-2.5 rounded-xl mb-4 text-sm focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none"
+                            placeholder="e.g. Primary"
+                            value={newCatName}
+                            onChange={(e) => setNewCatName(e.target.value)}
+                        />
+                        <div className="flex justify-end gap-3 mt-4">
+                            <button onClick={() => { setIsCatModalOpen(false); setEditingCatName(null); setNewCatName(''); }} className="px-4 py-3 text-sm font-medium text-gray-700 hover:bg-gray-100 rounded-md">Cancel</button>
+                            <button onClick={handleSaveCategory} className="px-6 py-3 text-sm font-bold bg-primary text-white hover:bg-opacity-90 rounded-md shadow-lg shadow-primary/20">Save Category</button>
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            <DeleteConfirmModal
+                isOpen={showCatDeleteModal}
+                onClose={() => setShowCatDeleteModal(false)}
+                onConfirm={confirmDeleteCategory}
+                itemName={catToDelete?.name}
+                title="Delete Category?"
+                message="This will permanently delete the Category. Make sure no projects are currently assigned to it."
             />
         </div>
     );
