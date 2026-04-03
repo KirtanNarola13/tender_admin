@@ -266,7 +266,6 @@ const Projects = () => {
                 {!selectedWON ? (
                     // VIEW 1: WON LIST
                     workOrders
-                        .filter(won => won.categories?.some(cat => cat.projects?.length > 0))
                         .map((won) => (
                             <button
                                 key={won._id}
@@ -294,7 +293,6 @@ const Projects = () => {
                 ) : !selectedCategory ? (
                     // VIEW 2: CATEGORY LIST
                     selectedWON.categories
-                        .filter(cat => cat.projects?.length > 0)
                         .map((cat) => (
                             <button
                                 key={cat.name}
@@ -487,8 +485,33 @@ const Projects = () => {
                             value={newWO.description}
                             onChange={(e) => setNewWO({ ...newWO, description: e.target.value })}
                         />
-
-                 
+                        <label className="block text-xs font-semibold text-gray-600 mb-1">Categories *</label>
+                        <div className="space-y-2 mb-4">
+                            {newWO.categories.map((cat, idx) => (
+                                <div key={idx} className="flex gap-2">
+                                    <input
+                                        className="flex-1 border border-gray-300 p-2.5 rounded-xl text-sm focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none"
+                                        placeholder="Category Name"
+                                        value={cat.name}
+                                        onChange={(e) => updateWOCategory(idx, e.target.value)}
+                                    />
+                                    {newWO.categories.length > 1 && (
+                                        <button 
+                                            onClick={() => removeWOCategory(idx)} 
+                                            className="text-gray-400 hover:text-red-500 p-1.5 transition-colors"
+                                        >
+                                            <Trash2 size={16} />
+                                        </button>
+                                    )}
+                                </div>
+                            ))}
+                            <button 
+                                onClick={addWOCategory}
+                                className="text-xs font-bold text-primary flex items-center gap-1 hover:underline mt-1 ml-1"
+                            >
+                                <Plus size={14} /> Add Category
+                            </button>
+                        </div>
 
                         <div className="flex justify-end gap-3 mt-4">
                             <button onClick={() => setIsWOModalOpen(false)} className="px-4 py-3 text-sm font-medium text-gray-700 hover:bg-gray-100 rounded-md">Cancel</button>

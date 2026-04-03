@@ -53,7 +53,7 @@ const EditProjectWizard = () => {
     const [initialQuantities, setInitialQuantities] = useState({}); // { productId: qty }
 
     // Filtered team leaders based on selected branch
-    const filteredLeaders = teamLeaders.filter(tl => 
+    const filteredLeaders = teamLeaders.filter(tl =>
         !projectData.branch || (tl.branches && tl.branches.includes(projectData.branch))
     );
 
@@ -73,7 +73,7 @@ const EditProjectWizard = () => {
         try {
             const res = await api.post('/workorders', {
                 workOrderNumber: newWON,
-                categories: [{ name: 'Primary' }]
+                categories: CATEGORIES.map(name => ({ name, projects: [] }))
             });
             setWorkOrders([...workOrders, res.data]);
             setProjectData({ ...projectData, workOrder: res.data._id, workOrderCategory: 'Primary' });
@@ -127,7 +127,7 @@ const EditProjectWizard = () => {
                 setAvailableProducts(products);
                 setTeamLeaders(leaders);
                 setWorkOrders(wos);
-                
+
                 // Extract unique clients
                 const clients = [...new Set(projectsRes.data.map(p => p.client).filter(Boolean))];
                 setExistingClients(clients.sort());
@@ -178,7 +178,7 @@ const EditProjectWizard = () => {
             }
         };
 
-    load();
+        load();
     }, [id]);
 
     // ── Product helpers ─────────────────────────────────────────────
@@ -326,24 +326,7 @@ const EditProjectWizard = () => {
                     icon={Tag}
                     disabled={!projectData.workOrder}
                     searchable
-                    footer={
-                        <div className="flex gap-2 p-1" onClick={e => e.stopPropagation()}>
-                            <input
-                                className="flex-1 border border-gray-200 rounded-lg p-1.5 text-xs outline-none focus:border-primary disabled:bg-gray-100 px-3"
-                                placeholder="New Category (e.g. Civil)"
-                                value={newWONCategory}
-                                onChange={e => setNewWONCategory(e.target.value)}
-                                disabled={!projectData.workOrder}
-                            />
-                            <button
-                                onClick={handleCreateWONCategory}
-                                disabled={!newWONCategory || isCreatingCat || !projectData.workOrder}
-                                className="bg-primary text-white p-1.5 rounded-lg hover:bg-opacity-90 disabled:opacity-50 transition-all shrink-0"
-                            >
-                                <Plus size={14} />
-                            </button>
-                        </div>
-                    }
+                    footer={null}
                 />
 
                 <div>
@@ -369,10 +352,10 @@ const EditProjectWizard = () => {
                     label="Team Leader"
                     value={projectData.assignedLeader}
                     onChange={val => setProjectData({ ...projectData, assignedLeader: val })}
-                    options={filteredLeaders.map(u => ({ 
-                        label: u.name, 
+                    options={filteredLeaders.map(u => ({
+                        label: u.name,
                         value: u._id,
-                        sublabel: u.email 
+                        sublabel: u.email
                     }))}
                     placeholder={projectData.branch ? "— Unassigned —" : "Select Branch First"}
                     icon={User}
@@ -476,8 +459,8 @@ const EditProjectWizard = () => {
                                                     Max Available: {getEffectiveStock(item.product)}
                                                 </span>
                                                 <span className={`px-1.5 py-0.5 rounded text-[10px] font-bold border uppercase tracking-tight transition-colors
-                                                    ${(getEffectiveStock(item.product) - (item.plannedQuantity || 0)) < 0 
-                                                        ? 'bg-red-100 text-red-600 border-red-200' 
+                                                    ${(getEffectiveStock(item.product) - (item.plannedQuantity || 0)) < 0
+                                                        ? 'bg-red-100 text-red-600 border-red-200'
                                                         : 'bg-green-50 text-green-600 border-green-200'}`}
                                                 >
                                                     Remaining: {getEffectiveStock(item.product) - (item.plannedQuantity || 0)}

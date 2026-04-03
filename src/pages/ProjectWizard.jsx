@@ -50,13 +50,13 @@ const ProjectWizard = () => {
         try {
             const res = await api.post('/workorders', {
                 workOrderNumber: newWON,
-                categories: [{ name: 'Primary' }] // Default category for new WON
+                categories: CATEGORIES.map(name => ({ name, projects: [] }))
             });
             setWorkOrders([...workOrders, res.data]);
-            setProjectData({ 
-                ...projectData, 
-                workOrder: res.data._id, 
-                workOrderCategory: 'Primary' 
+            setProjectData({
+                ...projectData,
+                workOrder: res.data._id,
+                workOrderCategory: 'Primary'
             });
             setNewWON('');
         } catch (e) {
@@ -74,16 +74,16 @@ const ProjectWizard = () => {
             if (!selectedWO) return;
 
             const updatedCategories = [...selectedWO.categories, { name: newWONCategory, projects: [] }];
-            
+
             const res = await api.put(`/workorders/${projectData.workOrder}`, {
                 categories: updatedCategories
             });
 
             // Update local state
             setWorkOrders(workOrders.map(wo => wo._id === res.data._id ? res.data : wo));
-            setProjectData({ 
-                ...projectData, 
-                workOrderCategory: newWONCategory 
+            setProjectData({
+                ...projectData,
+                workOrderCategory: newWONCategory
             });
             setNewWONCategory('');
         } catch (e) {
@@ -92,9 +92,9 @@ const ProjectWizard = () => {
             setIsCreatingCat(false);
         }
     };
-    
+
     // Filtered team leaders based on selected branch
-    const filteredLeaders = teamLeaders.filter(tl => 
+    const filteredLeaders = teamLeaders.filter(tl =>
         !projectData.branch || (tl.branches && tl.branches.includes(projectData.branch))
     );
 
@@ -127,7 +127,7 @@ const ProjectWizard = () => {
             setAvailableProducts(prodRes.data);
             setTeamLeaders(usersRes.data.filter(u => u.role === 'team_leader'));
             setWorkOrders(woRes.data);
-            
+
             // Extract unique clients
             const clients = [...new Set(projectsRes.data.map(p => p.client).filter(Boolean))];
             setExistingClients(clients.sort());
@@ -235,7 +235,7 @@ const ProjectWizard = () => {
                         </div>
                     }
                 />
-                
+
                 <FormSelect
                     label="Work Order Number *"
                     value={projectData.workOrder}
@@ -278,25 +278,7 @@ const ProjectWizard = () => {
                     icon={Tag}
                     disabled={!projectData.workOrder}
                     searchable
-                    footer={
-                        <div className="flex gap-2 p-1" onClick={e => e.stopPropagation()}>
-                            <input
-                                className="flex-1 border border-gray-200 rounded-lg p-1.5 text-xs outline-none focus:border-primary disabled:bg-gray-100"
-                                placeholder="New Category (e.g. Civil)"
-                                value={newWONCategory}
-                                onChange={e => setNewWONCategory(e.target.value)}
-                                disabled={!projectData.workOrder}
-                            />
-                            <button
-                                onClick={handleCreateWONCategory}
-                                disabled={!newWONCategory || isCreatingCat || !projectData.workOrder}
-                                className="bg-primary text-white p-1.5 rounded-lg hover:bg-opacity-90 disabled:opacity-50 transition-all shrink-0"
-                                title="Add New Category"
-                            >
-                                <Plus size={14} />
-                            </button>
-                        </div>
-                    }
+                    footer={null}
                 />
                 <div>
                     <label className="block text-xs font-semibold text-gray-600 mb-1.5 uppercase tracking-wide ml-1">Location / City</label>
@@ -321,10 +303,10 @@ const ProjectWizard = () => {
                     label="Team Leader *"
                     value={projectData.assignedLeader}
                     onChange={val => setProjectData({ ...projectData, assignedLeader: val })}
-                    options={filteredLeaders.map(u => ({ 
-                        label: u.name, 
+                    options={filteredLeaders.map(u => ({
+                        label: u.name,
                         value: u._id,
-                        sublabel: u.email 
+                        sublabel: u.email
                     }))}
                     placeholder={projectData.branch ? "— Select Team Leader —" : "Select Branch First"}
                     icon={User}
@@ -604,11 +586,11 @@ const ProjectWizard = () => {
                         Next <ChevronRight size={18} />
                     </button>
                 ) : (
-                        <button
-                            onClick={handleSubmit}
-                            disabled={loading}
-                            className="flex items-center gap-2 px-7 py-2.5 rounded-lg bg-primary text-white font-bold text-sm hover:bg-opacity-90 transition disabled:opacity-60 shadow-lg shadow-primary/20"
-                        >
+                    <button
+                        onClick={handleSubmit}
+                        disabled={loading}
+                        className="flex items-center gap-2 px-7 py-2.5 rounded-lg bg-primary text-white font-bold text-sm hover:bg-opacity-90 transition disabled:opacity-60 shadow-lg shadow-primary/20"
+                    >
                         {loading ? (
                             <><Loader size={16} className="animate-spin" /> Creating...</>
                         ) : (
