@@ -58,4 +58,12 @@
   .custom-scrollbar::-webkit-scrollbar-thumb {
     @apply bg-gray-200 rounded-full;
   }
+
+  @keyframes progress-shrink {
+    from { width: 100%; }
+    to { width: 0%; }
+  }
+  .animate-progress-shrink {
+    animation: progress-shrink linear forwards;
+  }
 }

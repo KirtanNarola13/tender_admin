@@ -8,6 +8,7 @@ import {
     Trash2, SlidersHorizontal, Layout, X, Calendar, MapPin
 } from 'lucide-react';
 import DeleteConfirmModal from '../components/DeleteConfirmModal';
+import { useAlert } from '../context/AlertContext';
 
 import CustomSelect from '../components/CustomSelect';
 
@@ -30,6 +31,7 @@ const CategoryProjects = () => {
     const { categoryName } = useParams();
     const navigate = useNavigate();
     const { user: currentUser } = useAuth();
+    const { showAlert } = useAlert();
 
     const { activeBranch } = useBranch();
     const [allProjects, setAllProjects] = useState([]);
@@ -74,7 +76,7 @@ const CategoryProjects = () => {
             await api.delete(`/projects/${projectToDelete.id}`);
             fetchProjects();
         } catch (error) {
-            alert('Failed to delete project: ' + (error.response?.data?.message || error.message));
+            showAlert('Failed to delete project: ' + (error.response?.data?.message || error.message), 'error');
         }
     };
 

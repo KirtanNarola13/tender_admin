@@ -18,7 +18,15 @@ const CreatePOModal = ({ isOpen, onClose, onSuccess, editData }) => {
         warehouse: '',
         project: '',
         items: [{ product: '', quantity: '', unitPrice: '' }],
-        date: new Date().toISOString().split('T')[0]
+        date: new Date().toISOString().split('T')[0],
+        expectedTimeline: {
+            ADVANCE: '',
+            IN_PRODUCTION: '',
+            TRANSIT: '',
+            DELIVERED: '',
+            INSTALLATION: '',
+            COMPLETED: ''
+        }
     });
 
     useEffect(() => {
@@ -42,14 +50,30 @@ const CreatePOModal = ({ isOpen, onClose, onSuccess, editData }) => {
                         quantity: i.quantity,
                         unitPrice: i.unitPrice
                     })) || [{ product: '', quantity: '', unitPrice: '' }],
-                    date: new Date(editData.date).toISOString().split('T')[0]
+                    date: new Date(editData.date).toISOString().split('T')[0],
+                    expectedTimeline: {
+                        ADVANCE: editData.statusTimeline?.find(t => t.status === 'ADVANCE')?.expectedDate?.split('T')[0] || '',
+                        IN_PRODUCTION: editData.statusTimeline?.find(t => t.status === 'IN_PRODUCTION')?.expectedDate?.split('T')[0] || '',
+                        TRANSIT: editData.statusTimeline?.find(t => t.status === 'TRANSIT')?.expectedDate?.split('T')[0] || '',
+                        DELIVERED: editData.statusTimeline?.find(t => t.status === 'DELIVERED')?.expectedDate?.split('T')[0] || '',
+                        INSTALLATION: editData.statusTimeline?.find(t => t.status === 'INSTALLATION')?.expectedDate?.split('T')[0] || '',
+                        COMPLETED: editData.statusTimeline?.find(t => t.status === 'COMPLETED')?.expectedDate?.split('T')[0] || ''
+                    }
                 });
             } else {
                 setFormData({
                     party: { name: '', phone: '', address: '', email: '' },
                     warehouse: '',
                     items: [{ product: '', quantity: '', unitPrice: '' }],
-                    date: new Date().toISOString().split('T')[0]
+                    date: new Date().toISOString().split('T')[0],
+                    expectedTimeline: {
+                        ADVANCE: '',
+                        IN_PRODUCTION: '',
+                        TRANSIT: '',
+                        DELIVERED: '',
+                        INSTALLATION: '',
+                        COMPLETED: ''
+                    }
                 });
             }
         }
@@ -281,8 +305,36 @@ const CreatePOModal = ({ isOpen, onClose, onSuccess, editData }) => {
                                 )}
                             </div>
                         </section>
+                        
+                        {/* 2. Expected Timeline Dates */}
+                        <section className="space-y-4">
+                            <h4 className="text-[10px] font-black uppercase tracking-[0.2em] text-gray-400">Scheduled Journey (Expected Dates)</h4>
+                            <div className="grid grid-cols-2 md:grid-cols-3 gap-4 p-5 bg-gray-50 rounded-2xl border border-gray-100">
+                                {[
+                                    { key: 'ADVANCE', label: 'Advance' },
+                                    { key: 'IN_PRODUCTION', label: 'Production' },
+                                    { key: 'TRANSIT', label: 'Transit' },
+                                    { key: 'DELIVERED', label: 'Delivery' },
+                                    { key: 'INSTALLATION', label: 'Installation' },
+                                    { key: 'COMPLETED', label: 'Completion' }
+                                ].map((step) => (
+                                    <div key={step.key}>
+                                        <label className="text-[9px] font-black uppercase text-gray-500 mb-1 ml-1 block">{step.label}</label>
+                                        <input 
+                                            type="date"
+                                            className="w-full border border-gray-200 p-2.5 rounded-xl focus:ring-2 focus:ring-primary/20 outline-none text-[11px] font-bold"
+                                            value={formData.expectedTimeline[step.key]}
+                                            onChange={e => setFormData({
+                                                ...formData,
+                                                expectedTimeline: { ...formData.expectedTimeline, [step.key]: e.target.value }
+                                            })}
+                                        />
+                                    </div>
+                                ))}
+                            </div>
+                        </section>
 
-                        {/* 2. Order Items Table-style */}
+                        {/* 3. Order Items Table-style */}
                         <section className="space-y-4">
                             <div className="flex items-center justify-between border-b border-gray-100 pb-2">
                                 <h4 className="text-[10px] font-black uppercase tracking-[0.2em] text-gray-400">Order Items</h4>

@@ -77,32 +77,36 @@ const ProtectedRoute = ({ children }) => {
   );
 };
 
+import { AlertProvider } from './context/AlertContext';
+
 function App() {
   return (
     <BrowserRouter>
       <AuthProvider>
         <BranchProvider>
-          <Routes>
-            <Route path="/login" element={<Login />} />
-            <Route path="/" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
-            <Route path="/projects" element={<ProtectedRoute><Projects /></ProtectedRoute>} />
-            <Route path="/projects/new" element={<ProtectedRoute><ProjectWizard /></ProtectedRoute>} />
-            <Route path="/projects/category/:categoryName" element={<ProtectedRoute><CategoryProjects /></ProtectedRoute>} />
-            <Route path="/projects/:id/edit" element={<ProtectedRoute><EditProjectWizard /></ProtectedRoute>} />
-            <Route path="/projects/:id" element={<ProtectedRoute><ProjectDetails /></ProtectedRoute>} />
-            <Route path="/tasks" element={<ProtectedRoute><Tasks /></ProtectedRoute>} />
-            <Route path="/tasks/leader/:leaderId" element={<ProtectedRoute><TaskLedger /></ProtectedRoute>} />
-            <Route path="/tasks/leader/:leaderId/project/:projectId" element={<ProtectedRoute><TaskProducts /></ProtectedRoute>} />
-            <Route path="/tasks/leader/:leaderId/project/:projectId/product/:productId" element={<ProtectedRoute><TaskSteps /></ProtectedRoute>} />
-            <Route path="/tasks/:id" element={<ProtectedRoute><TaskDetails /></ProtectedRoute>} />
-            <Route path="/verify" element={<ProtectedRoute><VerifyDashboard /></ProtectedRoute>} />
-            <Route path="/users" element={<ProtectedRoute><Users /></ProtectedRoute>} />
-            <Route path="/inventory" element={<ProtectedRoute><Inventory /></ProtectedRoute>} />
-            <Route path="/inventory/product/:id" element={<ProtectedRoute><ProductDetails /></ProtectedRoute>} />
-            <Route path="/purchase-orders" element={<ProtectedRoute><PurchaseOrders /></ProtectedRoute>} />
-            <Route path="/reports" element={<ProtectedRoute><Reports /></ProtectedRoute>} />
-            <Route path="/branches" element={<ProtectedRoute><Branches /></ProtectedRoute>} />
-          </Routes>
+          <AlertProvider>
+            <Routes>
+              <Route path="/login" element={<Login />} />
+              <Route path="/" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
+              <Route path="/projects" element={<ProtectedRoute><Projects /></ProtectedRoute>} />
+              <Route path="/projects/new" element={<ProtectedRoute><ProjectWizard /></ProtectedRoute>} />
+              <Route path="/projects/category/:categoryName" element={<ProtectedRoute><CategoryProjects /></ProtectedRoute>} />
+              <Route path="/projects/:id/edit" element={<ProtectedRoute><EditProjectWizard /></ProtectedRoute>} />
+              <Route path="/projects/:id" element={<ProtectedRoute><ProjectDetails /></ProtectedRoute>} />
+              <Route path="/tasks" element={<ProtectedRoute><Tasks /></ProtectedRoute>} />
+              <Route path="/tasks/leader/:leaderId" element={<ProtectedRoute><TaskLedger /></ProtectedRoute>} />
+              <Route path="/tasks/leader/:leaderId/project/:projectId" element={<ProtectedRoute><TaskProducts /></ProtectedRoute>} />
+              <Route path="/tasks/leader/:leaderId/project/:projectId/product/:productId" element={<ProtectedRoute><TaskSteps /></ProtectedRoute>} />
+              <Route path="/tasks/:id" element={<ProtectedRoute><TaskDetails /></ProtectedRoute>} />
+              <Route path="/verify" element={<ProtectedRoute><VerifyDashboard /></ProtectedRoute>} />
+              <Route path="/users" element={<ProtectedRoute><Users /></ProtectedRoute>} />
+              <Route path="/inventory" element={<ProtectedRoute><Inventory /></ProtectedRoute>} />
+              <Route path="/inventory/product/:id" element={<ProtectedRoute><ProductDetails /></ProtectedRoute>} />
+              <Route path="/purchase-orders" element={<ProtectedRoute><PurchaseOrders /></ProtectedRoute>} />
+              <Route path="/reports" element={<ProtectedRoute><Reports /></ProtectedRoute>} />
+              <Route path="/branches" element={<ProtectedRoute><Branches /></ProtectedRoute>} />
+            </Routes>
+          </AlertProvider>
         </BranchProvider>
       </AuthProvider>
     </BrowserRouter>

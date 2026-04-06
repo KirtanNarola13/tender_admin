@@ -6,6 +6,7 @@ import { useBranch } from '../context/BranchContext';
 import { ChevronRight, ChevronLeft, Trash2, Box, ArrowLeft, CheckCircle, Loader, Calendar, MapPin, User, Tag, Activity, Plus, Search } from 'lucide-react';
 import FormSelect from '../components/FormSelect';
 import FormDatePicker from '../components/FormDatePicker';
+import { useAlert } from '../context/AlertContext';
 
 const CATEGORIES = ['Primary', 'Upper Primary', 'Secondary', 'Higher Secondary', 'Residential'];
 const STATUSES = ['active', 'completed', 'on-hold'];
@@ -16,6 +17,7 @@ const EditProjectWizard = () => {
     const { branches: globalBranches } = useBranch();
     const { id } = useParams();
     const navigate = useNavigate();
+    const { showAlert } = useAlert();
     const [step, setStep] = useState(1);
     const [loading, setLoading] = useState(true);   // initial data fetch
     const [saving, setSaving] = useState(false);    // submit
@@ -79,7 +81,7 @@ const EditProjectWizard = () => {
             setProjectData({ ...projectData, workOrder: res.data._id, workOrderCategory: 'Primary' });
             setNewWON('');
         } catch (e) {
-            alert('Failed to create Work Order');
+            showAlert('Failed to create Work Order', 'error');
         } finally {
             setIsCreatingWON(false);
         }
@@ -97,7 +99,7 @@ const EditProjectWizard = () => {
             setProjectData({ ...projectData, workOrderCategory: newWONCategory, category: newWONCategory });
             setNewWONCategory('');
         } catch (e) {
-            alert('Failed to add Category');
+            showAlert('Failed to add Category', 'error');
         } finally {
             setIsCreatingCat(false);
         }
@@ -171,7 +173,7 @@ const EditProjectWizard = () => {
                 }
             } catch (e) {
                 console.error('Failed to load project data', e);
-                alert('Failed to load project. Please try again.');
+                showAlert('Failed to load project. Please try again.', 'error');
                 navigate(`/projects/${id}`);
             } finally {
                 setLoading(false);
@@ -209,7 +211,7 @@ const EditProjectWizard = () => {
     // ── Submit ──────────────────────────────────────────────────────
     const handleSubmit = async () => {
         if (!projectData.name.trim()) {
-            alert('Site Name is required.');
+            showAlert('Site Name is required.', 'error');
             return;
         }
 
@@ -224,11 +226,11 @@ const EditProjectWizard = () => {
             };
 
             await api.put(`/projects/${id}`, payload);
-            alert('Project updated successfully! ✅');
+            showAlert('Project updated successfully! ✅', 'success');
             navigate(`/projects/${id}`);
         } catch (e) {
             console.error(e);
-            alert('Failed to update project: ' + (e.response?.data?.message || e.message));
+            showAlert('Failed to update project: ' + (e.response?.data?.message || e.message), 'error');
         } finally {
             setSaving(false);
         }
@@ -654,7 +656,7 @@ const EditProjectWizard = () => {
                         onClick={() => {
                             if (step === 1 && projectData.startDate && projectData.deadline) {
                                 if (new Date(projectData.deadline) < new Date(projectData.startDate)) {
-                                    alert('End Date cannot be before Start Date.');
+                                    showAlert('End Date cannot be before Start Date.', 'error');
                                     return;
                                 }
                             }

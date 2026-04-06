@@ -11,6 +11,7 @@ import {
 import { useAuth } from '../context/AuthContext';
 import ImageModal from '../components/ImageModal';
 import DeleteConfirmModal from '../components/DeleteConfirmModal';
+import { useAlert } from '../context/AlertContext';
 
 const CATEGORIES = ['Primary', 'Upper Primary', 'Secondary', 'Higher Secondary', 'Residential'];
 const STATUSES = ['active', 'completed', 'on-hold'];
@@ -19,6 +20,7 @@ const ProjectDetails = () => {
     const { user: currentUser } = useAuth();
     const { id } = useParams();
     const navigate = useNavigate();
+    const { showAlert } = useAlert();
     const [project, setProject] = useState(null);
     const [tasks, setTasks] = useState([]);
     const [loading, setLoading] = useState(true);
@@ -41,10 +43,10 @@ const ProjectDetails = () => {
     const confirmDelete = async () => {
         try {
             await api.delete(`/projects/${id}`);
-            alert('Project deleted successfully.');
+            showAlert('Project deleted successfully.', 'success');
             navigate('/projects');
         } catch (error) {
-            alert('Failed to delete project: ' + (error.response?.data?.message || error.message));
+            showAlert('Failed to delete project: ' + (error.response?.data?.message || error.message), 'error');
         }
     };
 
@@ -95,10 +97,10 @@ const ProjectDetails = () => {
             });
 
             fetchProjectDetails();
-            alert('Handover Letter uploaded successfully!');
+            showAlert('Handover Letter uploaded successfully!', 'success');
         } catch (error) {
             console.error('Upload failed', error);
-            alert('Failed to upload file.');
+            showAlert('Failed to upload file.', 'error');
         } finally {
             setUploading(false);
         }

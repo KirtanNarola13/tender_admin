@@ -1,11 +1,12 @@
 import { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import api from '../services/api';
 import { useAuth } from '../context/AuthContext';
 import { useBranch } from '../context/BranchContext';
 import { ChevronRight, ChevronLeft, Trash2, Box, ArrowLeft, CheckCircle, Loader, Calendar, MapPin, User, Tag, Plus } from 'lucide-react';
 import FormSelect from '../components/FormSelect';
 import FormDatePicker from '../components/FormDatePicker';
+import { useAlert } from '../context/AlertContext';
 
 const CATEGORIES = ['Primary', 'Upper Primary', 'Secondary', 'Higher Secondary', 'Residential'];
 
@@ -14,22 +15,26 @@ const today = new Date().toISOString().split('T')[0];
 const ProjectWizard = () => {
     const { user: currentUser } = useAuth();
     const navigate = useNavigate();
+    const [searchParams] = useSearchParams();
+    const urlWon = searchParams.get('won');
+    const urlCat = searchParams.get('cat');
     const { activeBranch, branches: globalBranches } = useBranch();
+    const { showAlert } = useAlert();
     const [step, setStep] = useState(1);
     const [loading, setLoading] = useState(false);
 
     const [projectData, setProjectData] = useState({
         name: '',
         client: '',
-        category: 'Primary',
+        category: urlCat || 'Primary',
         location: '',
         startDate: '',
         deadline: '',
         description: '',
         assignedLeader: '',
         branch: activeBranch !== 'all' ? activeBranch : '',
-        workOrder: '',
-        workOrderCategory: ''
+        workOrder: urlWon || '',
+        workOrderCategory: urlCat || ''
     });
     const [availableProducts, setAvailableProducts] = useState([]);
     const [teamLeaders, setTeamLeaders] = useState([]);
@@ -60,7 +65,7 @@ const ProjectWizard = () => {
             });
             setNewWON('');
         } catch (e) {
-            alert('Failed to create Work Order');
+            showAlert('Failed to create Work Order', 'error');
         } finally {
             setIsCreatingWON(false);
         }
@@ -87,7 +92,7 @@ const ProjectWizard = () => {
             });
             setNewWONCategory('');
         } catch (e) {
-            alert('Failed to add Category');
+            showAlert('Failed to add Category', 'error');
         } finally {
             setIsCreatingCat(false);
         }
@@ -160,7 +165,7 @@ const ProjectWizard = () => {
     // ── Submit ──────────────────────────────────────────────────────
     const handleSubmit = async () => {
         if (!projectData.name || !projectData.assignedLeader || selectedProducts.length === 0) {
-            alert('Please fill in Name, assign a Leader, and add at least one Product.');
+            showAlert('Please fill in Name, assign a Leader, and add at least one Product.', 'error');
             return;
         }
 
@@ -175,11 +180,11 @@ const ProjectWizard = () => {
             };
 
             await api.post('/projects', payload);
-            alert('Project Launched Successfully! 🚀');
+            showAlert('Project Launched Successfully! 🚀', 'success');
             navigate('/projects');
         } catch (e) {
             console.error(e);
-            alert('Failed to create project: ' + (e.response?.data?.message || e.message));
+            showAlert('Failed to create project: ' + (e.response?.data?.message || e.message), 'error');
         } finally {
             setLoading(false);
         }
@@ -575,7 +580,7 @@ const ProjectWizard = () => {
                         onClick={() => {
                             if (step === 1 && projectData.startDate && projectData.deadline) {
                                 if (new Date(projectData.deadline) < new Date(projectData.startDate)) {
-                                    alert('End Date cannot be before Start Date.');
+                                    showAlert('End Date cannot be before Start Date.', 'error');
                                     return;
                                 }
                             }

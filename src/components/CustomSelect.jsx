@@ -47,7 +47,7 @@ const CustomSelect = ({ value, onChange, options, className }) => {
                             type="button"
                             onClick={() => { onChange(opt.value); setIsOpen(false); }}
                             className={clsx(
-                                'w-full flex items-center justify-between px-3 py-3 rounded-md text-xs transition-all',
+                                'w-full flex items-center justify-between px-3 py-3 rounded-md text-xs transition-all text-left',
                                 value === opt.value
                                     ? 'bg-primary/8 text-primary font-semibold'
                                     : 'text-gray-600 hover:bg-gray-50 font-medium'

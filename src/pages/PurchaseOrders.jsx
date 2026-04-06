@@ -9,129 +9,214 @@ import {
 } from 'lucide-react';
 import clsx from 'clsx';
 import PageLoader from '../components/PageLoader';
+import { useAlert } from '../context/AlertContext';
 
 import CustomSelect from '../components/CustomSelect';
 
 const PO_STATUS_OPTIONS = [
     { value: 'all', label: 'All Status' },
-    { value: 'PENDING', label: 'Pending' },
-    { value: 'IN_TRANSIT', label: 'In Transit' },
-    { value: 'PARTIAL', label: 'Partial' },
+    { value: 'ORDER_PLACED', label: 'Order Placed' },
+    { value: 'ADVANCE', label: 'Advance' },
+    { value: 'IN_PRODUCTION', label: 'In Production' },
+    { value: 'TRANSIT', label: 'In Transit' },
+    { value: 'PARTIAL', label: 'Partial Delivery' },
     { value: 'DELIVERED', label: 'Delivered' },
+    { value: 'INSTALLATION', label: 'Installation' },
+    { value: 'COMPLETED', label: 'Completed' },
 ];
 
-const RecordDeliveryModal = ({ order, onClose, onSuccess }) => {
+const ORDERED_STATUSES = [
+    'ORDER_PLACED', 'ADVANCE', 'IN_PRODUCTION', 'TRANSIT', 'DELIVERED', 'INSTALLATION', 'COMPLETED'
+];
+
+const STATUS_ICONS = {
+    ORDER_PLACED: <Receipt size={14} />,
+    ADVANCE: <Receipt size={14} />,
+    IN_PRODUCTION: <Warehouse size={14} />,
+    TRANSIT: <Truck size={14} />,
+    DELIVERED: <CheckCircle size={14} />,
+    INSTALLATION: <CheckCircle size={14} />,
+    COMPLETED: <CheckCircle size={14} />,
+    PARTIAL: <Clock size={14} />
+};
+
+const formatDateTime = (date) => {
+    if (!date) return '';
+    const d = new Date(date);
+    const z = n => (n < 10 ? '0' : '') + n;
+    return `${d.getFullYear()}-${z(d.getMonth() + 1)}-${z(d.getDate())}T${z(d.getHours())}:${z(d.getMinutes())}`;
+};
+
+const StatusUpdateModal = ({ order, onClose, onSuccess }) => {
+    const [selectedStatus, setSelectedStatus] = useState('');
+    const [expectedDate, setExpectedDate] = useState('');
+    const [actualDate, setActualDate] = useState(formatDateTime(new Date()));
+    const [notes, setNotes] = useState('');
     const [deliveryQuantities, setDeliveryQuantities] = useState({});
-    const [submitting, setSubmitting] = useState(false);
+    const [loading, setLoading] = useState(false);
+    const { showAlert } = useAlert();
 
     useEffect(() => {
         if (order) {
-            const initialQty = {};
+            const currentIdx = ORDERED_STATUSES.indexOf(order.deliveryStatus === 'PARTIAL' ? 'TRANSIT' : order.deliveryStatus);
+            const nextIdx = Math.min(ORDERED_STATUSES.length - 1, currentIdx + 1);
+            const nextStat = ORDERED_STATUSES[nextIdx];
+            setSelectedStatus(nextStat);
+
+            // Pre-fill expected date from current timeline if exists
+            const nextTimeline = order.statusTimeline?.find(t => t.status === nextStat);
+            if (nextTimeline?.expectedDate) {
+                setExpectedDate(formatDateTime(nextTimeline.expectedDate));
+            }
+
+            // Init delivery quantities if target state is DELIVERED
+            const qties = {};
             order.items.forEach(item => {
                 const remaining = item.quantity - (item.receivedQuantity || 0);
-                initialQty[item.product._id || item.product] = Math.max(0, remaining);
+                qties[item.product._id || item.product] = Math.max(0, remaining);
             });
-            setDeliveryQuantities(initialQty);
+            setDeliveryQuantities(qties);
         }
     }, [order]);
 
-    if (!order) return null;
-
     const handleSubmit = async (e) => {
         e.preventDefault();
-        setSubmitting(true);
-        try {
-            const deliveredItems = Object.entries(deliveryQuantities)
-                .filter(([_, qty]) => Number(qty) > 0)
-                .map(([productId, qty]) => ({ productId, quantity: Number(qty) }));
+        setLoading(true);
 
-            if (deliveredItems.length === 0) return alert('Enter at least one delivery quantity');
+        const deliveredItems = Object.entries(deliveryQuantities)
+            .filter(([_, qty]) => Number(qty) > 0)
+            .map(([productId, qty]) => ({ productId, quantity: Number(qty) }));
 
-            // Validation: Delivery quantity cannot exceed remaining
+        // Validation for items if status is DELIVERED
+        if (selectedStatus === 'DELIVERED') {
             for (const dItem of deliveredItems) {
                 const poItem = order.items.find(i => (i.product._id || i.product) === dItem.productId);
                 const remaining = poItem.quantity - (poItem.receivedQuantity || 0);
                 if (dItem.quantity > remaining) {
-                    return alert(`Delivery for ${poItem.productName} (${dItem.quantity}) exceeds remaining expected (${remaining})`);
+                    showAlert(`Delivery for ${poItem.productName} (${dItem.quantity}) exceeds remaining (${remaining})`, 'error');
+                    setLoading(false);
+                    return;
                 }
             }
+        }
 
-            await api.patch(`/purchase-orders/${order._id}/status`, { deliveredItems });
+        try {
+            await api.patch(`/purchase-orders/${order._id}/status`, {
+                deliveryStatus: selectedStatus,
+                expectedDate: expectedDate ? new Date(expectedDate).toISOString() : '',
+                actualDate: new Date(actualDate).toISOString(),
+                notes,
+                deliveredItems: selectedStatus === 'DELIVERED' ? deliveredItems : []
+            });
             onSuccess();
             onClose();
         } catch (error) {
-            alert(error.response?.data?.message || 'Failed to record delivery');
+            showAlert(error.response?.data?.message || 'Update failed', 'error');
         } finally {
-            setSubmitting(false);
+            setLoading(false);
         }
     };
 
+    if (!order) return null;
+
+    const isDelivering = selectedStatus === 'DELIVERED';
+
     return (
-        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-[110] flex items-center justify-center p-4">
-            <div className="bg-white rounded-2xl shadow-2xl w-full max-w-lg overflow-hidden border border-gray-100 flex flex-col max-h-[90vh]">
-                <div className="bg-emerald-600 p-6 text-white flex justify-between items-center">
-                    <div className="flex items-center gap-3">
-                        <Truck size={24} />
-                        <div>
-                            <h3 className="text-xl font-black">Record Shipment</h3>
-                            <p className="text-emerald-100/70 text-[10px] font-bold uppercase tracking-widest">{order.poNumber}</p>
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-[120] flex items-center justify-center p-4 text-left">
+            <div className={clsx(
+                "bg-white rounded-2xl shadow-2xl w-full overflow-hidden border border-gray-100 animate-in fade-in zoom-in duration-200 flex flex-col",
+                isDelivering ? "max-w-xl max-h-[90vh]" : "max-w-sm"
+            )}>
+                <div className={clsx(
+                    "p-5 text-white flex justify-between items-center bg-gradient-to-br transition-colors duration-500",
+                    isDelivering ? "from-emerald-600 to-emerald-700" : "from-amber-600 to-amber-700"
+                )}>
+                    <h3 className="text-lg font-black flex items-center gap-2">
+                        {isDelivering ? <Truck size={18} className="animate-bounce" /> : <Clock size={18} className="animate-pulse" />}
+                        {isDelivering ? 'Confirm Goods Receipt' : 'Progress Order'}
+                    </h3>
+                    <button onClick={onClose} className="p-1.5 hover:bg-white/10 rounded-full transition-colors"><X size={18} /></button>
+                </div>
+
+                <form onSubmit={handleSubmit} className="flex-1 overflow-y-auto p-5 space-y-4 custom-scrollbar">
+                    <div className={clsx(
+                        "p-3 rounded-xl border transition-colors",
+                        isDelivering ? "bg-emerald-50 border-emerald-100" : "bg-amber-50 border-amber-100"
+                    )}>
+                        <p className={clsx("text-[10px] font-black uppercase tracking-widest mb-1", isDelivering ? "text-emerald-600" : "text-amber-600")}>Target Milestone</p>
+                        <div className="flex items-center gap-2">
+                            <span className={clsx("text-lg font-black uppercase tracking-tight", isDelivering ? "text-emerald-800" : "text-amber-800")}>{selectedStatus.replace('_', ' ')}</span>
                         </div>
                     </div>
-                    <button onClick={onClose} className="p-2 hover:bg-white/10 rounded-full transition-colors"><X size={20} /></button>
-                </div>
 
-                <form onSubmit={handleSubmit} className="flex-1 overflow-y-auto p-6 space-y-6 custom-scrollbar">
-                    <div className="space-y-4">
-                        {order.items.map((item, idx) => {
-                            const pId = item.product._id || item.product;
-                            const received = item.receivedQuantity || 0;
-                            const remaining = item.quantity - received;
+                    <div className="grid grid-cols-2 gap-3">
+                        <div>
+                            <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1 block">Expected Date</label>
+                            <input
+                                type="datetime-local"
+                                className="w-full border border-gray-200 p-2.5 rounded-xl text-[10px] font-bold focus:ring-2 focus:ring-primary/20 outline-none bg-gray-50/50"
+                                value={expectedDate}
+                                onChange={e => setExpectedDate(e.target.value)}
+                            />
+                        </div>
+                        <div>
+                            <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1 block">Actual Date</label>
+                            <input
+                                type="datetime-local"
+                                className="w-full border border-gray-200 p-2.5 rounded-xl text-[10px] font-bold focus:ring-2 focus:ring-primary/20 outline-none bg-white"
+                                value={actualDate}
+                                onChange={e => setActualDate(e.target.value)}
+                            />
+                        </div>
+                    </div>
 
-                            return (
-                                <div key={idx} className="bg-gray-50 border border-gray-100 rounded-2xl p-4 space-y-3">
-                                    <div className="flex justify-between items-start">
-                                        <h4 className="font-bold text-gray-800 text-sm">{item.productName}</h4>
-                                        <div className="text-right">
-                                            <p className="text-[10px] font-black text-gray-400 uppercase">Target</p>
-                                            <p className="text-xs font-black text-gray-600">{item.quantity} PCS</p>
+                    {isDelivering && (
+                        <div className="space-y-3 bg-gray-50 p-4 rounded-xl border border-gray-100">
+                            <h4 className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2">Itemized Quantities</h4>
+                            {order.items.map((item, idx) => {
+                                const pId = item.product._id || item.product;
+                                const remaining = item.quantity - (item.receivedQuantity || 0);
+                                return (
+                                    <div key={idx} className="bg-white p-3 rounded-xl border border-gray-100 flex items-center justify-between gap-4">
+                                        <div className="flex-1 min-w-0">
+                                            <p className="text-xs font-black text-gray-800 truncate">{item.productName}</p>
+                                            <p className="text-[9px] font-bold text-gray-400 uppercase">Remain: {remaining} PCS</p>
+                                        </div>
+                                        <div className="w-24">
+                                            <input
+                                                type="number"
+                                                className="w-full border border-gray-100 bg-gray-50 p-1.5 rounded-lg text-xs font-black text-right focus:bg-white focus:ring-2 focus:ring-emerald-100 outline-none transition-all"
+                                                value={deliveryQuantities[pId] || ''}
+                                                onChange={e => setDeliveryQuantities({ ...deliveryQuantities, [pId]: e.target.value })}
+                                            />
                                         </div>
                                     </div>
+                                );
+                            })}
+                        </div>
+                    )}
 
-                                    <div className="grid grid-cols-2 gap-4">
-                                        <div className="bg-white/60 p-2 rounded-xl border border-gray-100">
-                                            <p className="text-[10px] font-bold text-gray-400 uppercase mb-0.5">Received</p>
-                                            <p className="text-xs font-black text-emerald-600">{received} PCS</p>
-                                        </div>
-                                        <div className="bg-white/60 p-2 rounded-xl border border-gray-100">
-                                            <p className="text-[10px] font-bold text-gray-400 uppercase mb-0.5">Expected</p>
-                                            <p className="text-xs font-black text-gray-700">{remaining} PCS</p>
-                                        </div>
-                                    </div>
+                    <div>
+                        <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1 block">Notes / Remark</label>
+                        <textarea
+                            className="w-full border border-gray-200 p-2.5 rounded-xl text-xs font-medium focus:ring-2 focus:ring-primary/20 outline-none bg-gray-50/50 resize-none"
+                            placeholder="Add brief details about this update..."
+                            rows={isDelivering ? 2 : 3}
+                            value={notes}
+                            onChange={e => setNotes(e.target.value)}
+                        />
+                    </div>
 
-                                    <div>
-                                        <label className="text-[10px] font-black text-primary uppercase tracking-widest mb-1.5 block">Delivering Now</label>
-                                        <input
-                                            type="number"
-                                            max={remaining}
-                                            min={0}
-                                            className="w-full border border-gray-200 p-2.5 rounded-xl text-sm font-black focus:ring-2 focus:ring-primary/20 outline-none"
-                                            value={deliveryQuantities[pId] || ''}
-                                            onChange={e => setDeliveryQuantities({ ...deliveryQuantities, [pId]: e.target.value })}
-                                        />
-                                    </div>
-                                </div>
-                            );
-                        })}
+                    <div className="pt-2 flex gap-2">
+                        <button type="button" onClick={onClose} className="flex-1 py-3 px-4 bg-gray-100 rounded-xl font-bold text-xs text-gray-600 hover:bg-gray-200 transition-all">Cancel</button>
+                        <button type="submit" disabled={loading || !selectedStatus} className={clsx(
+                            "flex-2 py-3 px-4 text-white rounded-xl font-black text-xs transition-all shadow-lg",
+                            isDelivering ? "bg-emerald-600 hover:bg-emerald-700 shadow-emerald-200" : "bg-amber-600 hover:bg-amber-700 shadow-amber-200"
+                        )}>
+                            {loading ? 'Processing...' : `Confirm ${selectedStatus.replace('_', ' ')}`}
+                        </button>
                     </div>
                 </form>
-
-                <div className="p-6 bg-gray-50 border-t flex gap-3">
-                    <button type="button" onClick={onClose} className="flex-1 py-3 px-4 bg-white border border-gray-200 rounded-md font-bold text-sm text-gray-600 hover:bg-gray-100 transition-all">Cancel</button>
-                    <button type="submit" onClick={handleSubmit} disabled={submitting} className="flex-2 py-3 px-8 bg-emerald-600 text-white rounded-md font-black text-sm hover:bg-emerald-700 transition-all flex items-center justify-center gap-2 shadow-lg shadow-emerald-200 disabled:opacity-50">
-                        {submitting ? <Clock size={16} className="animate-spin" /> : <CheckCircle size={16} />}
-                        {submitting ? 'Recording...' : 'Record Delivery'}
-                    </button>
-                </div>
             </div>
         </div>
     );
@@ -141,7 +226,7 @@ const ViewPOModal = ({ order, onClose }) => {
     if (!order) return null;
     return (
         <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-[110] flex items-end sm:items-center justify-center p-0 sm:p-4">
-            <div className="bg-white rounded-t-2xl sm:rounded-2xl shadow-2xl w-full sm:max-w-3xl overflow-hidden flex flex-col max-h-[90vh]">
+            <div className="bg-white rounded-t-2xl sm:rounded-2xl shadow-2xl w-full sm:max-w-5xl overflow-hidden flex flex-col max-h-[90vh]">
                 <div className="bg-primary px-4 py-4 sm:p-6 text-white flex justify-between items-center bg-gradient-to-r from-primary to-primary-dark">
                     <div className="flex items-center gap-3">
                         <div className="p-2 bg-white/10 rounded-xl"><Receipt size={20} /></div>
@@ -164,48 +249,137 @@ const ViewPOModal = ({ order, onClose }) => {
                     </button>
                 </div>
                 <div className="p-4 sm:p-8 space-y-6 overflow-y-auto custom-scrollbar">
-                    {/* Status Timeline */}
-                    <div className="bg-gray-50/50 p-6 rounded-2xl border border-gray-100">
-                        <h4 className="text-xs font-black text-gray-500 uppercase tracking-widest mb-6 border-b pb-2">Shipment Timeline</h4>
-                        <div className="relative flex justify-between items-start">
-                            {/* Connector Line */}
-                            <div className="absolute top-4 left-[10%] right-[10%] h-0.5 bg-gray-200 z-0">
+                    <div className="bg-white p-4 sm:p-6 rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
+                        <h4 className="text-sm font-black text-primary uppercase tracking-widest mb-4 border-b border-primary/10 pb-2 flex items-center gap-2">
+                            Shipment Journey
+                        </h4>
+
+                        {/* Mobile View: Vertical Timeline */}
+                        <div className="sm:hidden space-y-6 relative ml-4">
+                            {/* Vertical connecting line */}
+                            <div className="absolute left-5 top-5 bottom-5 w-0.5 bg-gray-100 z-0">
                                 <div
-                                    className="h-full bg-primary transition-all duration-1000"
-                                    style={{ width: order.deliveryStatus === 'PENDING' ? '0%' : order.deliveryStatus === 'IN_TRANSIT' ? '50%' : '100%' }}
+                                    className="w-full bg-primary transition-all duration-1000 origin-top"
+                                    style={{
+                                        height: `${(ORDERED_STATUSES.indexOf(order.deliveryStatus === 'PARTIAL' ? 'DELIVERED' : order.deliveryStatus) / (ORDERED_STATUSES.length - 1)) * 100}%`
+                                    }}
                                 />
                             </div>
 
-                            {[
-                                { label: 'Order Placed', status: 'PENDING', time: order.createdAt },
-                                { label: 'In Transit', status: 'IN_TRANSIT', time: order.updatedAt, activeIf: ['IN_TRANSIT', 'PARTIAL', 'DELIVERED'] },
-                                {
-                                    label: order.deliveryStatus === 'PARTIAL' ? 'Part-Received' : 'Delivered',
-                                    status: 'DELIVERED',
-                                    time: order.partialDeliveries?.[order.partialDeliveries.length - 1]?.deliveredAt || order.updatedAt,
-                                    activeIf: ['PARTIAL', 'DELIVERED'],
-                                    sub: `${order.items.reduce((acc, i) => acc + (i.receivedQuantity || 0), 0)} PCS`
-                                }
-                            ].map((step, idx) => {
-                                const isActive = step.activeIf ? step.activeIf.includes(order.deliveryStatus) : true;
+                            {ORDERED_STATUSES.map((stepStatus, idx) => {
+                                const timelineItem = order.statusTimeline?.find(t => t.status === stepStatus);
+                                const isCompleted = timelineItem?.isCompleted;
+                                const isCurrent = order.deliveryStatus === stepStatus || (order.deliveryStatus === 'PARTIAL' && stepStatus === 'DELIVERED');
+                                const isActive = isCompleted || isCurrent;
+
                                 return (
-                                    <div key={idx} className="relative z-10 flex flex-col items-center text-center w-1/3">
+                                    <div key={idx} className="relative z-10 flex items-start gap-5">
                                         <div className={clsx(
-                                            "w-8 h-8 rounded-full flex items-center justify-center border-4 border-white shadow-sm transition-all duration-500",
-                                            isActive ? "bg-primary text-white scale-110" : "bg-gray-200 text-gray-400"
+                                            "w-10 h-10 rounded-full flex items-center justify-center shrink-0 border-4 border-white shadow-sm transition-all duration-500 text-base",
+                                            isCompleted ? "bg-primary text-white" : isCurrent ? "bg-amber-500 text-white animate-pulse" : "bg-gray-100 text-gray-400"
                                         )}>
-                                            {idx === 0 ? <Receipt size={14} /> : idx === 1 ? <Truck size={14} /> : <CheckCircle size={14} />}
+                                            {STATUS_ICONS[stepStatus] || <Clock size={16} />}
                                         </div>
-                                        <p className={clsx("text-xs font-black uppercase mt-2", isActive ? "text-primary" : "text-gray-400")}>{step.label}</p>
-                                        <p className="text-xs text-gray-500 mt-1 font-bold">
-                                            {step.sub && <span className="text-primary block leading-none mb-1 font-black">{step.sub}</span>}
-                                            {new Date(step.time).toLocaleDateString()}
-                                            <br />
-                                            {new Date(step.time).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-                                        </p>
+                                        <div className="pt-1.5 flex-1">
+                                            <p className={clsx("text-sm font-bold uppercase mb-1.5", isActive ? "text-primary" : "text-gray-400")}>
+                                                {stepStatus.replace('_', ' ')}
+                                                {stepStatus === 'DELIVERED' && order.deliveryStatus === 'PARTIAL' && <span className="ml-2 text-[11px] font-medium text-amber-500">(PARTIAL)</span>}
+                                            </p>
+                                            <div className="flex flex-wrap gap-x-8 gap-y-3">
+                                                <div>
+                                                    <p className="text-[11px] text-gray-400 font-medium uppercase tracking-wider mb-0.5">Expected</p>
+                                                    <p className="text-sm font-medium text-gray-700 leading-tight">
+                                                        {timelineItem?.expectedDate ? new Date(timelineItem.expectedDate).toLocaleDateString() : '—'}
+                                                        {timelineItem?.expectedDate && (
+                                                            <span className="opacity-60 text-xs ml-2 font-medium whitespace-nowrap">{new Date(timelineItem.expectedDate).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
+                                                        )}
+                                                    </p>
+                                                </div>
+                                                {(timelineItem?.actualDate || stepStatus === 'ORDER_PLACED') && (
+                                                    <div>
+                                                        <p className="text-[11px] text-primary/50 font-medium uppercase tracking-wider mb-0.5">Real</p>
+                                                        <p className="text-sm font-medium text-primary leading-tight">
+                                                            {new Date(timelineItem?.actualDate || order.date).toLocaleDateString()}
+                                                            <span className="opacity-60 text-xs ml-2 font-medium whitespace-nowrap">{new Date(timelineItem?.actualDate || order.date).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
+                                                        </p>
+                                                    </div>
+                                                )}
+                                            </div>
+                                            {timelineItem?.notes && (
+                                                <div className="mt-3 bg-gray-50/80 border border-gray-100 p-3 rounded-xl">
+                                                    <p className="text-[10px] font-medium uppercase text-gray-400 tracking-widest mb-1 flex items-center gap-1.5 leading-none">
+                                                        Remark
+                                                    </p>
+                                                    <p className="text-xs font-medium text-gray-600 italic">"{timelineItem.notes}"</p>
+                                                </div>
+                                            )}
+                                        </div>
                                     </div>
                                 );
                             })}
+                        </div>
+
+                        {/* Desktop View: Horizontal Timeline */}
+                        <div className="hidden sm:block relative mt-4">
+                            {/* Horizontal line connecting dots */}
+                            <div className="absolute top-[20px] left-[5%] right-[5%] h-[2px] bg-gray-100 z-0">
+                                <div
+                                    className="w-full bg-primary transition-all duration-1000"
+                                    style={{
+                                        width: `${(ORDERED_STATUSES.indexOf(order.deliveryStatus === 'PARTIAL' ? 'DELIVERED' : order.deliveryStatus) / (ORDERED_STATUSES.length - 1)) * 100}%`
+                                    }}
+                                />
+                            </div>
+
+                            <div className="relative flex justify-between items-start">
+                                {ORDERED_STATUSES.map((stepStatus, idx) => {
+                                    const timelineItem = order.statusTimeline?.find(t => t.status === stepStatus);
+                                    const isCompleted = timelineItem?.isCompleted;
+                                    const isCurrent = order.deliveryStatus === stepStatus || (order.deliveryStatus === 'PARTIAL' && stepStatus === 'DELIVERED');
+                                    const isActive = isCompleted || isCurrent;
+                                    const displayActual = timelineItem?.actualDate || (stepStatus === 'ORDER_PLACED' ? order.date : null);
+
+                                    return (
+                                        <div key={idx} className="relative z-10 flex flex-col items-center text-center w-full px-1">
+                                            <div className={clsx(
+                                                "w-11 h-11 rounded-full flex items-center justify-center border-4 border-white shadow-sm transition-all duration-500",
+                                                isCompleted ? "bg-primary text-white" : isCurrent ? "bg-amber-500 text-white animate-pulse" : "bg-gray-100 text-gray-400"
+                                            )}>
+                                                {STATUS_ICONS[stepStatus] || <Clock size={16} />}
+                                            </div>
+                                            <p className={clsx("text-[11px] font-bold uppercase mt-3 px-1 leading-tight", isActive ? "text-primary" : "text-gray-400")}>
+                                                {stepStatus.replace('_', ' ')}
+                                                {stepStatus === 'DELIVERED' && order.deliveryStatus === 'PARTIAL' && <span className="block text-[9px] font-medium text-amber-500">(PARTIAL)</span>}
+                                            </p>
+
+                                            <div className="mt-3 space-y-2.5 min-h-[65px] font-medium">
+                                                <div>
+                                                    <p className="text-[9px] text-gray-400 uppercase tracking-wide leading-none mb-1">Expected</p>
+                                                    <p className="text-xs text-gray-600 leading-tight">
+                                                        {timelineItem?.expectedDate ? new Date(timelineItem.expectedDate).toLocaleDateString() : '—'}
+                                                        {timelineItem?.expectedDate && (
+                                                            <span className="block text-[9px] opacity-60 mt-0.5">{new Date(timelineItem.expectedDate).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
+                                                        )}
+                                                    </p>
+                                                </div>
+                                                {displayActual && (
+                                                    <div className="bg-primary/5 p-2 rounded-xl text-primary border border-primary/10">
+                                                        <p className="text-[9px] uppercase tracking-wide opacity-70 leading-none mb-1">Real Date</p>
+                                                        <p className="text-xs my-0.5">{new Date(displayActual).toLocaleDateString()}</p>
+                                                        <p className="text-[9px] opacity-60 leading-none">{new Date(displayActual).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</p>
+                                                    </div>
+                                                )}
+                                                {timelineItem?.notes && (
+                                                    <div className="bg-amber-50/50 border border-amber-100/50 p-1.5 rounded-lg flex flex-col items-center">
+                                                        <p className="text-[7px] text-amber-600 font-medium uppercase tracking-widest leading-none mb-1">Remark</p>
+                                                        <p className="text-[9px] font-medium text-gray-600 italic leading-tight truncate max-w-full" title={timelineItem.notes}>"{timelineItem.notes}"</p>
+                                                    </div>
+                                                )}
+                                            </div>
+                                        </div>
+                                    );
+                                })}
+                            </div>
                         </div>
                     </div>
 
@@ -249,28 +423,28 @@ const ViewPOModal = ({ order, onClose }) => {
                     </div>
 
                     <div>
-                        <h4 className="text-xs font-black text-gray-500 uppercase tracking-widest mb-3 px-1">Itemized Summary</h4>
+                        <h4 className="text-sm font-black text-gray-500 uppercase tracking-widest mb-4 px-1">Itemized Summary</h4>
                         <div className="border border-gray-100 rounded-2xl overflow-hidden overflow-x-auto shadow-sm">
-                            <table className="w-full text-base text-left">
-                                <thead className="bg-gray-50/50 border-b">
+                            <table className="w-full text-left">
+                                <thead className="bg-gray-50 text-left border-b">
                                     <tr>
-                                        <th className="px-4 py-4 font-black text-xs text-gray-500 uppercase">Item</th>
-                                        <th className="px-4 py-4 font-black text-xs text-gray-500 uppercase text-center">Ordered</th>
-                                        <th className="px-4 py-4 font-black text-xs text-gray-500 uppercase text-center">Received</th>
-                                        <th className="px-4 py-4 font-black text-xs text-gray-500 uppercase text-center">Pending</th>
-                                        <th className="px-4 py-4 font-black text-xs text-gray-500 uppercase text-right">Value</th>
+                                        <th className="px-5 py-4 font-black text-xs text-gray-500 uppercase tracking-widest">Item Detail</th>
+                                        <th className="px-5 py-4 font-black text-xs text-gray-500 uppercase tracking-widest text-center">Ordered</th>
+                                        <th className="px-5 py-4 font-black text-xs text-gray-500 uppercase tracking-widest text-center">Received</th>
+                                        <th className="px-5 py-4 font-black text-xs text-gray-500 uppercase tracking-widest text-center">Pending</th>
+                                        <th className="px-5 py-4 font-black text-xs text-gray-500 uppercase tracking-widest text-right whitespace-nowrap">Amount</th>
                                     </tr>
                                 </thead>
-                                <tbody className="divide-y divide-gray-50">
+                                <tbody className="divide-y divide-gray-100">
                                     {order.items.map((item, i) => {
                                         const pending = item.quantity - (item.receivedQuantity || 0);
                                         return (
-                                            <tr key={i} className="hover:bg-gray-50/30 transition-colors">
-                                                <td className="px-4 py-4 font-black text-gray-900 leading-tight">{item.productName}</td>
-                                                <td className="px-4 py-4 text-center font-bold text-gray-500">{item.quantity}</td>
-                                                <td className="px-4 py-4 text-center font-black text-emerald-600">{item.receivedQuantity || 0}</td>
-                                                <td className={clsx("px-4 py-4 text-center font-black", pending > 0 ? "text-amber-500" : "text-gray-300")}>{pending}</td>
-                                                <td className="px-4 py-4 text-right font-black text-gray-900 whitespace-nowrap">INR {item.amount?.toLocaleString() || '—'}</td>
+                                            <tr key={i} className="hover:bg-gray-50/50 transition-colors">
+                                                <td className="px-5 py-5 font-black text-gray-900 text-sm leading-tight">{item.productName}</td>
+                                                <td className="px-5 py-5 text-center font-bold text-gray-600 text-sm">{item.quantity}</td>
+                                                <td className="px-5 py-5 text-center font-black text-emerald-600 text-sm">{item.receivedQuantity || 0}</td>
+                                                <td className={clsx("px-5 py-5 text-center font-black text-sm", pending > 0 ? "text-amber-500" : "text-gray-300")}>{pending}</td>
+                                                <td className="px-5 py-5 text-right font-black text-gray-900 text-sm whitespace-nowrap lg:pr-8">INR {item.amount?.toLocaleString() || '—'}</td>
                                             </tr>
                                         );
                                     })}
@@ -319,7 +493,7 @@ const PurchaseOrders = () => {
     const [showModal, setShowModal] = useState(false);
     const [editingOrder, setEditingOrder] = useState(null);
     const [viewingOrder, setViewingOrder] = useState(null);
-    const [deliveryOrder, setDeliveryOrder] = useState(null);
+    const [statusUpdateOrder, setStatusUpdateOrder] = useState(null);
     const [searchTerm, setSearchTerm] = useState('');
     const [statusFilter, setStatusFilter] = useState('all');
 
@@ -359,23 +533,31 @@ const PurchaseOrders = () => {
 
     const StatusBadge = ({ status }) => {
         const styles = {
-            PENDING: 'bg-amber-50 text-amber-600 border-amber-200',
-            IN_TRANSIT: 'bg-blue-50 text-blue-600 border-blue-200',
-            PARTIAL: 'bg-purple-50 text-purple-600 border-purple-200',
+            ORDER_PLACED: 'bg-gray-50 text-gray-600 border-gray-200',
+            ADVANCE: 'bg-blue-50 text-blue-600 border-blue-200',
+            IN_PRODUCTION: 'bg-indigo-50 text-indigo-600 border-indigo-200',
+            TRANSIT: 'bg-cyan-50 text-cyan-600 border-cyan-200',
+            PARTIAL: 'bg-amber-50 text-amber-600 border-amber-200',
             DELIVERED: 'bg-emerald-50 text-emerald-600 border-emerald-200',
+            INSTALLATION: 'bg-purple-50 text-purple-600 border-purple-200',
+            COMPLETED: 'bg-primary text-white border-primary shadow-sm shadow-primary/10',
         };
         const icons = {
-            PENDING: <Clock size={11} />,
-            IN_TRANSIT: <Truck size={11} />,
-            PARTIAL: <Clock size={11} />, // Or a half-circle icon
+            ORDER_PLACED: <Receipt size={11} />,
+            ADVANCE: <Receipt size={11} />,
+            IN_PRODUCTION: <Warehouse size={11} />,
+            TRANSIT: <Truck size={11} />,
+            PARTIAL: <Clock size={11} />,
             DELIVERED: <CheckCircle size={11} />,
+            INSTALLATION: <CheckCircle size={11} />,
+            COMPLETED: <CheckCircle size={11} />,
         };
         return (
             <span className={clsx(
                 "inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider border whitespace-nowrap",
                 styles[status]
             )}>
-                {icons[status]}
+                {icons[status] || <Clock size={11} />}
                 {status.replace('_', ' ')}
             </span>
         );
@@ -479,17 +661,26 @@ const PurchaseOrders = () => {
                                         <StatusBadge status={po.deliveryStatus} />
                                     </td>
                                     <td className="px-3 py-3 text-right">
-                                        <div className="flex items-center justify-end gap-0.5">
-                                            {po.deliveryStatus === 'PENDING' && (
-                                                <button onClick={() => updateStatus(po._id, 'IN_TRANSIT')} className="p-1.5 text-blue-500 hover:bg-blue-50 rounded-lg transition-all" title="Mark In Transit">
-                                                    <Truck size={15} />
-                                                </button>
-                                            )}
-                                            {(po.deliveryStatus === 'IN_TRANSIT' || po.deliveryStatus === 'PARTIAL') && (
-                                                <button onClick={() => setDeliveryOrder(po)} className="p-1.5 text-emerald-500 hover:bg-emerald-50 rounded-lg transition-all" title="Record Delivery Receipt">
-                                                    <CheckCircle size={15} />
-                                                </button>
-                                            )}
+                                        <div className="flex items-center justify-end gap-1.5">
+                                            {po.deliveryStatus !== 'COMPLETED' && (() => {
+                                                const currentIdx = ORDERED_STATUSES.indexOf(po.deliveryStatus === 'PARTIAL' ? 'TRANSIT' : po.deliveryStatus);
+                                                const nextIdx = Math.min(ORDERED_STATUSES.length - 1, currentIdx + 1);
+                                                const nextStat = ORDERED_STATUSES[nextIdx];
+
+                                                if (nextStat && nextStat !== po.deliveryStatus) {
+                                                    return (
+                                                        <button
+                                                            onClick={() => setStatusUpdateOrder(po)}
+                                                            className="px-2.5 py-1.5 bg-amber-50 text-amber-600 border border-amber-100 rounded-full text-[9px] font-black uppercase hover:bg-amber-600 hover:text-white transition-all shadow-sm flex items-center gap-1.5"
+                                                        >
+                                                            <div className="w-1.5 h-1.5 rounded-full bg-current animate-pulse" />
+                                                            {nextStat.replace('_', ' ')}
+                                                        </button>
+                                                    );
+                                                }
+                                                return null;
+                                            })()}
+
                                             <button onClick={() => generatePOPDF(po)} className="p-1.5 text-gray-500 hover:bg-gray-100 rounded-lg transition-all hidden sm:block" title="Download PDF">
                                                 <Download size={15} />
                                             </button>
@@ -517,7 +708,8 @@ const PurchaseOrders = () => {
                 editData={editingOrder}
             />
             <ViewPOModal order={viewingOrder} onClose={() => setViewingOrder(null)} />
-            <RecordDeliveryModal order={deliveryOrder} onClose={() => setDeliveryOrder(null)} onSuccess={fetchOrders} />
+
+            {statusUpdateOrder && <StatusUpdateModal order={statusUpdateOrder} onClose={() => setStatusUpdateOrder(null)} onSuccess={fetchOrders} />}
         </div>
     );
 };

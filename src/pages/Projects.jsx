@@ -6,14 +6,21 @@ import { useBranch } from '../context/BranchContext';
 import { Plus, Briefcase, Layout, Search, ChevronRight, ArrowLeft, Trash2, Calendar, MapPin, Users, Pencil } from 'lucide-react';
 import DeleteConfirmModal from '../components/DeleteConfirmModal';
 import PageLoader from '../components/PageLoader';
+import { useAlert } from '../context/AlertContext';
 
 import CustomSelect from '../components/CustomSelect';
 import FormSelect from '../components/FormSelect';
 
 const SORT_OPTIONS = [
-    { value: 'updatedAt_desc', label: 'Recently Updated' },
-    { value: 'createdAt_desc', label: 'Recently Created' },
-    { value: 'name_asc', label: 'Name A–Z' },
+    // { value: 'updatedAt_desc', label: 'Recently Updated' },
+    // { value: 'createdAt_desc', label: 'Recently Created' },
+    // { value: 'name_asc', label: 'Name A–Z' },
+    { value: 'priority_high', label: 'High Priority (Urgent)' },
+    { value: 'priority_low', label: 'Low Priority' },
+    { value: 'status_active', label: 'Active WON' },
+    { value: 'status_planning', label: 'Planning WON' },
+    { value: 'status_completed', label: 'Completed WON' },
+    { value: 'status_pending', label: 'Pending WON' },
 ];
 
 const CATEGORIES = ['Primary', 'Upper Primary', 'Secondary', 'Higher Secondary', 'Residential'];
@@ -42,6 +49,7 @@ const Projects = () => {
 
     const [showDeleteModal, setShowDeleteModal] = useState(false);
     const [projectToDelete, setProjectToDelete] = useState(null);
+    const { showAlert } = useAlert();
 
     const [workOrders, setWorkOrders] = useState([]);
     const [searchParams, setSearchParams] = useSearchParams();
@@ -105,7 +113,7 @@ const Projects = () => {
             setNewProject({ name: '', description: '' });
             fetchProjects();
         } catch (error) {
-            alert('Failed to create project');
+            showAlert('Failed to create project', 'error');
         }
     };
 
@@ -121,15 +129,15 @@ const Projects = () => {
     };
 
     const handleAssignLeader = async () => {
-        if (!selectedLeader) return alert('Select Team Leader');
+        if (!selectedLeader) return showAlert('Select Team Leader', 'error');
         try {
             await api.put(`/projects/${selectedProject._id}`, { assignedLeader: selectedLeader });
             setShowSchoolModal(false);
             setSelectedLeader('');
-            alert('Team Leader Assigned Successfully!');
+            showAlert('Team Leader Assigned Successfully!', 'success');
             fetchProjects();
         } catch (e) {
-            alert('Failed to assign: ' + (e.response?.data?.message || e.message));
+            showAlert('Failed to assign: ' + (e.response?.data?.message || e.message), 'error');
         }
     };
 
@@ -144,7 +152,7 @@ const Projects = () => {
             await api.delete(`/projects/${projectToDelete.id}`);
             fetchProjects();
         } catch (error) {
-            alert('Failed to delete project: ' + (error.response?.data?.message || error.message));
+            showAlert('Failed to delete project: ' + (error.response?.data?.message || error.message), 'error');
         }
     };
 
@@ -160,24 +168,38 @@ const Projects = () => {
             const matchesBranch = activeBranch === 'all' || p.branch === activeBranch;
             const matchesWON = !selectedWON || (p.workOrder?._id || p.workOrder) === selectedWON._id;
             const matchesCat = !selectedCategory || p.workOrderCategory === selectedCategory.name;
-            return matchesSearch && matchesBranch && matchesWON && matchesCat;
+
+            let matchesStatus = true;
+            if (sortBy === 'status_active') matchesStatus = p.status === 'active';
+            if (sortBy === 'status_planning') matchesStatus = p.status === 'planning';
+            if (sortBy === 'status_completed') matchesStatus = p.status === 'completed';
+            if (sortBy === 'status_pending') matchesStatus = (p.status === 'pending' || !p.status);
+
+            return matchesSearch && matchesBranch && matchesWON && matchesCat && matchesStatus;
         })
         .sort((a, b) => {
             if (sortBy === 'name_asc') return (a.name || '').localeCompare(b.name || '');
             if (sortBy === 'createdAt_desc') return new Date(b.createdAt || 0) - new Date(a.createdAt || 0);
             if (sortBy === 'updatedAt_desc') return new Date(b.updatedAt || 0) - new Date(a.updatedAt || 0);
+
+            if (sortBy === 'priority_high' || sortBy === 'priority_low') {
+                const getDays = (p) => {
+                    if (p.status === 'completed') return sortBy === 'priority_high' ? 999999 : -999999;
+                    if (!p.deadline) return 9999;
+                    return (new Date(p.deadline).getTime() - Date.now()) / (1000 * 3600 * 24);
+                };
+                return sortBy === 'priority_high' ? getDays(a) - getDays(b) : getDays(b) - getDays(a);
+            }
             return 0;
         });
 
     const filteredAndSortedWorkOrders = [...workOrders]
         .filter(won => {
-            const hasAnyProject = projects.some(p => (p.workOrder?._id || p.workOrder) === won._id);
-            const hasProjectInBranch = projects.some(p =>
-                (p.workOrder?._id || p.workOrder) === won._id && p.branch === activeBranch
-            );
+            const wonProjects = projects.filter(p => (p.workOrder?._id || p.workOrder) === won._id);
+            const hasAnyProject = wonProjects.length > 0;
+            const hasProjectInBranch = wonProjects.some(p => p.branch === activeBranch);
 
             let matchesBranch = false;
-
             if (wonTab === 'with_projects') {
                 matchesBranch = activeBranch === 'all' ? hasAnyProject : hasProjectInBranch;
             } else {
@@ -186,19 +208,37 @@ const Projects = () => {
 
             const q = searchQuery.toLowerCase();
             const matchesSearch = won.workOrderNumber?.toString().toLowerCase().includes(q) ||
-                (won.description || '').toLowerCase().includes(q) ||
                 (won.categories || []).some(c => c.name.toLowerCase().includes(q)) ||
-                projects.some(p =>
-                    (p.workOrder?._id || p.workOrder) === won._id &&
+                wonProjects.some(p =>
                     ((p.name || '').toLowerCase().includes(q) || (p.description || '').toLowerCase().includes(q))
                 );
 
-            return matchesBranch && (searchQuery === '' || matchesSearch);
+            if (!matchesBranch || (searchQuery !== '' && !matchesSearch)) return false;
+
+            // Status Filter Integration
+            if (sortBy === 'status_active') return wonProjects.some(p => p.status === 'active');
+            if (sortBy === 'status_planning') return wonProjects.some(p => p.status === 'planning');
+            if (sortBy === 'status_completed') return wonProjects.length > 0 && wonProjects.every(p => p.status === 'completed');
+            if (sortBy === 'status_pending') return wonProjects.length === 0 || wonProjects.every(p => p.status === 'pending');
+
+            return true;
         })
         .sort((a, b) => {
             if (sortBy === 'name_asc') return (a.workOrderNumber || '').toString().localeCompare((b.workOrderNumber || '').toString());
             if (sortBy === 'createdAt_desc') return new Date(b.createdAt || 0) - new Date(a.createdAt || 0);
             if (sortBy === 'updatedAt_desc') return new Date(b.updatedAt || 0) - new Date(a.updatedAt || 0);
+
+            if (sortBy === 'priority_high' || sortBy === 'priority_low') {
+                const getMinDays = (won) => {
+                    const wp = projects.filter(p => (p.workOrder?._id || p.workOrder) === won._id && p.status !== 'completed');
+                    if (wp.length === 0) return sortBy === 'priority_high' ? 999999 : -999999;
+                    return Math.min(...wp.map(p => {
+                        if (!p.deadline) return 9999;
+                        return (new Date(p.deadline).getTime() - Date.now()) / (1000 * 3600 * 24);
+                    }));
+                };
+                return sortBy === 'priority_high' ? getMinDays(a) - getMinDays(b) : getMinDays(b) - getMinDays(a);
+            }
             return 0;
         });
 
@@ -239,7 +279,7 @@ const Projects = () => {
 
     const [isWOModalOpen, setIsWOModalOpen] = useState(false);
     const [editingWO, setEditingWO] = useState(null);
-    const [newWO, setNewWO] = useState({ workOrderNumber: '', description: '', categories: CATEGORIES.map(c => ({ name: c })) });
+    const [newWO, setNewWO] = useState({ workOrderNumber: '', categories: CATEGORIES.map(c => ({ name: c })) });
 
     const [showWODeleteModal, setShowWODeleteModal] = useState(false);
     const [woToDelete, setWoToDelete] = useState(null);
@@ -250,23 +290,27 @@ const Projects = () => {
 
     const [showCatDeleteModal, setShowCatDeleteModal] = useState(false);
     const [catToDelete, setCatToDelete] = useState(null);
+    const [woHasProjects, setWoHasProjects] = useState(false);
+    const [catHasProjects, setCatHasProjects] = useState(false);
 
     const handleCreateWO = async () => {
         if (!newWO.workOrderNumber || newWO.categories.some(c => !c.name)) {
-            return alert('Please fill in WON and all category names');
+            return showAlert('Please fill in WON and all category names', 'error');
         }
         try {
             if (editingWO) {
                 await api.put(`/workorders/${editingWO._id}`, newWO);
             } else {
                 await api.post('/workorders', newWO);
+                setWonTab('all');
             }
             setIsWOModalOpen(false);
             setEditingWO(null);
-            setNewWO({ workOrderNumber: '', description: '', categories: CATEGORIES.map(c => ({ name: c })) });
+            setNewWO({ workOrderNumber: '', categories: CATEGORIES.map(c => ({ name: c })) });
             fetchWorkOrders();
+            showAlert(editingWO ? 'Work Order updated!' : 'Work Order created!', 'success');
         } catch (error) {
-            alert('Failed to process Work Order: ' + (error.response?.data?.message || error.message));
+            showAlert('Failed to process Work Order: ' + (error.response?.data?.message || error.message), 'error');
         }
     };
 
@@ -275,7 +319,6 @@ const Projects = () => {
         setEditingWO(won);
         setNewWO({
             workOrderNumber: won.workOrderNumber,
-            description: won.description || '',
             categories: won.categories?.map(c => ({ name: c.name })) || [{ name: '' }]
         });
         setIsWOModalOpen(true);
@@ -284,6 +327,8 @@ const Projects = () => {
     const handleDeleteWO = (e, won) => {
         e.stopPropagation();
         setWoToDelete(won);
+        const hasProjects = projects.some(p => (p.workOrder?._id || p.workOrder) === won._id);
+        setWoHasProjects(hasProjects);
         setShowWODeleteModal(true);
     };
 
@@ -294,7 +339,7 @@ const Projects = () => {
             fetchWorkOrders();
             setShowWODeleteModal(false);
         } catch (error) {
-            alert('Failed to delete Work Order: ' + (error.response?.data?.message || error.message));
+            showAlert('Failed to delete Work Order: ' + (error.response?.data?.message || error.message), 'error');
         }
     };
 
@@ -306,7 +351,7 @@ const Projects = () => {
     };
 
     const handleSaveCategory = async () => {
-        if (!newCatName.trim()) return alert('Category name cannot be empty');
+        if (!newCatName.trim()) return showAlert('Category name cannot be empty', 'error');
 
         const updatedCategories = selectedWON.categories.map(c =>
             c.name === editingCatName ? { ...c, name: newCatName } : c
@@ -323,13 +368,18 @@ const Projects = () => {
                 setSelectedCategory(null); // Or update it to the new name in search params
             }
         } catch (error) {
-            alert('Failed to update category: ' + (error.response?.data?.message || error.message));
+            showAlert('Failed to update category: ' + (error.response?.data?.message || error.message), 'error');
         }
     };
 
     const handleDeleteCategoryBtn = (e, cat) => {
         e.stopPropagation();
         setCatToDelete(cat);
+        const hasProjects = projects.some(p => 
+            (p.workOrder?._id || p.workOrder) === selectedWON._id && 
+            p.workOrderCategory === cat.name
+        );
+        setCatHasProjects(hasProjects);
         setShowCatDeleteModal(true);
     };
 
@@ -343,7 +393,7 @@ const Projects = () => {
             setCatToDelete(null);
             fetchWorkOrders();
         } catch (error) {
-            alert('Failed to delete category: ' + (error.response?.data?.message || error.message));
+            showAlert('Failed to delete category: ' + (error.response?.data?.message || error.message), 'error');
         }
     };
 
@@ -364,7 +414,7 @@ const Projects = () => {
     if (loading) return <PageLoader text="Loading projects..." />;
 
     return (
-        <div className="w-full space-y-3 max-w-7xl mx-auto pb-8">
+        <div className="w-full space-y-3 max-w-full px-3 mx-auto pb-8">
             {/* Sticky header */}
             <div className="bg-gray-50 pt-2 md:pt-4 pb-2 space-y-2 border-b border-gray-50">
                 <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 w-full">
@@ -399,7 +449,7 @@ const Projects = () => {
                         )}
                         {currentUser?.role !== 'admin_viewer' && (
                             <Link
-                                to="/projects/new"
+                                to={`/projects/new${wonId ? `?won=${wonId}${catName ? `&cat=${encodeURIComponent(catName)}` : ''}` : ''}`}
                                 className="flex-1 sm:flex-none flex justify-center items-center gap-1.5 bg-primary text-white px-3 py-3 rounded-md font-bold text-xs shadow-md shadow-primary/20 hover:scale-[1.02] active:scale-[0.98] transition-all shrink-0"
                             >
                                 <Plus size={14} /> New Project
@@ -462,7 +512,7 @@ const Projects = () => {
                                             {won.workOrderNumber}
                                         </h2>
                                         <p className="text-xs text-gray-500 mt-0.5">
-                                            {won.description || 'No description'} • {won.categories?.length || 0} Categories
+                                            {won.categories?.filter(c => c.projects?.length > 0).length || 0} categories with project and {won.categories?.filter(c => !c.projects || c.projects.length === 0).length || 0} categories without project
                                         </p>
                                     </div>
                                 </div>
@@ -564,17 +614,17 @@ const Projects = () => {
                     // VIEW 3: PROJECT LIST
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                         {filteredAndSortedProjects.map((project) => {
-                            const isOverdue = project.status !== 'completed' && project.deadline && new Date(project.deadline).setHours(0,0,0,0) < new Date().setHours(0,0,0,0);
-                            
+                            const isOverdue = project.status !== 'completed' && project.deadline && new Date(project.deadline).setHours(0, 0, 0, 0) < new Date().setHours(0, 0, 0, 0);
+                            const overdueDays = isOverdue ? Math.floor((new Date().setHours(0, 0, 0, 0) - new Date(project.deadline).setHours(0, 0, 0, 0)) / (1000 * 60 * 60 * 24)) : 0;
+
                             return (
                                 <Link
                                     key={project._id}
                                     to={`/projects/${project._id}`}
-                                    className={`shadow-sm rounded-xl p-5 flex flex-col relative overflow-hidden h-full transition-all group/card border ${
-                                        isOverdue 
-                                        ? 'bg-red-50/50 border-red-100 hover:border-red-200 hover:shadow-md' 
+                                    className={`shadow-sm rounded-xl p-5 flex flex-col relative overflow-hidden h-full transition-all group/card border ${isOverdue
+                                        ? 'bg-red-50/50 border-red-100 hover:border-red-200 hover:shadow-md'
                                         : 'bg-white border-gray-200 shadow-sm hover:shadow-md hover:border-primary/30'
-                                    }`}
+                                        }`}
                                 >
                                     {/* Status & Delete */}
                                     <div className="flex justify-between items-start mb-4 w-full">
@@ -586,7 +636,7 @@ const Projects = () => {
                                             }`}>
                                             <span className="w-1.5 h-1.5 rounded-full mr-1.5 inline-block bg-current opacity-70" />
                                             {project.status || 'Pending'}
-                                            {isOverdue && <span className="ml-1.5 text-[8px] opacity-70 font-bold">(Overdue)</span>}
+                                            {isOverdue && <span className="ml-1.5 text-[8px] opacity-70 font-bold">({overdueDays}d Overdue)</span>}
                                         </span>
                                         {currentUser?.role !== 'admin_viewer' && (
                                             <button
@@ -677,8 +727,8 @@ const Projects = () => {
                                                     <span className={`text-[10px] font-black ${isOverdue ? 'text-red-500' : 'text-primary'}`}>{progressPercent}%</span>
                                                 </div>
                                                 <div className="w-full bg-gray-100 rounded-full h-1.5 overflow-hidden shadow-inner flex-shrink-0">
-                                                    <div 
-                                                        className={`h-full rounded-full transition-all duration-1000 ease-out ${progressPercent === 100 ? 'bg-green-500' : isOverdue ? 'bg-red-500' : 'bg-primary'}`} 
+                                                    <div
+                                                        className={`h-full rounded-full transition-all duration-1000 ease-out ${progressPercent === 100 ? 'bg-green-500' : isOverdue ? 'bg-red-500' : 'bg-primary'}`}
                                                         style={{ width: `${progressPercent}%` }}
                                                     />
                                                 </div>
@@ -759,13 +809,6 @@ const Projects = () => {
                             onChange={(e) => setNewWO({ ...newWO, workOrderNumber: e.target.value })}
                         />
 
-                        <label className="block text-xs font-semibold text-gray-600 mb-1">Description</label>
-                        <textarea
-                            className="w-full border border-gray-300 p-2.5 rounded-xl mb-4 text-sm focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none min-h-[60px]"
-                            placeholder="Enter description..."
-                            value={newWO.description}
-                            onChange={(e) => setNewWO({ ...newWO, description: e.target.value })}
-                        />
                         <label className="block text-xs font-semibold text-gray-600 mb-1">Categories *</label>
                         <div className="space-y-2 mb-4">
                             {newWO.categories.map((cat, idx) => (
@@ -796,7 +839,7 @@ const Projects = () => {
                         </div>
 
                         <div className="flex justify-end gap-3 mt-4">
-                            <button onClick={() => { setIsWOModalOpen(false); setEditingWO(null); setNewWO({ workOrderNumber: '', description: '', categories: CATEGORIES.map(c => ({ name: c })) }); }} className="px-4 py-3 text-sm font-medium text-gray-700 hover:bg-gray-100 rounded-md">Cancel</button>
+                            <button onClick={() => { setIsWOModalOpen(false); setEditingWO(null); setNewWO({ workOrderNumber: '', categories: CATEGORIES.map(c => ({ name: c })) }); }} className="px-4 py-3 text-sm font-medium text-gray-700 hover:bg-gray-100 rounded-md">Cancel</button>
                             <button onClick={handleCreateWO} className="px-6 py-3 text-sm font-bold bg-primary text-white hover:bg-opacity-90 rounded-md shadow-lg shadow-primary/20">{editingWO ? 'Update WON' : 'Create WON'}</button>
                         </div>
                     </div>
@@ -845,7 +888,10 @@ const Projects = () => {
                 onConfirm={confirmDeleteWO}
                 itemName={woToDelete?.workOrderNumber}
                 title="Delete Work Order?"
-                message="This will permanently delete the Work Order and all its categories. Make sure no projects are attached to it."
+                message={woHasProjects 
+                    ? `WARNING: This Work Order has associated projects! Deleting it will also PERMANENTLY remove ALL associated categories, projects, tasks, and related items. This action cannot be undone.`
+                    : "This will permanently delete the Work Order and its categories. Make sure no projects are attached to it."
+                }
             />
 
             {isCatModalOpen && (
@@ -873,8 +919,12 @@ const Projects = () => {
                 onConfirm={confirmDeleteCategory}
                 itemName={catToDelete?.name}
                 title="Delete Category?"
-                message="This will permanently delete the Category. Make sure no projects are currently assigned to it."
+                message={catHasProjects
+                    ? `WARNING: This category has associated projects in this Work Order! Deleting it will also PERMANENTLY remove ALL associated projects, tasks, and related data. Are you sure?`
+                    : "This will permanently delete the Category. Make sure no projects are currently assigned to it."
+                }
             />
+
         </div>
     );
 };
