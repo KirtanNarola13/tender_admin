@@ -160,8 +160,9 @@ const FormDateTimePicker = ({ label, value, onChange, min, placeholder = 'Select
                         onClick={() => handleDateSelect(date)}
                         className={clsx(
                             "h-8 flex items-center justify-center text-xs rounded-lg transition-all",
-                            !date ? "invisible" : "hover:bg-primary/5",
-                            isSelected(date) ? "bg-primary text-white font-bold" : "text-gray-700",
+                            !date && "invisible",
+                            date && !isSelected(date) && "hover:bg-primary/5 text-gray-700",
+                            isSelected(date) && "bg-primary text-white font-bold",
                             isDisabled(date) && "opacity-20 cursor-not-allowed"
                         )}
                     >
