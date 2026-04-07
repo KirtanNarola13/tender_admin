@@ -2,7 +2,7 @@ import { useState, useRef, useEffect } from 'react';
 import { ChevronDown, Check, Search } from 'lucide-react';
 import clsx from 'clsx';
 
-const FormSelect = ({ label, value, onChange, options, placeholder = 'Select an option', icon: Icon, error, searchable, footer }) => {
+const FormSelect = ({ label, value, onChange, options, placeholder = 'Select an option', icon: Icon, error, searchable, footer, disabled }) => {
     const [isOpen, setIsOpen] = useState(false);
     const [search, setSearch] = useState('');
     const dropdownRef = useRef(null);
@@ -37,11 +37,13 @@ const FormSelect = ({ label, value, onChange, options, placeholder = 'Select an 
             <div className="relative">
                 <button
                     type="button"
-                    onClick={() => setIsOpen(!isOpen)}
+                    onClick={() => !disabled && setIsOpen(!isOpen)}
+                    disabled={disabled}
                     className={clsx(
-                        "w-full flex items-center justify-between bg-white border p-3 rounded-xl text-sm transition-all focus:outline-none focus:ring-2 focus:ring-primary/20",
+                        "w-full flex items-center justify-between border p-3 rounded-xl text-sm transition-all focus:outline-none focus:ring-2 focus:ring-primary/20",
                         isOpen ? "border-primary shadow-sm" : "border-gray-200 hover:border-gray-300",
-                        error ? "border-red-300 bg-red-50" : "bg-white"
+                        error ? "border-red-300 bg-red-50" : "bg-white",
+                        disabled && "bg-gray-50/80 cursor-not-allowed opacity-75 border-gray-100"
                     )}
                 >
                     <div className="flex items-center gap-3 truncate">
@@ -52,7 +54,7 @@ const FormSelect = ({ label, value, onChange, options, placeholder = 'Select an 
                             {selectedOption ? selectedOption.label : placeholder}
                         </span>
                     </div>
-                    <ChevronDown size={18} className={clsx("text-gray-400 transition-transform duration-300 shrink-0", isOpen && "rotate-180")} />
+                    {!disabled && <ChevronDown size={18} className={clsx("text-gray-400 transition-transform duration-300 shrink-0", isOpen && "rotate-180")} />}
                 </button>
 
                 {isOpen && (

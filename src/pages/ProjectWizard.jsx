@@ -252,7 +252,8 @@ const ProjectWizard = () => {
                     placeholder="— Select WON —"
                     icon={Tag}
                     searchable
-                    footer={
+                    disabled={!!urlWon}
+                    footer={urlWon ? null : (
                         <div className="flex gap-2 p-1" onClick={e => e.stopPropagation()}>
                             <input
                                 type="number"
@@ -270,7 +271,7 @@ const ProjectWizard = () => {
                                 <Plus size={14} />
                             </button>
                         </div>
-                    }
+                    )}
                 />
 
                 <FormSelect
@@ -282,7 +283,7 @@ const ProjectWizard = () => {
                     }
                     placeholder={projectData.workOrder ? "— Select Category —" : "Select WON First"}
                     icon={Tag}
-                    disabled={!projectData.workOrder}
+                    disabled={!projectData.workOrder || !!urlCat}
                     searchable
                     footer={null}
                 />
