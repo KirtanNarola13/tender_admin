@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { useAuth } from '../context/AuthContext';
+import { useBranch } from '../context/BranchContext';
 import { useNavigate } from 'react-router-dom';
 import { Mail, Lock, Loader2, AlertCircle, ShieldCheck } from 'lucide-react';
 
@@ -9,6 +10,7 @@ const Login = () => {
     const [isLoading, setIsLoading] = useState(false);
     const [error, setError] = useState('');
     const { login, logout } = useAuth();
+    const { refreshBranches } = useBranch();
     const navigate = useNavigate();
 
     const handleSubmit = async (e) => {
@@ -45,6 +47,7 @@ const Login = () => {
                 return;
             }
 
+            await refreshBranches(); // Ensure branches are fetched for the new session
             navigate('/');
         } catch (err) {
             console.error('[Login Error] Catch block reached:', err);
