@@ -12,7 +12,8 @@ import {
     Clock,
     Users,
     TrendingUp,
-    Shield
+    Shield,
+    ClipboardList
 } from 'lucide-react';
 import PageLoader from '../components/PageLoader';
 
@@ -72,7 +73,7 @@ const Dashboard = () => {
             </div>
 
             {/* Top Metrics Row */}
-            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4">
+            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
                 <StatCard
                     title="Active Projects"
                     count={stats.totalProjects}
@@ -81,6 +82,15 @@ const Dashboard = () => {
                     bg="bg-indigo-50"
                     border="border-indigo-100"
                     onClick={() => navigate('/projects')}
+                />
+                <StatCard
+                    title="Work Orders"
+                    count={stats.totalWorkOrders || 0}
+                    icon={ClipboardList}
+                    color="text-amber-600"
+                    bg="bg-amber-50"
+                    border="border-amber-100"
+                    onClick={() => navigate('/projects')} // Could navigate to work orders specifically if there's a page
                 />
                 <StatCard
                     title="Team Leaders"
