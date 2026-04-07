@@ -1,9 +1,9 @@
 import { useState, useEffect, useRef } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate, useLocation } from 'react-router-dom';
 import api, { getImageUrl } from '../services/api';
 import { useAuth } from '../context/AuthContext';
 import { useBranch } from '../context/BranchContext';
-import { Plus, Package, Trash2, X, Upload, Download, CheckCircle, Loader2, Search, Warehouse, ShoppingCart, Pencil, AlertTriangle, Eye } from 'lucide-react';
+import { Plus, Package, Trash2, X, Upload, Download, CheckCircle, Loader2, Search, Warehouse, ShoppingCart, Pencil, AlertTriangle, Eye, ArrowLeft } from 'lucide-react';
 import PageLoader from '../components/PageLoader';
 import FormSelect from '../components/FormSelect';
 import CustomSelect from '../components/CustomSelect';
@@ -11,6 +11,9 @@ import CustomSelect from '../components/CustomSelect';
 const Inventory = () => {
     const { user: currentUser } = useAuth();
     const { activeBranch } = useBranch();
+    const navigate = useNavigate();
+    const location = useLocation();
+    const fromDashboard = location.state?.fromDashboard;
     const [products, setProducts] = useState([]);
     const [warehouses, setWarehouses] = useState([]);
     const [activeTab, setActiveTab] = useState('products');
@@ -357,6 +360,14 @@ const Inventory = () => {
                 {/* Title row */}
                 <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
                     <div>
+                        {fromDashboard && (
+                            <button
+                                onClick={() => navigate('/')}
+                                className="flex items-center gap-1 text-primary text-xs font-bold uppercase tracking-wider mb-1"
+                            >
+                                <ArrowLeft size={12} /> Back to Dashboard
+                            </button>
+                        )}
                         <h1 className="text-lg font-bold text-gray-900 leading-tight">Inventory Management</h1>
                         <p className="text-gray-400 text-xs mt-0.5">Manage products, warehouses, and stock levels.</p>
                     </div>

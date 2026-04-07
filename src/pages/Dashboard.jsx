@@ -81,7 +81,7 @@ const Dashboard = () => {
                     color="text-indigo-600"
                     bg="bg-indigo-50"
                     border="border-indigo-100"
-                    onClick={() => navigate('/projects')}
+                    onClick={() => navigate('/projects', { state: { fromDashboard: true } })}
                 />
                 <StatCard
                     title="Work Orders"
@@ -90,7 +90,7 @@ const Dashboard = () => {
                     color="text-amber-600"
                     bg="bg-amber-50"
                     border="border-amber-100"
-                    onClick={() => navigate('/projects')} // Could navigate to work orders specifically if there's a page
+                    onClick={() => navigate('/projects', { state: { fromDashboard: true } })} // Could navigate to work orders specifically if there's a page
                 />
                 <StatCard
                     title="Team Leaders"
@@ -99,7 +99,7 @@ const Dashboard = () => {
                     color="text-primary"
                     bg="bg-primary/5"
                     border="border-primary/20"
-                    onClick={() => navigate('/users?role=team_leader')}
+                    onClick={() => navigate('/users?role=team_leader', { state: { fromDashboard: true } })}
                 />
                 <StatCard
                     title="Employees"
@@ -108,7 +108,7 @@ const Dashboard = () => {
                     color="text-sky-600"
                     bg="bg-sky-50"
                     border="border-sky-100"
-                    onClick={() => navigate('/users?role=employee')}
+                    onClick={() => navigate('/users?role=employee', { state: { fromDashboard: true } })}
                 />
                 <StatCard
                     title="Pending Tasks"
@@ -117,7 +117,7 @@ const Dashboard = () => {
                     color="text-red-600"
                     bg="bg-red-50"
                     border="border-red-100"
-                    onClick={() => navigate('/tasks?status=pending')}
+                    onClick={() => navigate('/tasks?status=pending', { state: { fromDashboard: true } })}
                 />
                 <StatCard
                     title="Completed Tasks"
@@ -126,7 +126,7 @@ const Dashboard = () => {
                     color="text-emerald-600"
                     bg="bg-emerald-50"
                     border="border-emerald-100"
-                    onClick={() => navigate('/tasks?status=completed')}
+                    onClick={() => navigate('/tasks?status=completed', { state: { fromDashboard: true } })}
                 />
             </div>
 
@@ -258,7 +258,7 @@ const Dashboard = () => {
                             <h3 className="text-sm font-black text-gray-800">Inventory Status</h3>
                         </div>
                         <button
-                            onClick={() => navigate('/inventory')}
+                            onClick={() => navigate('/inventory', { state: { fromDashboard: true } })}
                             className="bg-white text-gray-500 hover:text-primary p-2 rounded border border-gray-200 transition-colors"
                         >
                             <TrendingUp size={14} />
@@ -337,7 +337,7 @@ const Dashboard = () => {
                     </div>
                     <div className="p-4 border-t border-gray-50 bg-gray-50/10 text-center">
                         <button
-                            onClick={() => navigate('/branches')}
+                            onClick={() => navigate('/branches', { state: { fromDashboard: true } })}
                             className="text-[10px] font-black text-gray-400 uppercase tracking-[0.2em] hover:text-primary transition-colors"
                         >
                             View Territory Ledger →
