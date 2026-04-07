@@ -3,7 +3,7 @@ import { useBranch } from '../context/BranchContext';
 import { Globe, MapPin, ChevronDown, Check } from 'lucide-react';
 
 const BranchTabs = () => {
-    const { activeBranch, branches, updateBranch } = useBranch();
+    const { activeBranch, branches, updateBranch, loading } = useBranch();
     const [isOpen, setIsOpen] = useState(false);
     const dropdownRef = useRef(null);
 
@@ -69,7 +69,7 @@ const BranchTabs = () => {
                             <div className="my-1 border-t border-gray-50" />
 
                             {/* Regional Options */}
-                            {branches.map((branch) => (
+                            {!loading && branches.map((branch) => (
                                 <button
                                     key={branch}
                                     onClick={() => {
@@ -89,9 +89,16 @@ const BranchTabs = () => {
                                     {activeBranch === branch && <Check size={16} strokeWidth={3} />}
                                 </button>
                             ))}
+
+                            {loading && (
+                                <div className="p-12 text-center">
+                                    <div className="w-6 h-6 border-2 border-primary border-t-transparent rounded-full animate-spin mx-auto mb-2" />
+                                    <p className="text-[10px] text-gray-400 font-bold uppercase tracking-widest">Updating Territories...</p>
+                                </div>
+                            )}
                         </div>
-                        {branches.length === 0 && (
-                            <div className="p-8 text-center">
+                        {!loading && branches.length === 0 && (
+                            <div className="p-8 text-center bg-white">
                                 <MapPin size={24} className="text-gray-200 mx-auto mb-2" />
                                 <p className="text-xs text-gray-400 font-medium">No regions found</p>
                             </div>

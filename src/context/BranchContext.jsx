@@ -10,7 +10,7 @@ export const BranchProvider = ({ children }) => {
 
     const fetchBranches = async () => {
         try {
-            const res = await api.get('/branches?status=active');
+            const res = await api.get(`/branches?status=active&_t=${Date.now()}`);
             const branchNames = res.data.map(b => b.name).sort();
             setBranches(branchNames);
         } catch (error) {
