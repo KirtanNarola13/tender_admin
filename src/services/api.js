@@ -1,9 +1,8 @@
 import axios from 'axios';
 
 // 1. Determine the correct API base URL
-const IS_DEV = import.meta.env.DEV;
-const BASE_URL = IS_DEV ? 'http://localhost:3000/api' : 'https://tender-api.reliablesolution.in/api';
-export const FILE_BASE_URL = IS_DEV ? 'http://localhost:3000' : 'https://tender-api.reliablesolution.in';
+const BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:3000/api';
+export const FILE_BASE_URL = import.meta.env.VITE_FILE_BASE_URL || 'http://localhost:3000';
 
 const api = axios.create({
     baseURL: BASE_URL,

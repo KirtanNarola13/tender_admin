@@ -12,6 +12,8 @@ import PageLoader from '../components/PageLoader';
 import { useAlert } from '../context/AlertContext';
 
 import CustomSelect from '../components/CustomSelect';
+import FormSelect from '../components/FormSelect';
+import FormDateTimePicker from '../components/FormDateTimePicker';
 
 const PO_STATUS_OPTIONS = [
     { value: 'all', label: 'All Status' },
@@ -50,7 +52,7 @@ const formatDateTime = (date) => {
 const StatusUpdateModal = ({ order, onClose, onSuccess }) => {
     const [selectedStatus, setSelectedStatus] = useState('');
     const [expectedDate, setExpectedDate] = useState('');
-    const [actualDate, setActualDate] = useState(formatDateTime(new Date()));
+    const [actualDate, setActualDate] = useState(new Date().toISOString());
     const [notes, setNotes] = useState('');
     const [deliveryQuantities, setDeliveryQuantities] = useState({});
     const [loading, setLoading] = useState(false);
@@ -66,7 +68,7 @@ const StatusUpdateModal = ({ order, onClose, onSuccess }) => {
             // Pre-fill expected date from current timeline if exists
             const nextTimeline = order.statusTimeline?.find(t => t.status === nextStat);
             if (nextTimeline?.expectedDate) {
-                setExpectedDate(formatDateTime(nextTimeline.expectedDate));
+                setExpectedDate(nextTimeline.expectedDate);
             }
 
             // Init delivery quantities if target state is DELIVERED
@@ -100,6 +102,22 @@ const StatusUpdateModal = ({ order, onClose, onSuccess }) => {
             }
         }
 
+        // --- Date Sequence Validation ---
+        if (selectedStatus !== 'INSTALLATION') {
+            const currentIdx = ORDERED_STATUSES.indexOf(selectedStatus);
+            for (let i = currentIdx - 1; i >= 0; i--) {
+                const prevStat = ORDERED_STATUSES[i];
+                if (prevStat === 'INSTALLATION') continue;
+                const prevEntry = order.statusTimeline?.find(t => t.status === prevStat);
+                if (prevEntry?.actualDate && new Date(actualDate) < new Date(prevEntry.actualDate)) {
+                    showAlert(`Actual date cannot be earlier than ${prevStat.replace('_', ' ')} (${new Date(prevEntry.actualDate).toLocaleDateString()})`, 'error');
+                    setLoading(false);
+                    return;
+                }
+            }
+        }
+        // ---
+
         try {
             await api.patch(`/purchase-orders/${order._id}/status`, {
                 deliveryStatus: selectedStatus,
@@ -124,11 +142,11 @@ const StatusUpdateModal = ({ order, onClose, onSuccess }) => {
     return (
         <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-[120] flex items-center justify-center p-4 text-left">
             <div className={clsx(
-                "bg-white rounded-2xl shadow-2xl w-full overflow-hidden border border-gray-100 animate-in fade-in zoom-in duration-200 flex flex-col",
-                isDelivering ? "max-w-xl max-h-[90vh]" : "max-w-sm"
+                "bg-white rounded-2xl shadow-2xl w-full border border-gray-100 animate-in fade-in zoom-in duration-200 flex flex-col relative overflow-hidden",
+                isDelivering ? "max-w-2xl max-h-[90vh]" : "max-w-xl max-h-[95vh]"
             )}>
                 <div className={clsx(
-                    "p-5 text-white flex justify-between items-center bg-gradient-to-br transition-colors duration-500",
+                    "p-5 text-white flex justify-between items-center rounded-t-2xl bg-gradient-to-br transition-colors duration-500",
                     isDelivering ? "from-emerald-600 to-emerald-700" : "from-amber-600 to-amber-700"
                 )}>
                     <h3 className="text-lg font-black flex items-center gap-2">
@@ -138,7 +156,10 @@ const StatusUpdateModal = ({ order, onClose, onSuccess }) => {
                     <button onClick={onClose} className="p-1.5 hover:bg-white/10 rounded-full transition-colors"><X size={18} /></button>
                 </div>
 
-                <form onSubmit={handleSubmit} className="flex-1 overflow-y-auto p-5 space-y-4 custom-scrollbar">
+                <form onSubmit={handleSubmit} className={clsx(
+                    "flex-1 p-5 space-y-4 overflow-y-auto",
+                    isDelivering ? "custom-scrollbar" : "scrollbar-hide"
+                )}>
                     <div className={clsx(
                         "p-3 rounded-xl border transition-colors",
                         isDelivering ? "bg-emerald-50 border-emerald-100" : "bg-amber-50 border-amber-100"
@@ -149,25 +170,46 @@ const StatusUpdateModal = ({ order, onClose, onSuccess }) => {
                         </div>
                     </div>
 
-                    <div className="grid grid-cols-2 gap-3">
-                        <div>
-                            <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1 block">Expected Date</label>
-                            <input
-                                type="datetime-local"
-                                className="w-full border border-gray-200 p-2.5 rounded-xl text-[10px] font-bold focus:ring-2 focus:ring-primary/20 outline-none bg-gray-50/50"
-                                value={expectedDate}
-                                onChange={e => setExpectedDate(e.target.value)}
-                            />
-                        </div>
-                        <div>
-                            <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1 block">Actual Date</label>
-                            <input
-                                type="datetime-local"
-                                className="w-full border border-gray-200 p-2.5 rounded-xl text-[10px] font-bold focus:ring-2 focus:ring-primary/20 outline-none bg-white"
-                                value={actualDate}
-                                onChange={e => setActualDate(e.target.value)}
-                            />
-                        </div>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                        <FormDateTimePicker
+                            label="Expected Date"
+                            value={expectedDate}
+                            onChange={(val) => setExpectedDate(val)}
+                            min={(() => {
+                                if (selectedStatus === 'INSTALLATION') return '';
+                                const currentIdx = ORDERED_STATUSES.indexOf(selectedStatus);
+                                if (currentIdx <= 0) return '';
+
+                                for (let i = currentIdx - 1; i >= 0; i--) {
+                                    const prevStat = ORDERED_STATUSES[i];
+                                    if (prevStat === 'INSTALLATION') continue;
+                                    const prevEntry = order.statusTimeline?.find(t => t.status === prevStat);
+                                    const baseDate = prevEntry?.actualDate || prevEntry?.expectedDate;
+                                    if (baseDate) return baseDate;
+                                }
+                                return '';
+                            })()}
+                        />
+
+                        <FormDateTimePicker
+                            label="Actual Date"
+                            value={actualDate}
+                            onChange={(val) => setActualDate(val)}
+                            align="right"
+                            min={(() => {
+                                if (selectedStatus === 'INSTALLATION') return '';
+                                const currentIdx = ORDERED_STATUSES.indexOf(selectedStatus);
+                                if (currentIdx <= 0) return '';
+
+                                for (let i = currentIdx - 1; i >= 0; i--) {
+                                    const prevStat = ORDERED_STATUSES[i];
+                                    if (prevStat === 'INSTALLATION') continue;
+                                    const prevEntry = order.statusTimeline?.find(t => t.status === prevStat);
+                                    if (prevEntry?.actualDate) return prevEntry.actualDate;
+                                }
+                                return '';
+                            })()}
+                        />
                     </div>
 
                     {isDelivering && (

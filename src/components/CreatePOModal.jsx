@@ -3,6 +3,7 @@ import api from '../services/api';
 import { X, Plus, Trash2, Loader2, Save, ShoppingCart, User, Home, Receipt } from 'lucide-react';
 import clsx from 'clsx';
 import FormSelect from './FormSelect';
+import FormDateTimePicker from './FormDateTimePicker';
 
 const CreatePOModal = ({ isOpen, onClose, onSuccess, editData }) => {
     const [warehouses, setWarehouses] = useState([]);
@@ -172,7 +173,7 @@ const CreatePOModal = ({ isOpen, onClose, onSuccess, editData }) => {
 
     return (
         <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-[100] flex items-center justify-center p-4 overflow-y-auto">
-            <div className="bg-white rounded-2xl shadow-2xl w-full max-w-3xl my-8 overflow-hidden transform transition-all animate-in fade-in zoom-in duration-200">
+            <div className="bg-white rounded-2xl shadow-2xl w-full max-w-3xl my-8 overflow-hidden transform transition-all animate-in fade-in zoom-in duration-200 text-left">
                 {/* Header */}
                 <div className="bg-primary p-5 text-white flex justify-between items-center bg-gradient-to-r from-primary to-primary-dark">
                     <div className="flex items-center gap-3">
@@ -190,7 +191,7 @@ const CreatePOModal = ({ isOpen, onClose, onSuccess, editData }) => {
                 </div>
 
                 <form onSubmit={handleSubmit} className="p-6 overflow-y-auto max-h-[85vh] custom-scrollbar">
-                    <div className="space-y-8">
+                    <div className="space-y-8 text-left">
                         {/* 1. Basic Party & Logistic Info */}
                         <section className="space-y-4">
                             <div className="flex items-center justify-between">
@@ -254,12 +255,10 @@ const CreatePOModal = ({ isOpen, onClose, onSuccess, editData }) => {
                                 )}
 
                                 <div>
-                                    <label className="text-[9px] font-black uppercase text-gray-400 mb-1 ml-1 block">PO Date</label>
-                                    <input 
-                                        type="date"
-                                        className="w-full border border-gray-200 p-3 rounded-xl focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition-all text-sm font-semibold" 
+                                    <FormDateTimePicker
+                                        label="PO Date"
                                         value={formData.date}
-                                        onChange={e => setFormData({ ...formData, date: e.target.value })}
+                                        onChange={val => setFormData({ ...formData, date: val })}
                                     />
                                 </div>
 
@@ -309,28 +308,59 @@ const CreatePOModal = ({ isOpen, onClose, onSuccess, editData }) => {
                         {/* 2. Expected Timeline Dates */}
                         <section className="space-y-4">
                             <h4 className="text-[10px] font-black uppercase tracking-[0.2em] text-gray-400">Scheduled Journey (Expected Dates)</h4>
-                            <div className="grid grid-cols-2 md:grid-cols-3 gap-4 p-5 bg-gray-50 rounded-2xl border border-gray-100">
+                            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-5 p-5 bg-gray-50 rounded-2xl border border-gray-100">
                                 {[
                                     { key: 'ADVANCE', label: 'Advance' },
                                     { key: 'IN_PRODUCTION', label: 'Production' },
-                                    { key: 'TRANSIT', label: 'Transit' },
-                                    { key: 'DELIVERED', label: 'Delivery' },
-                                    { key: 'INSTALLATION', label: 'Installation' },
-                                    { key: 'COMPLETED', label: 'Completion' }
-                                ].map((step) => (
-                                    <div key={step.key}>
-                                        <label className="text-[9px] font-black uppercase text-gray-500 mb-1 ml-1 block">{step.label}</label>
-                                        <input 
-                                            type="date"
-                                            className="w-full border border-gray-200 p-2.5 rounded-xl focus:ring-2 focus:ring-primary/20 outline-none text-[11px] font-bold"
-                                            value={formData.expectedTimeline[step.key]}
-                                            onChange={e => setFormData({
-                                                ...formData,
-                                                expectedTimeline: { ...formData.expectedTimeline, [step.key]: e.target.value }
-                                            })}
-                                        />
-                                    </div>
-                                ))}
+                                    { key: 'TRANSIT', label: 'Transit', align: 'right' },
+                                    { key: 'DELIVERED', label: 'Delivery', up: true },
+                                    { key: 'INSTALLATION', label: 'Installation', up: true, exempt: true },
+                                    { key: 'COMPLETED', label: 'Completion', align: 'right', up: true }
+                                ].map((step, index, arr) => {
+                                    // Determine min date based on previous step
+                                    let minDate = formData.date;
+                                    if (index > 0 && !step.exempt) {
+                                        // Find the last non-exempt step before this one
+                                        for (let i = index - 1; i >= 0; i--) {
+                                            const prevVal = formData.expectedTimeline[arr[i].key];
+                                            if (prevVal) {
+                                                minDate = prevVal;
+                                                break;
+                                            }
+                                        }
+                                    }
+                                    
+                                    // Special case for Completion: must be after both Delivery and Installation
+                                    if (step.key === 'COMPLETED') {
+                                        const delivery = formData.expectedTimeline.DELIVERED;
+                                        const installation = formData.expectedTimeline.INSTALLATION;
+                                        if (delivery && installation) {
+                                            minDate = new Date(delivery) > new Date(installation) ? delivery : installation;
+                                        } else {
+                                            minDate = delivery || installation || minDate;
+                                        }
+                                    }
+
+                                    return (
+                                        <div key={step.key}>
+                                            <FormDateTimePicker
+                                                label={step.label}
+                                                value={formData.expectedTimeline[step.key]}
+                                                min={minDate}
+                                                align={step.align}
+                                                up={step.up}
+                                                onChange={val => {
+                                                    // When a date changes, we might need to cascade update later dates 
+                                                    // but for now just enforcing the min on selection is enough.
+                                                    setFormData({
+                                                        ...formData,
+                                                        expectedTimeline: { ...formData.expectedTimeline, [step.key]: val }
+                                                    });
+                                                }}
+                                            />
+                                        </div>
+                                    );
+                                })}
                             </div>
                         </section>
 

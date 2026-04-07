@@ -13,6 +13,17 @@ const Login = () => {
 
     const handleSubmit = async (e) => {
         e.preventDefault();
+        
+        // Manual validation for specific error messages
+        if (!email.trim()) {
+            setError('Please enter your email address');
+            return;
+        }
+        if (!password) {
+            setError('Please enter your password');
+            return;
+        }
+
         setIsLoading(true);
         setError('');
 
@@ -37,7 +48,8 @@ const Login = () => {
             navigate('/');
         } catch (err) {
             console.error('[Login Error] Catch block reached:', err);
-            setError('Invalid email or password. Please try again.');
+            const message = err.response?.data?.message || 'Invalid email or password. Please try again.';
+            setError(message);
         } finally {
             setIsLoading(false);
         }
@@ -65,7 +77,7 @@ const Login = () => {
                     </div>
                 )}
 
-                <form onSubmit={handleSubmit} className="space-y-6 relative z-10">
+                <form onSubmit={handleSubmit} className="space-y-6 relative z-10" noValidate>
                     <div>
                         <label className="block text-sm font-semibold text-gray-700 mb-2 ml-1">Email Address</label>
                         <div className="relative group">
@@ -74,11 +86,13 @@ const Login = () => {
                             </div>
                             <input
                                 type="email"
-                                className="w-full pl-11 pr-4 py-3.5 border border-gray-200 rounded-xl focus:ring-4 focus:ring-primary/10 focus:border-primary outline-none transition-all text-gray-700 bg-gray-50/50 hover:bg-gray-50 focus:bg-white"
+                                className={`w-full pl-11 pr-4 py-3.5 border rounded-xl focus:ring-4 focus:ring-primary/10 focus:border-primary outline-none transition-all text-gray-700 bg-gray-50/50 hover:bg-gray-50 focus:bg-white ${error && !email ? 'border-red-300' : 'border-gray-200'}`}
                                 placeholder="admin@kginfra.com"
                                 value={email}
-                                onChange={(e) => setEmail(e.target.value)}
-                                required
+                                onChange={(e) => {
+                                    setEmail(e.target.value);
+                                    if (error) setError('');
+                                }}
                             />
                         </div>
                     </div>
@@ -91,11 +105,13 @@ const Login = () => {
                             </div>
                             <input
                                 type="password"
-                                className="w-full pl-11 pr-4 py-3.5 border border-gray-200 rounded-xl focus:ring-4 focus:ring-primary/10 focus:border-primary outline-none transition-all text-gray-700 bg-gray-50/50 hover:bg-gray-50 focus:bg-white"
+                                className={`w-full pl-11 pr-4 py-3.5 border rounded-xl focus:ring-4 focus:ring-primary/10 focus:border-primary outline-none transition-all text-gray-700 bg-gray-50/50 hover:bg-gray-50 focus:bg-white ${error && !password ? 'border-red-300' : 'border-gray-200'}`}
                                 placeholder="••••••••"
                                 value={password}
-                                onChange={(e) => setPassword(e.target.value)}
-                                required
+                                onChange={(e) => {
+                                    setPassword(e.target.value);
+                                    if (error) setError('');
+                                }}
                             />
                         </div>
                     </div>
